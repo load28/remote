@@ -58,3 +58,18 @@
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.8);
 }
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 0.5rem;
+  padding-left: 1rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.userName {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+}

@@ -12,6 +12,26 @@
   color: white;
 }
 
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 1rem;
+  padding-left: 1rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.userName {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 .title {
   font-size: 1.5rem;
   font-weight: 700;
@@ -48,4 +68,13 @@
 .formActions {
   display: flex;
   gap: 0.5rem;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 1.125rem;
+  color: #5e6c84;
 }
