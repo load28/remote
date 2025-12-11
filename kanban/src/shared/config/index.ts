@@ -1,3 +1,5 @@
+export * from './env';
+
 export const STORAGE_KEYS = {
   BOARDS: 'kanban-boards',
   CURRENT_BOARD: 'kanban-current-board',

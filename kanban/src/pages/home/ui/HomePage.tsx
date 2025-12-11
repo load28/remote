@@ -1,40 +1,86 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Button, Input, Modal } from '@/shared/ui';
-import { BoardCard, useBoardStore } from '@/entities/board';
+import { BoardCard, useBoardStore, useBoardsQuery, useCreateBoardMutation, useDeleteBoardMutation } from '@/entities/board';
+import { UserAvatar } from '@/entities/user';
+import { LogoutButton } from '@/features/auth';
 import styles from './HomePage.module.css';
 
 export function HomePage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [isCreating, setIsCreating] = useState(false);
   const [newBoardTitle, setNewBoardTitle] = useState('');
 
-  const boards = useBoardStore((state) => state.boards);
-  const createBoard = useBoardStore((state) => state.createBoard);
-  const deleteBoard = useBoardStore((state) => state.deleteBoard);
+  // React Query hooks
+  const { data: queryBoards, isLoading } = useBoardsQuery();
+  const createBoardMutation = useCreateBoardMutation();
+  const deleteBoardMutation = useDeleteBoardMutation();
 
-  const handleCreateBoard = () => {
+  // Fallback to Zustand store for offline/SSR
+  const storeBoards = useBoardStore((state) => state.boards);
+  const createBoardStore = useBoardStore((state) => state.createBoard);
+  const deleteBoardStore = useBoardStore((state) => state.deleteBoard);
+
+  const boards = queryBoards ?? storeBoards;
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  const handleCreateBoard = async () => {
     if (!newBoardTitle.trim()) return;
 
-    const board = createBoard({ title: newBoardTitle.trim() });
-    setNewBoardTitle('');
-    setIsCreating(false);
-    router.push(`/board/${board.id}`);
-  };
-
-  const handleDeleteBoard = (boardId: string) => {
-    if (window.confirm('Are you sure you want to delete this board?')) {
-      deleteBoard(boardId);
+    try {
+      const board = await createBoardMutation.mutateAsync({ title: newBoardTitle.trim() });
+      setNewBoardTitle('');
+      setIsCreating(false);
+      router.push(`/board/${board.id}`);
+    } catch {
+      // Fallback to store
+      const board = createBoardStore({ title: newBoardTitle.trim() });
+      setNewBoardTitle('');
+      setIsCreating(false);
+      router.push(`/board/${board.id}`);
     }
   };
+
+  const handleDeleteBoard = async (boardId: string) => {
+    if (window.confirm('Are you sure you want to delete this board?')) {
+      try {
+        await deleteBoardMutation.mutateAsync(boardId);
+      } catch {
+        deleteBoardStore(boardId);
+      }
+    }
+  };
+
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <h1 className={styles.title}>Kanban Boards</h1>
-        <Button onClick={() => setIsCreating(true)}>Create Board</Button>
+        <div className={styles.headerRight}>
+          <Button onClick={() => setIsCreating(true)}>Create Board</Button>
+          <div className={styles.userSection}>
+            <UserAvatar size="sm" />
+            <span className={styles.userName}>{session?.user?.name}</span>
+            <LogoutButton variant="ghost" />
+          </div>
+        </div>
       </header>
 
       <main className={styles.main}>

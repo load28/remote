@@ -2,8 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Button, Input } from '@/shared/ui';
-import { Board, useBoardStore } from '@/entities/board';
+import { useSession } from 'next-auth/react';
+import { Input } from '@/shared/ui';
+import { Board, useBoardStore, useUpdateBoardMutation } from '@/entities/board';
+import { UserAvatar } from '@/entities/user';
+import { LogoutButton } from '@/features/auth';
 import styles from './BoardHeader.module.css';
 
 interface BoardHeaderProps {
@@ -11,13 +14,22 @@ interface BoardHeaderProps {
 }
 
 export function BoardHeader({ board }: BoardHeaderProps) {
+  const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(board.title);
-  const updateBoard = useBoardStore((state) => state.updateBoard);
+  const updateBoardStore = useBoardStore((state) => state.updateBoard);
+  const updateBoardMutation = useUpdateBoardMutation();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (title.trim() && title.trim() !== board.title) {
-      updateBoard(board.id, title.trim());
+      try {
+        await updateBoardMutation.mutateAsync({
+          id: board.id,
+          dto: { title: title.trim() }
+        });
+      } catch {
+        updateBoardStore(board.id, title.trim());
+      }
     } else {
       setTitle(board.title);
     }
@@ -72,6 +84,11 @@ export function BoardHeader({ board }: BoardHeaderProps) {
         <span className={styles.stats}>
           {board.columns.reduce((sum, col) => sum + col.cards.length, 0)} cards
         </span>
+        <div className={styles.userSection}>
+          <UserAvatar size="sm" />
+          <span className={styles.userName}>{session?.user?.name}</span>
+          <LogoutButton variant="ghost" />
+        </div>
       </div>
     </header>
   );
