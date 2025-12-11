@@ -1,0 +1,28 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  min-height: 2.5rem;
+}
+
+.title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #172b4d;
+  margin: 0;
+  flex: 1;
+}
+
+.count {
+  font-size: 0.75rem;
+  color: #5e6c84;
+  background-color: rgba(9, 30, 66, 0.08);
+  padding: 0.125rem 0.5rem;
+  border-radius: 10px;
+}
+
+.actions {
+  display: flex;
+  gap: 0.25rem;
+}

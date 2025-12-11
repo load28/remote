@@ -1,0 +1,46 @@
+.card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.active {
+  border-color: #0079bf;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #172b4d;
+  margin: 0;
+}
+
+.stats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #5e6c84;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #dfe1e6;
+}

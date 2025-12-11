@@ -1,0 +1,60 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: rgba(0, 0, 0, 0.15);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.backLink:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.title:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.titleInput {
+  font-size: 1.125rem;
+  font-weight: 700;
+  background-color: white;
+  border: none;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stats {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+}

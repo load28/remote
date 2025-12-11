@@ -1,0 +1,28 @@
+.column {
+  background-color: #ebecf0;
+  border-radius: 8px;
+  width: 272px;
+  min-width: 272px;
+  max-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+}
+
+.cards {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.over {
+  background-color: rgba(0, 121, 191, 0.1);
+}
+
+.addCard {
+  padding: 0.5rem;
+}
