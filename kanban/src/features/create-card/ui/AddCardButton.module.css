@@ -1,0 +1,15 @@
+.button {
+  justify-content: flex-start;
+  color: #5e6c84;
+}
+
+.button:hover {
+  color: #172b4d;
+}
+
+.formWrapper {
+  padding: 0.5rem;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}

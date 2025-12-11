@@ -1,0 +1,11 @@
+.button {
+  min-width: 272px;
+  justify-content: flex-start;
+  background-color: rgba(255, 255, 255, 0.24);
+  color: white;
+  padding: 0.75rem;
+}
+
+.button:hover {
+  background-color: rgba(255, 255, 255, 0.32);
+}
