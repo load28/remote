@@ -1,2 +1,2 @@
-export * from './types';
-export * from './atoms';
+export type { User, Session } from './types';
+export { sessionAtom, currentUserAtom, isAuthenticatedAtom } from './atoms';
