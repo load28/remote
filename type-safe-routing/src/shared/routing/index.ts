@@ -1,55 +1,74 @@
-// Query parameter definitions and parsers
+// ============================================
+// 공통 파서
+// ============================================
 export {
-  // Product search
+  parseAsJson,
+  parseAsDate,
+  parseAsNumberRange,
+  type NumberRange,
+} from "./parsers";
+
+// ============================================
+// 공통 유틸리티
+// ============================================
+export {
+  mergeQueryParams,
+  queryStringToObject,
+  objectToQueryString,
+  extractSearchParams,
+  type SerializedState,
+  type DeserializedState,
+} from "./utils";
+
+// ============================================
+// 페이지별 라우팅 (개별 import 가능)
+// ============================================
+
+// Products
+export {
   productSearchParams,
   productSearchParamsCache,
   serializeProductSearch,
   productSortOptions,
+  ProductSearchSerializer,
+  useProductSearchParams,
   type ProductSortOption,
   type ProductSearchParams,
-  // General search
+  type ProductSearchParamsInput,
+} from "./pages/products";
+
+// Search
+export {
   searchParams,
   searchParamsCache,
   serializeSearch,
   searchTypeOptions,
+  SearchSerializer,
+  useSearchParams,
   type SearchType,
+  type SearchFilters,
   type SearchParams,
-  // Dashboard
+  type SearchParamsInput,
+} from "./pages/search";
+
+// Dashboard
+export {
   dashboardParams,
   dashboardParamsCache,
   serializeDashboard,
   dashboardViewOptions,
   timeRangeOptions,
+  DashboardSerializer,
+  useDashboardParams,
   type DashboardView,
   type TimeRange,
   type DashboardParams,
-  // Custom parsers
-  parseAsJson,
-  parseAsDate,
-  parseAsNumberRange,
-  type NumberRange,
-} from "./query-params";
+  type DashboardParamsInput,
+} from "./pages/dashboard";
 
-// Serializers and utilities
-export {
-  ProductSearchSerializer,
-  SearchSerializer,
-  DashboardSerializer,
-  mergeQueryParams,
-  queryStringToObject,
-  objectToQueryString,
-  type SerializedState,
-  type DeserializedState,
-} from "./serializer";
-
-// Custom hooks for each page
-export {
-  useProductSearchParams,
-  useSearchParams,
-  useDashboardParams,
-} from "./hooks";
-
-// Re-export nuqs utilities for convenience
+// ============================================
+// nuqs 유틸리티 re-export
+// ============================================
 export {
   useQueryState,
   useQueryStates,
