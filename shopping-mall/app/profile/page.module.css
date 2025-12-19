@@ -1,0 +1,115 @@
+.page {
+  min-height: 100vh;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 16px;
+  background: white;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.backBtn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #495057;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.placeholder {
+  width: 40px;
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 16px;
+  background: white;
+  margin-bottom: 12px;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f3f5;
+  border-radius: 50%;
+  color: #868e96;
+}
+
+.userInfo h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+  margin: 0 0 4px 0;
+}
+
+.userInfo p {
+  font-size: 14px;
+  color: #868e96;
+  margin: 0;
+}
+
+.menu {
+  background: white;
+  margin-bottom: 12px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  text-decoration: none;
+  color: #212529;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.menuItem:last-child {
+  border-bottom: none;
+}
+
+.menuItem span {
+  flex: 1;
+  font-size: 15px;
+}
+
+.arrow {
+  color: #adb5bd;
+}
+
+.logout {
+  padding: 16px;
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #ff6b6b;
+  cursor: pointer;
+}

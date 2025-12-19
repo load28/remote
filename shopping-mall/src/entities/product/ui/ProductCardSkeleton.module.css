@@ -1,0 +1,14 @@
+.card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.image {
+  aspect-ratio: 1;
+  width: 100%;
+}
+
+.content {
+  padding: 12px;
+}
