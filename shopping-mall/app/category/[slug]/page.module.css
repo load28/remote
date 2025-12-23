@@ -1,0 +1,65 @@
+.page {
+  min-height: 100vh;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 16px;
+  background: white;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.backBtn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #495057;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.placeholder {
+  width: 40px;
+}
+
+.content {
+  padding: 16px 0;
+}
+
+.count {
+  font-size: 14px;
+  color: #868e96;
+  padding: 0 16px;
+  margin-bottom: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 16px;
+}
+
+.empty p {
+  font-size: 16px;
+  color: #868e96;
+}

@@ -1,0 +1,29 @@
+.card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.default {
+  border: 1px solid #e9ecef;
+}
+
+.elevated {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.padding-none {
+  padding: 0;
+}
+
+.padding-sm {
+  padding: 8px;
+}
+
+.padding-md {
+  padding: 16px;
+}
+
+.padding-lg {
+  padding: 24px;
+}
