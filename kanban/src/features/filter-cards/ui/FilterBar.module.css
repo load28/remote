@@ -1,0 +1,150 @@
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.searchWrapper {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 13px;
+  background: white;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3B82F6;
+}
+
+.clearSearch {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: #E5E7EB;
+  border-radius: 50%;
+  color: #6B7280;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.clearSearch:hover {
+  background: #D1D5DB;
+}
+
+.filterDropdowns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdownTrigger {
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dropdownTrigger:hover {
+  border-color: #9CA3AF;
+}
+
+.dropdownTrigger.active {
+  background: #EFF6FF;
+  border-color: #3B82F6;
+  color: #1D4ED8;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 180px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  padding: 8px;
+}
+
+.checkboxItem,
+.radioItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+}
+
+.checkboxItem:hover,
+.radioItem:hover {
+  background: #F3F4F6;
+}
+
+.checkboxItem input,
+.radioItem input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.labelColor {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.emptyMessage {
+  padding: 8px;
+  text-align: center;
+  color: #9CA3AF;
+  font-size: 13px;
+  margin: 0;
+}
+
+.resetButton {
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: #DC2626;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.resetButton:hover {
+  text-decoration: underline;
+}

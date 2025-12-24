@@ -1,0 +1,128 @@
+.section {
+  padding: 16px 0;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  font-size: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.toggleButton,
+.deleteButton {
+  padding: 4px 8px;
+  background: #F3F4F6;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #6B7280;
+  cursor: pointer;
+}
+
+.toggleButton:hover,
+.deleteButton:hover {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+.items {
+  margin: 12px 0;
+}
+
+.addItemForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.addItemInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.addItemInput:focus {
+  outline: none;
+  border-color: #3B82F6;
+}
+
+.addItemActions {
+  display: flex;
+  gap: 8px;
+}
+
+.addButton {
+  padding: 6px 12px;
+  background: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.addButton:hover {
+  background: #2563EB;
+}
+
+.cancelButton {
+  padding: 6px 12px;
+  background: none;
+  color: #6B7280;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  color: #374151;
+}
+
+.showAddButton {
+  width: 100%;
+  padding: 8px 12px;
+  background: #F3F4F6;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #6B7280;
+  text-align: left;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.showAddButton:hover {
+  background: #E5E7EB;
+  color: #374151;
+}

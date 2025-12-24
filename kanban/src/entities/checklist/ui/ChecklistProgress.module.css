@@ -1,0 +1,47 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sm {
+  font-size: 11px;
+}
+
+.md {
+  font-size: 12px;
+}
+
+.label {
+  color: #6B7280;
+  min-width: 32px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.sm .progressBar {
+  height: 4px;
+}
+
+.progressFill {
+  height: 100%;
+  background: #3B82F6;
+  border-radius: 3px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.progressFill.complete {
+  background: #22C55E;
+}
+
+.percentage {
+  color: #6B7280;
+  min-width: 32px;
+  text-align: right;
+}
