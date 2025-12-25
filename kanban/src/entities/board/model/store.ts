@@ -123,13 +123,14 @@ export const useBoardStore = create<BoardState>()(
       },
 
       updateColumn: (columnId, title) => {
+        const now = new Date().toISOString();
         set((state) => ({
           boards: state.boards.map((board) => ({
             ...board,
             columns: board.columns.map((column) =>
-              column.id === columnId ? { ...column, title } : column
+              column.id === columnId ? { ...column, title, updatedAt: now } : column
             ),
-            updatedAt: new Date().toISOString(),
+            updatedAt: now,
           })),
         }));
       },
