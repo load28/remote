@@ -50,6 +50,7 @@ export const useBoardStore = create<BoardState>()(
           order: index,
           cards: [],
           createdAt: now,
+          updatedAt: now,
         }));
 
         const newBoard: Board = {
@@ -109,6 +110,7 @@ export const useBoardStore = create<BoardState>()(
               order: board.columns.length,
               cards: [],
               createdAt: now,
+              updatedAt: now,
             };
 
             return {

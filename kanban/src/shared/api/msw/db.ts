@@ -74,6 +74,7 @@ const createInitialData = (): MockDb => {
         },
       ],
       createdAt: now,
+      updatedAt: now,
     },
     {
       id: 'col-2',
@@ -99,6 +100,7 @@ const createInitialData = (): MockDb => {
         },
       ],
       createdAt: now,
+      updatedAt: now,
     },
     {
       id: 'col-3',
@@ -121,6 +123,7 @@ const createInitialData = (): MockDb => {
         },
       ],
       createdAt: now,
+      updatedAt: now,
     },
   ];
 
@@ -316,16 +319,18 @@ class MockDatabase {
   createColumn(boardId: string, title: string): Column | null {
     const board = this.getBoardById(boardId);
     if (!board) return null;
+    const now = new Date().toISOString();
     const column: Column = {
       id: uuidv4(),
       title,
       boardId,
       order: board.columns.length,
       cards: [],
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     };
     board.columns.push(column);
-    board.updatedAt = new Date().toISOString();
+    board.updatedAt = now;
     return column;
   }
 

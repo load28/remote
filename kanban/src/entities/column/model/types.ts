@@ -7,6 +7,7 @@ export interface Column {
   order: number;
   cards: Card[];
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateColumnDto {
