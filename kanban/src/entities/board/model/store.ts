@@ -4,8 +4,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import { Board, CreateBoardDto } from './types';
-import { Column, CreateColumnDto } from '@/entities/column';
-import { Card, CreateCardDto, UpdateCardDto } from '@/entities/card';
+import type { Column, CreateColumnDto } from '@/entities/column/@x/board';
+import type { Card, CreateCardDto, UpdateCardDto } from '@/entities/card/@x/board';
 import { STORAGE_KEYS } from '@/shared/config';
 
 interface BoardState {

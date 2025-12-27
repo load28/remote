@@ -1,4 +1,4 @@
-export * from './env';
+export { env } from './env';
 
 export const STORAGE_KEYS = {
   BOARDS: 'kanban-boards',

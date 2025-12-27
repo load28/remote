@@ -23,7 +23,7 @@ export function LabelPicker({
 }: LabelPickerProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [newLabelName, setNewLabelName] = useState('');
-  const [selectedColor, setSelectedColor] = useState(LABEL_COLORS[0].value);
+  const [selectedColor, setSelectedColor] = useState<string>(LABEL_COLORS[0].value);
 
   const selectedIds = selectedLabels.map((l) => l.id);
 
