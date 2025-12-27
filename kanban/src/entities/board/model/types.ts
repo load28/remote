@@ -1,4 +1,4 @@
-import { Column } from '@/entities/column';
+import type { Column } from '@/entities/column/@x/board';
 
 export interface Board {
   id: string;

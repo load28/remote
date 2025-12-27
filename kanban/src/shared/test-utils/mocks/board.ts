@@ -39,7 +39,6 @@ export function buildColumn(overrides: Partial<Column> = {}): Column {
     order: 0,
     cards: [],
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
     ...overrides,
   };
 }
