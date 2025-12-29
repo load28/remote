@@ -1,0 +1,60 @@
+[package]
+name = "stock_trading_server"
+version = "0.1.0"
+edition = "2021"
+authors = ["Stock Trading Team"]
+description = "Enterprise-grade mock stock trading server"
+
+[dependencies]
+# Web Framework
+axum = { version = "0.7", features = ["ws", "macros"] }
+axum-extra = { version = "0.9", features = ["typed-header"] }
+tower = { version = "0.4", features = ["full"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "compression-gzip"] }
+
+# Async Runtime
+tokio = { version = "1", features = ["full"] }
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite", "chrono", "uuid"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Authentication
+jsonwebtoken = "9"
+argon2 = "0.5"
+
+# Utilities
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+rand = "0.8"
+rust_decimal = { version = "1", features = ["serde"] }
+rust_decimal_macros = "1"
+
+# Validation
+validator = { version = "0.16", features = ["derive"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Error Handling
+thiserror = "1"
+anyhow = "1"
+
+# Configuration
+dotenvy = "0.15"
+
+# WebSocket
+futures = "0.3"
+tokio-stream = "0.1"
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
