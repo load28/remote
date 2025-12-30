@@ -1,0 +1,334 @@
+version: '3.8'
+
+services:
+  # ============ Application Services ============
+
+  # Auth Service - OAuth and JWT authentication
+  auth:
+    image: ${REGISTRY:-localhost:5000}/auth-service:${TAG:-latest}
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.auth.rule=PathPrefix(`/auth`) || PathPrefix(`/oauth`)"
+        - "traefik.http.services.auth.loadbalancer.server.port=8081"
+    environment:
+      - AUTH_HOST=0.0.0.0
+      - AUTH_PORT=8081
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - OAUTH_GOOGLE_CLIENT_ID=${OAUTH_GOOGLE_CLIENT_ID:-}
+      - OAUTH_GOOGLE_CLIENT_SECRET=${OAUTH_GOOGLE_CLIENT_SECRET:-}
+      - OAUTH_GITHUB_CLIENT_ID=${OAUTH_GITHUB_CLIENT_ID:-}
+      - OAUTH_GITHUB_CLIENT_SECRET=${OAUTH_GITHUB_CLIENT_SECRET:-}
+      - RUST_LOG=auth_service=info
+    networks:
+      - push-network
+    depends_on:
+      - redis
+
+  # Gateway Service - WebSocket connections
+  gateway:
+    image: ${REGISTRY:-localhost:5000}/gateway-service:${TAG:-latest}
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.2'
+          memory: 128M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.gateway.rule=PathPrefix(`/ws`) || PathPrefix(`/stats`)"
+        - "traefik.http.services.gateway.loadbalancer.server.port=8080"
+        - "traefik.http.services.gateway.loadbalancer.sticky.cookie=true"
+        - "traefik.http.services.gateway.loadbalancer.sticky.cookie.name=gateway_affinity"
+    environment:
+      - GATEWAY_HOST=0.0.0.0
+      - GATEWAY_PORT=8080
+      - NATS_URL=nats://nats:4222
+      - AUTH_SERVICE_URL=http://auth:8081
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - RUST_LOG=gateway_service=info
+    networks:
+      - push-network
+    depends_on:
+      - nats
+      - auth
+
+  # Message Service - Message routing and storage
+  message:
+    image: ${REGISTRY:-localhost:5000}/message-service:${TAG:-latest}
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    environment:
+      - MESSAGE_HOST=0.0.0.0
+      - MESSAGE_PORT=8082
+      - REDIS_URL=redis://redis:6379
+      - NATS_URL=nats://nats:4222
+      - SCYLLA_NODES=scylla:9042
+      - RUST_LOG=message_service=info
+    networks:
+      - push-network
+    depends_on:
+      - redis
+      - nats
+      - scylla
+
+  # Presence Service - Online/offline status
+  presence:
+    image: ${REGISTRY:-localhost:5000}/presence-service:${TAG:-latest}
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    environment:
+      - PRESENCE_HOST=0.0.0.0
+      - PRESENCE_PORT=8083
+      - REDIS_URL=redis://redis:6379
+      - NATS_URL=nats://nats:4222
+      - RUST_LOG=presence_service=info
+    networks:
+      - push-network
+    depends_on:
+      - redis
+      - nats
+
+  # Push Service - FCM/APNs notifications
+  push:
+    image: ${REGISTRY:-localhost:5000}/push-service:${TAG:-latest}
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    environment:
+      - PUSH_HOST=0.0.0.0
+      - PUSH_PORT=8084
+      - REDIS_URL=redis://redis:6379
+      - NATS_URL=nats://nats:4222
+      - FCM_API_KEY=${FCM_API_KEY:-}
+      - RUST_LOG=push_service=info
+    networks:
+      - push-network
+    depends_on:
+      - redis
+      - nats
+
+  # ============ Infrastructure Services ============
+
+  # Redis - Session/State storage
+  redis:
+    image: redis:7-alpine
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - push-network
+
+  # NATS - Message bus
+  nats:
+    image: nats:2.10-alpine
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    command: ["--js", "--http_port", "8222", "--cluster_name", "push-cluster"]
+    volumes:
+      - nats-data:/data
+    networks:
+      - push-network
+
+  # ScyllaDB - Message persistence
+  scylla:
+    image: scylladb/scylla:5.4
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    command: --smp 1 --memory 1G --overprovisioned 1 --api-address 0.0.0.0
+    volumes:
+      - scylla-data:/var/lib/scylla
+    networks:
+      - push-network
+
+  # Traefik - Load Balancer / API Gateway
+  traefik:
+    image: traefik:v3.0
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--log.level=INFO"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8090:8080"  # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - push-network
+
+  # ============ Monitoring (Optional) ============
+
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    configs:
+      - source: prometheus-config
+        target: /etc/prometheus/prometheus.yml
+    volumes:
+      - prometheus-data:/prometheus
+    networks:
+      - push-network
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.grafana.rule=PathPrefix(`/grafana`)"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_SERVER_ROOT_URL=/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - push-network
+
+networks:
+  push-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  redis-data:
+  nats-data:
+  scylla-data:
+  prometheus-data:
+  grafana-data:
+
+configs:
+  prometheus-config:
+    file: ./prometheus.yml

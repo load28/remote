@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # Enterprise Push Server
+  push-server:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - GATEWAY_ID=gateway-1
+      - REDIS_URL=redis://redis:6379
+      - NATS_URL=nats://nats:4222
+      - SCYLLA_NODES=scylla:9042
+      - SCYLLA_KEYSPACE=push_server
+      - RUST_LOG=enterprise_push_server=debug
+    depends_on:
+      - redis
+      - nats
+      - scylla
+    networks:
+      - push-network
+    restart: unless-stopped
+
+  # Redis for session/presence management
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - push-network
+    restart: unless-stopped
+
+  # NATS for message bus
+  nats:
+    image: nats:2.10-alpine
+    ports:
+      - "4222:4222"
+      - "8222:8222"  # HTTP monitoring
+    command: ["--js", "--http_port", "8222"]
+    volumes:
+      - nats-data:/data
+    networks:
+      - push-network
+    restart: unless-stopped
+
+  # ScyllaDB for message storage
+  scylla:
+    image: scylladb/scylla:5.4
+    ports:
+      - "9042:9042"
+      - "9160:9160"
+    volumes:
+      - scylla-data:/var/lib/scylla
+    command: --smp 1 --memory 512M --overprovisioned 1 --api-address 0.0.0.0
+    networks:
+      - push-network
+    restart: unless-stopped
+
+  # Monitoring with Prometheus (optional)
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - push-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  # Grafana for dashboards (optional)
+  grafana:
+    image: grafana/grafana:10.2.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - push-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+networks:
+  push-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  nats-data:
+  scylla-data:
+  prometheus-data:
+  grafana-data:
