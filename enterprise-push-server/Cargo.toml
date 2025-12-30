@@ -1,15 +1,24 @@
-[package]
-name = "enterprise-push-server"
+[workspace]
+resolver = "2"
+members = [
+    "crates/common",
+    "crates/auth",
+    "crates/gateway-service",
+    "crates/message-service",
+    "crates/presence-service",
+    "crates/push-service",
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
-description = "Enterprise-grade push notification server with horizontal scaling support"
 authors = ["Enterprise Team"]
 
-[dependencies]
+[workspace.dependencies]
 # Async runtime
 tokio = { version = "1.35", features = ["full"] }
 
-# Web framework with WebSocket support
+# Web framework
 axum = { version = "0.7", features = ["ws"] }
 axum-extra = { version = "0.9", features = ["typed-header"] }
 tower = "0.4"
@@ -26,7 +35,7 @@ scylla = "0.12"
 # Message bus
 async-nats = "0.33"
 
-# HTTP client for FCM/APNs
+# HTTP client
 reqwest = { version = "0.11", features = ["json", "rustls-tls"], default-features = false }
 
 # Utilities
@@ -35,7 +44,7 @@ chrono = { version = "0.4", features = ["serde"] }
 dashmap = "5.5"
 parking_lot = "0.12"
 
-# Logging and tracing
+# Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
@@ -44,19 +53,20 @@ thiserror = "1.0"
 anyhow = "1.0"
 
 # Configuration
-config = "0.14"
 dotenvy = "0.15"
 
 # Async utilities
 futures = "0.3"
 tokio-stream = "0.1"
 
-# JWT for authentication
+# JWT/OAuth
 jsonwebtoken = "9.2"
+oauth2 = "4.4"
+argon2 = "0.5"
+rand = "0.8"
 
-[dev-dependencies]
-tokio-test = "0.4"
-mockall = "0.12"
+# Internal crates
+common = { path = "crates/common" }
 
 [profile.release]
 lto = true

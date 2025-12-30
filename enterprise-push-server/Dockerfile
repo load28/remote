@@ -1,5 +1,8 @@
-# Build stage
-FROM rust:1.75-slim-bookworm as builder
+# Multi-stage Dockerfile for all services
+# Usage: docker build --target <service-name> -t <image-name> .
+
+# ============ Build Stage ============
+FROM rust:1.75-slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -9,45 +12,98 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy manifests
+# Copy workspace files
 COPY Cargo.toml Cargo.lock* ./
+COPY crates ./crates
 
-# Create dummy source for dependency caching
-RUN mkdir src && echo "fn main() {}" > src/main.rs
+# Build all binaries in release mode
+RUN cargo build --release
 
-# Build dependencies only
-RUN cargo build --release && rm -rf src
+# ============ Runtime Base ============
+FROM debian:bookworm-slim AS runtime-base
 
-# Copy actual source
-COPY src ./src
-
-# Build the application
-RUN touch src/main.rs && cargo build --release
-
-# Runtime stage
-FROM debian:bookworm-slim
-
-WORKDIR /app
-
-# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libssl3 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the binary
-COPY --from=builder /app/target/release/enterprise-push-server /app/
+RUN useradd -r -s /bin/false appuser
 
-# Create non-root user
-RUN useradd -r -s /bin/false pushserver
-USER pushserver
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
-# Expose port
+# ============ Auth Service ============
+FROM runtime-base AS auth-service
+
+COPY --from=builder /app/target/release/auth-service /app/auth-service
+
+USER appuser
+WORKDIR /app
+
+ENV AUTH_HOST=0.0.0.0
+ENV AUTH_PORT=8081
+
+EXPOSE 8081
+
+CMD ["./auth-service"]
+
+# ============ Gateway Service ============
+FROM runtime-base AS gateway-service
+
+COPY --from=builder /app/target/release/gateway-service /app/gateway-service
+
+USER appuser
+WORKDIR /app
+
+ENV GATEWAY_HOST=0.0.0.0
+ENV GATEWAY_PORT=8080
+
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+CMD ["./gateway-service"]
 
-# Run the binary
-CMD ["./enterprise-push-server"]
+# ============ Message Service ============
+FROM runtime-base AS message-service
+
+COPY --from=builder /app/target/release/message-service /app/message-service
+
+USER appuser
+WORKDIR /app
+
+ENV MESSAGE_HOST=0.0.0.0
+ENV MESSAGE_PORT=8082
+
+EXPOSE 8082
+
+CMD ["./message-service"]
+
+# ============ Presence Service ============
+FROM runtime-base AS presence-service
+
+COPY --from=builder /app/target/release/presence-service /app/presence-service
+
+USER appuser
+WORKDIR /app
+
+ENV PRESENCE_HOST=0.0.0.0
+ENV PRESENCE_PORT=8083
+
+EXPOSE 8083
+
+CMD ["./presence-service"]
+
+# ============ Push Service ============
+FROM runtime-base AS push-service
+
+COPY --from=builder /app/target/release/push-service /app/push-service
+
+USER appuser
+WORKDIR /app
+
+ENV PUSH_HOST=0.0.0.0
+ENV PUSH_PORT=8084
+
+EXPOSE 8084
+
+CMD ["./push-service"]

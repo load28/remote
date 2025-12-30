@@ -1,0 +1,50 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik:8080']
+
+  - job_name: 'auth-service'
+    dns_sd_configs:
+      - names: ['tasks.auth']
+        type: A
+        port: 8081
+
+  - job_name: 'gateway-service'
+    dns_sd_configs:
+      - names: ['tasks.gateway']
+        type: A
+        port: 8080
+
+  - job_name: 'message-service'
+    dns_sd_configs:
+      - names: ['tasks.message']
+        type: A
+        port: 8082
+
+  - job_name: 'presence-service'
+    dns_sd_configs:
+      - names: ['tasks.presence']
+        type: A
+        port: 8083
+
+  - job_name: 'push-service'
+    dns_sd_configs:
+      - names: ['tasks.push']
+        type: A
+        port: 8084
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  - job_name: 'nats'
+    static_configs:
+      - targets: ['nats:8222']
