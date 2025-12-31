@@ -29,6 +29,16 @@ export interface KanbanPage {
 }
 
 export const test = base.extend<{ kanbanPage: KanbanPage }>({
+  // Override page fixture to clear localStorage before each test
+  page: async ({ page }, use) => {
+    // Navigate to a blank page first to access localStorage
+    await page.goto('/login');
+    await page.evaluate(() => {
+      localStorage.clear();
+    });
+    await use(page);
+  },
+
   kanbanPage: async ({ page }, use) => {
     // Auto-accept all confirm dialogs
     page.on('dialog', async (dialog) => {

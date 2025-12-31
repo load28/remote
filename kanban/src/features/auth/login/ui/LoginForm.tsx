@@ -54,15 +54,17 @@ export function LoginForm() {
         redirect: false,
       });
 
-      if (result?.error) {
+      // Check for both explicit error and ok status
+      if (result?.error || result?.ok === false) {
         setError('Invalid email or password');
       } else {
         // Store mock session for MSW
         if (typeof window !== 'undefined') {
           localStorage.setItem('mock-auth-session', 'true');
         }
-        router.push('/');
-        router.refresh();
+        // Wait a bit for session to be established, then navigate
+        await new Promise(resolve => setTimeout(resolve, 100));
+        window.location.href = '/';
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
