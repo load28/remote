@@ -161,7 +161,29 @@ export const test = base.extend<{ kanbanPage: KanbanPage }>({
           `[data-testid="kanban-column"]:has-text("${targetColumnTitle}") [data-testid="column-drop-area"]`
         );
 
-        await card.dragTo(targetColumn);
+        // Use manual drag approach for dnd-kit compatibility
+        const cardBox = await card.boundingBox();
+        const targetBox = await targetColumn.boundingBox();
+
+        if (cardBox && targetBox) {
+          const startX = cardBox.x + cardBox.width / 2;
+          const startY = cardBox.y + cardBox.height / 2;
+          const endX = targetBox.x + targetBox.width / 2;
+          const endY = targetBox.y + targetBox.height / 2;
+
+          // Move mouse to card center
+          await page.mouse.move(startX, startY);
+          // Press mouse down
+          await page.mouse.down();
+          // Move beyond activation distance (dnd-kit requires 8px)
+          await page.mouse.move(startX + 10, startY + 10, { steps: 5 });
+          // Move to target
+          await page.mouse.move(endX, endY, { steps: 10 });
+          // Small delay for dnd-kit to process
+          await page.waitForTimeout(100);
+          // Release
+          await page.mouse.up();
+        }
       },
 
       async openCardDetail(cardTitle: string) {

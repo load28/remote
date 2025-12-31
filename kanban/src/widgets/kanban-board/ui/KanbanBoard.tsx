@@ -7,6 +7,7 @@ import {
   DragOverEvent,
   DragStartEvent,
   PointerSensor,
+  MouseSensor,
   useSensor,
   useSensors,
   closestCorners,
@@ -32,6 +33,11 @@ export function KanbanBoard({ board }: KanbanBoardProps) {
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 5,
       },
     })
   );
