@@ -24,9 +24,23 @@ export function SortableCard({ card, onClick }: SortableCardProps) {
     transition,
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    // Prevent click during drag
+    if (!isDragging) {
+      onClick();
+    }
+  };
+
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <CardItem card={card} isDragging={isDragging} onClick={onClick} />
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      data-testid="card-item"
+      onClick={handleClick}
+    >
+      <CardItem card={card} isDragging={isDragging} />
     </div>
   );
 }

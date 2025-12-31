@@ -7,6 +7,7 @@ import {
   DragOverEvent,
   DragStartEvent,
   PointerSensor,
+  MouseSensor,
   useSensor,
   useSensors,
   closestCorners,
@@ -32,6 +33,11 @@ export function KanbanBoard({ board }: KanbanBoardProps) {
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 5,
       },
     })
   );
@@ -126,7 +132,7 @@ export function KanbanBoard({ board }: KanbanBoardProps) {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className={styles.board}>
+        <div className={styles.board} data-testid="kanban-board">
           {board.columns.map((column) => (
             <KanbanColumn
               key={column.id}
@@ -140,6 +146,7 @@ export function KanbanBoard({ board }: KanbanBoardProps) {
 
       <EditCardModal
         card={editingCard}
+        boardId={board.id}
         isOpen={!!editingCard}
         onClose={() => setEditingCard(null)}
       />

@@ -7,9 +7,10 @@ import styles from './AddCardButton.module.css';
 
 interface AddCardButtonProps {
   columnId: string;
+  boardId: string;
 }
 
-export function AddCardButton({ columnId }: AddCardButtonProps) {
+export function AddCardButton({ columnId, boardId }: AddCardButtonProps) {
   const [isAdding, setIsAdding] = useState(false);
 
   if (isAdding) {
@@ -17,6 +18,7 @@ export function AddCardButton({ columnId }: AddCardButtonProps) {
       <div className={styles.formWrapper}>
         <CreateCardForm
           columnId={columnId}
+          boardId={boardId}
           onCancel={() => setIsAdding(false)}
           onSuccess={() => setIsAdding(false)}
         />
@@ -30,6 +32,7 @@ export function AddCardButton({ columnId }: AddCardButtonProps) {
       fullWidth
       className={styles.button}
       onClick={() => setIsAdding(true)}
+      data-testid="add-card-button"
     >
       + Add a card
     </Button>

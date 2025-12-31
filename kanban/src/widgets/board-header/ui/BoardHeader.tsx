@@ -46,7 +46,7 @@ export function BoardHeader({ board }: BoardHeaderProps) {
   };
 
   return (
-    <header className={styles.header}>
+    <header className={styles.header} data-testid="board-header">
       <div className={styles.left}>
         <Link href="/" className={styles.backLink}>
           <svg
@@ -70,11 +70,13 @@ export function BoardHeader({ board }: BoardHeaderProps) {
             onKeyDown={handleKeyDown}
             autoFocus
             className={styles.titleInput}
+            data-testid="board-title-input"
           />
         ) : (
           <h1
             className={styles.title}
             onClick={() => setIsEditing(true)}
+            data-testid="board-title"
           >
             {board.title}
           </h1>
@@ -86,7 +88,7 @@ export function BoardHeader({ board }: BoardHeaderProps) {
         </span>
         <div className={styles.userSection}>
           <UserAvatar size="sm" />
-          <span className={styles.userName}>{session?.user?.name}</span>
+          <span className={styles.userName} data-testid="user-name">{session?.user?.name}</span>
           <LogoutButton variant="ghost" />
         </div>
       </div>
