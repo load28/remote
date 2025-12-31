@@ -74,20 +74,22 @@ export function HomePage() {
       <header className={styles.header}>
         <h1 className={styles.title}>Kanban Boards</h1>
         <div className={styles.headerRight}>
-          <Button onClick={() => setIsCreating(true)}>Create Board</Button>
+          <Button onClick={() => setIsCreating(true)} data-testid="create-board-button">
+            Create Board
+          </Button>
           <div className={styles.userSection}>
             <UserAvatar size="sm" />
-            <span className={styles.userName}>{session?.user?.name}</span>
+            <span className={styles.userName} data-testid="user-name">{session?.user?.name}</span>
             <LogoutButton variant="ghost" />
           </div>
         </div>
       </header>
 
-      <main className={styles.main}>
+      <main className={styles.main} data-testid="board-list">
         {boards.length === 0 ? (
           <div className={styles.empty}>
             <p>No boards yet. Create your first board to get started!</p>
-            <Button onClick={() => setIsCreating(true)}>
+            <Button onClick={() => setIsCreating(true)} data-testid="create-first-board-button">
               Create Your First Board
             </Button>
           </div>
@@ -103,6 +105,7 @@ export function HomePage() {
                     variant="danger"
                     size="sm"
                     onClick={() => handleDeleteBoard(board.id)}
+                    data-testid="delete-board-button"
                   >
                     Delete
                   </Button>
@@ -130,9 +133,10 @@ export function HomePage() {
             onChange={(e) => setNewBoardTitle(e.target.value)}
             placeholder="Board title"
             autoFocus
+            data-testid="board-title-input"
           />
           <div className={styles.formActions}>
-            <Button type="submit" disabled={!newBoardTitle.trim()}>
+            <Button type="submit" disabled={!newBoardTitle.trim()} data-testid="submit-board-button">
               Create
             </Button>
             <Button

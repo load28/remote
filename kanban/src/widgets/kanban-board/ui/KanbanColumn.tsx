@@ -21,7 +21,7 @@ export function KanbanColumn({ column, onCardClick }: KanbanColumnProps) {
   });
 
   return (
-    <div className={styles.column}>
+    <div className={styles.column} data-testid="kanban-column">
       <ColumnHeader column={column} />
       <SortableContext
         items={column.cards.map((c) => c.id)}
@@ -30,6 +30,7 @@ export function KanbanColumn({ column, onCardClick }: KanbanColumnProps) {
         <div
           ref={setNodeRef}
           className={`${styles.cards} ${isOver ? styles.over : ''}`}
+          data-testid="column-drop-area"
         >
           {column.cards.map((card) => (
             <SortableCard

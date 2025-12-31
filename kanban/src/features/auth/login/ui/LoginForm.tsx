@@ -12,11 +12,39 @@ export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const validateForm = () => {
+    let isValid = true;
+    setEmailError('');
+    setPasswordError('');
+
+    if (!email) {
+      setEmailError('Email is required');
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError('Invalid email format');
+      isValid = false;
+    }
+
+    if (!password) {
+      setPasswordError('Password is required');
+      isValid = false;
+    }
+
+    return isValid;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -44,13 +72,13 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className={styles.form}>
+    <form onSubmit={handleSubmit} className={styles.form} data-testid="login-form" noValidate>
       <div className={styles.header}>
         <h1 className={styles.title}>Sign In</h1>
         <p className={styles.subtitle}>Welcome back to Kanban Board</p>
       </div>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {error && <div className={styles.error} data-testid="login-error">{error}</div>}
 
       <div className={styles.field}>
         <label htmlFor="email" className={styles.label}>
@@ -62,8 +90,9 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="demo@example.com"
-          required
+          data-testid="email-input"
         />
+        {emailError && <span className={styles.fieldError} data-testid="email-error">{emailError}</span>}
       </div>
 
       <div className={styles.field}>
@@ -76,11 +105,12 @@ export function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="demo1234"
-          required
+          data-testid="password-input"
         />
+        {passwordError && <span className={styles.fieldError} data-testid="password-error">{passwordError}</span>}
       </div>
 
-      <Button type="submit" variant="primary" disabled={isLoading}>
+      <Button type="submit" variant="primary" disabled={isLoading} data-testid="login-button">
         {isLoading ? 'Signing in...' : 'Sign In'}
       </Button>
 

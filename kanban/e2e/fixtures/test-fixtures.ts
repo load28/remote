@@ -135,9 +135,9 @@ export const testData = {
   },
   users: {
     testUser: {
-      email: 'test@example.com',
-      password: 'testpassword123',
-      name: 'Test User',
+      email: 'demo@example.com',
+      password: 'demo1234',
+      name: 'Demo User',
     },
   },
 };

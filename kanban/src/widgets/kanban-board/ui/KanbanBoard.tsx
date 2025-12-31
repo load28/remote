@@ -126,7 +126,7 @@ export function KanbanBoard({ board }: KanbanBoardProps) {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className={styles.board}>
+        <div className={styles.board} data-testid="kanban-board">
           {board.columns.map((column) => (
             <KanbanColumn
               key={column.id}

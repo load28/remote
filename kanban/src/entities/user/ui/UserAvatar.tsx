@@ -24,7 +24,7 @@ export function UserAvatar({ size = 'md' }: UserAvatarProps) {
   const pixelSize = sizeMap[size];
 
   return (
-    <div className={styles.avatar} style={{ width: pixelSize, height: pixelSize }}>
+    <div className={styles.avatar} style={{ width: pixelSize, height: pixelSize }} data-testid="user-avatar">
       {user.image ? (
         <img src={user.image} alt={user.name} className={styles.image} />
       ) : (

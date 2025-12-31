@@ -22,12 +22,13 @@ export function BoardCard({ board, onClick, actions, isActive }: BoardCardProps)
     <div
       className={cn(styles.card, isActive && styles.active)}
       onClick={onClick}
+      data-testid="board-card"
     >
       <div className={styles.content}>
         <h3 className={styles.title}>{board.title}</h3>
         <div className={styles.stats}>
-          <span>{board.columns.length} columns</span>
-          <span>{totalCards} cards</span>
+          <span data-testid="column-count">{board.columns.length} columns</span>
+          <span data-testid="card-count">{totalCards} cards</span>
         </div>
       </div>
       {actions && (

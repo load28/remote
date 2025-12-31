@@ -25,7 +25,7 @@ export function SortableCard({ card, onClick }: SortableCardProps) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} data-testid="card-item">
       <CardItem card={card} isDragging={isDragging} onClick={onClick} />
     </div>
   );

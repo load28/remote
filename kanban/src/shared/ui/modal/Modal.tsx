@@ -10,9 +10,10 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   title?: string;
+  'data-testid'?: string;
 }
 
-export function Modal({ isOpen, onClose, children, title }: ModalProps) {
+export function Modal({ isOpen, onClose, children, title, 'data-testid': testId }: ModalProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -33,11 +34,11 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
 
   return createPortal(
     <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()} data-testid={testId}>
         {title && (
           <div className={styles.header}>
             <h2 className={styles.title}>{title}</h2>
-            <button className={styles.closeButton} onClick={onClose}>
+            <button className={styles.closeButton} onClick={onClose} data-testid="close-modal-button">
               &times;
             </button>
           </div>

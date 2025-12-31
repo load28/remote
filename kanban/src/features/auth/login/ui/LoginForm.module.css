@@ -67,3 +67,9 @@
   color: var(--color-primary, #3b82f6);
   font-family: monospace;
 }
+
+.fieldError {
+  font-size: 0.75rem;
+  color: #dc2626;
+  margin-top: 0.25rem;
+}

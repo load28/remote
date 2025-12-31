@@ -16,6 +16,7 @@ export function EditCardModal({ card, isOpen, onClose }: EditCardModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const updateCard = useBoardStore((state) => state.updateCard);
+  const deleteCard = useBoardStore((state) => state.deleteCard);
 
   useEffect(() => {
     if (card) {
@@ -35,15 +36,24 @@ export function EditCardModal({ card, isOpen, onClose }: EditCardModalProps) {
     onClose();
   };
 
+  const handleDelete = () => {
+    if (!card) return;
+    if (window.confirm('Are you sure you want to delete this card?')) {
+      deleteCard(card.id);
+      onClose();
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Card">
-      <form className={styles.form} onSubmit={handleSubmit}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Card" data-testid="card-detail-modal">
+      <form className={styles.form} onSubmit={handleSubmit} data-testid="card-detail-modal">
         <div className={styles.field}>
           <label className={styles.label}>Title</label>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Card title"
+            data-testid="card-title-input"
           />
         </div>
         <div className={styles.field}>
@@ -54,13 +64,20 @@ export function EditCardModal({ card, isOpen, onClose }: EditCardModalProps) {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Add a more detailed description..."
             rows={4}
+            data-testid="card-description-input"
           />
+          {description && (
+            <div data-testid="card-description">{description}</div>
+          )}
         </div>
         <div className={styles.actions}>
-          <Button type="submit" disabled={!title.trim()}>
+          <Button type="submit" disabled={!title.trim()} data-testid="save-card-button">
             Save
           </Button>
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="danger" onClick={handleDelete} data-testid="delete-card-button">
+            Delete
+          </Button>
+          <Button type="button" variant="secondary" onClick={onClose} data-testid="close-modal-button">
             Cancel
           </Button>
         </div>

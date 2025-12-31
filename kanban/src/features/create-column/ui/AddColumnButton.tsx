@@ -27,6 +27,7 @@ export function AddColumnButton({ boardId }: AddColumnButtonProps) {
       variant="ghost"
       className={styles.button}
       onClick={() => setIsAdding(true)}
+      data-testid="add-column-button"
     >
       + Add another list
     </Button>

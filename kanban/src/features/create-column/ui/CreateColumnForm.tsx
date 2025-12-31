@@ -31,9 +31,10 @@ export function CreateColumnForm({ boardId, onCancel, onSuccess }: CreateColumnF
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Enter list title..."
         autoFocus
+        data-testid="column-title-input"
       />
       <div className={styles.actions}>
-        <Button type="submit" size="sm" disabled={!title.trim()}>
+        <Button type="submit" size="sm" disabled={!title.trim()} data-testid="submit-column-button">
           Add List
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>

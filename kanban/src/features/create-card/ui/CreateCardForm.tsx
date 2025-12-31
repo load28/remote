@@ -31,9 +31,10 @@ export function CreateCardForm({ columnId, onCancel, onSuccess }: CreateCardForm
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Enter a title for this card..."
         autoFocus
+        data-testid="card-title-input"
       />
       <div className={styles.actions}>
-        <Button type="submit" size="sm" disabled={!title.trim()}>
+        <Button type="submit" size="sm" disabled={!title.trim()} data-testid="submit-card-button">
           Add Card
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>

@@ -31,7 +31,7 @@ export function LogoutButton({ variant = 'ghost' }: LogoutButtonProps) {
   };
 
   return (
-    <Button variant={variant} onClick={handleLogout} disabled={isLoading}>
+    <Button variant={variant} onClick={handleLogout} disabled={isLoading} data-testid="logout-button">
       {isLoading ? 'Signing out...' : 'Sign Out'}
     </Button>
   );

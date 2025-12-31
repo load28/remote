@@ -30,6 +30,7 @@ export function AddCardButton({ columnId }: AddCardButtonProps) {
       fullWidth
       className={styles.button}
       onClick={() => setIsAdding(true)}
+      data-testid="add-card-button"
     >
       + Add a card
     </Button>
