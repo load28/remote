@@ -1,4 +1,5 @@
 use async_nats::Client;
+use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use uuid::Uuid;

@@ -1,5 +1,8 @@
 mod store;
 
+#[cfg(test)]
+mod tests;
+
 use axum::{routing::get, Router};
 use std::sync::Arc;
 use tokio::net::TcpListener;

@@ -2,6 +2,9 @@ mod connection;
 mod handler;
 mod auth_client;
 
+#[cfg(test)]
+mod tests;
+
 use axum::{
     routing::get,
     Router,
