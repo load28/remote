@@ -2,6 +2,9 @@ mod handlers;
 mod oauth;
 mod store;
 
+#[cfg(test)]
+mod tests;
+
 use axum::{
     routing::{get, post},
     Router,

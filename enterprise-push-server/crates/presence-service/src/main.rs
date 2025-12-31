@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use axum::{routing::get, Router};
 use redis::aio::ConnectionManager;
 use redis::AsyncCommands;

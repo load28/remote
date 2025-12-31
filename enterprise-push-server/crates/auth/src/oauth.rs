@@ -134,25 +134,28 @@ impl OAuthProviders {
 
         let token = client
             .exchange_code(AuthorizationCode::new(code.to_string()))
-            .request_async(|req| async {
-                let response = http_client
-                    .request(req.method().clone(), req.url().as_str())
-                    .headers(req.headers().clone())
-                    .body(req.body().clone())
-                    .send()
-                    .await
-                    .map_err(|e| oauth2::reqwest::Error::Reqwest(e))?;
+            .request_async(|req| {
+                let client = http_client.clone();
+                async move {
+                    let response = client
+                        .request(req.method.clone(), req.url.as_str())
+                        .headers(req.headers.clone())
+                        .body(req.body.clone())
+                        .send()
+                        .await
+                        .map_err(|e| oauth2::reqwest::Error::Reqwest(e))?;
 
-                let status = response.status();
-                let headers = response.headers().clone();
-                let body = response.bytes().await
-                    .map_err(|e| oauth2::reqwest::Error::Reqwest(e))?;
+                    let status = response.status();
+                    let headers = response.headers().clone();
+                    let body = response.bytes().await
+                        .map_err(|e| oauth2::reqwest::Error::Reqwest(e))?;
 
-                Ok(oauth2::HttpResponse {
-                    status_code: status,
-                    headers,
-                    body: body.to_vec(),
-                })
+                    Ok::<_, oauth2::reqwest::Error<reqwest::Error>>(oauth2::HttpResponse {
+                        status_code: status,
+                        headers,
+                        body: body.to_vec(),
+                    })
+                }
             })
             .await
             .map_err(|e| AuthError::OAuthError(e.to_string()))?;
@@ -182,25 +185,28 @@ impl OAuthProviders {
 
         let token = client
             .exchange_code(AuthorizationCode::new(code.to_string()))
-            .request_async(|req| async {
-                let response = http_client
-                    .request(req.method().clone(), req.url().as_str())
-                    .headers(req.headers().clone())
-                    .body(req.body().clone())
-                    .send()
-                    .await
-                    .map_err(|e| oauth2::reqwest::Error::Reqwest(e))?;
+            .request_async(|req| {
+                let client = http_client.clone();
+                async move {
+                    let response = client
+                        .request(req.method.clone(), req.url.as_str())
+                        .headers(req.headers.clone())
+                        .body(req.body.clone())
+                        .send()
+                        .await
+                        .map_err(|e| oauth2::reqwest::Error::Reqwest(e))?;
 
-                let status = response.status();
-                let headers = response.headers().clone();
-                let body = response.bytes().await
-                    .map_err(|e| oauth2::reqwest::Error::Reqwest(e))?;
+                    let status = response.status();
+                    let headers = response.headers().clone();
+                    let body = response.bytes().await
+                        .map_err(|e| oauth2::reqwest::Error::Reqwest(e))?;
 
-                Ok(oauth2::HttpResponse {
-                    status_code: status,
-                    headers,
-                    body: body.to_vec(),
-                })
+                    Ok::<_, oauth2::reqwest::Error<reqwest::Error>>(oauth2::HttpResponse {
+                        status_code: status,
+                        headers,
+                        body: body.to_vec(),
+                    })
+                }
             })
             .await
             .map_err(|e| AuthError::OAuthError(e.to_string()))?;
