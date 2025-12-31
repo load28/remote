@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useBoardStore, useBoardsQuery } from '@/entities/board';
 import { BoardHeader } from '@/widgets/board-header';
 import { KanbanBoard } from '@/widgets/kanban-board';
@@ -13,9 +14,17 @@ interface BoardPageProps {
 
 export function BoardPage({ boardId }: BoardPageProps) {
   const router = useRouter();
+  const { status } = useSession();
 
   // React Query for API data
   const { data: queryBoards, isLoading } = useBoardsQuery();
+
+  // Redirect to login if unauthenticated
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
 
   // Zustand store for offline/fallback
   const storeBoards = useBoardStore((state) => state.boards);
@@ -35,8 +44,8 @@ export function BoardPage({ boardId }: BoardPageProps) {
     };
   }, [board, boardId, setCurrentBoard]);
 
-  // Show loading while fetching boards
-  if (isLoading) {
+  // Show loading while checking auth or fetching boards
+  if (status === 'loading' || isLoading) {
     return (
       <div className={styles.notFound}>
         <p>Loading...</p>

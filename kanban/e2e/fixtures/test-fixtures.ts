@@ -30,10 +30,29 @@ export interface KanbanPage {
 
 export const test = base.extend<{ kanbanPage: KanbanPage }>({
   kanbanPage: async ({ page }, use) => {
+    // Auto-accept all confirm dialogs
+    page.on('dialog', async (dialog) => {
+      await dialog.accept();
+    });
+
     const kanbanPage: KanbanPage = {
       page,
 
       async goto(path = '/') {
+        // Auto-authenticate for protected routes
+        const protectedRoutes = ['/board', '/'];
+        const isProtected = protectedRoutes.some(route =>
+          path === route || path.startsWith(route + '/')
+        );
+
+        if (isProtected && path !== '/login' && path !== '/register') {
+          // Navigate to a page first to set localStorage
+          await page.goto('/login');
+          await page.evaluate(() => {
+            localStorage.setItem('mock-auth-session', 'true');
+          });
+        }
+
         await page.goto(path);
       },
 
@@ -201,6 +220,12 @@ export const testData = {
   },
   users: {
     demo: {
+      id: 'user-1',
+      email: 'demo@example.com',
+      password: 'demo1234',
+      name: 'Demo User',
+    },
+    testUser: {
       id: 'user-1',
       email: 'demo@example.com',
       password: 'demo1234',

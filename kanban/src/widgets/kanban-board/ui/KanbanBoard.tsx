@@ -140,6 +140,7 @@ export function KanbanBoard({ board }: KanbanBoardProps) {
 
       <EditCardModal
         card={editingCard}
+        boardId={board.id}
         isOpen={!!editingCard}
         onClose={() => setEditingCard(null)}
       />

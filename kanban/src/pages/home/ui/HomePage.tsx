@@ -38,16 +38,15 @@ export function HomePage() {
     if (!newBoardTitle.trim()) return;
 
     try {
-      const board = await createBoardMutation.mutateAsync({ title: newBoardTitle.trim() });
+      await createBoardMutation.mutateAsync({ title: newBoardTitle.trim() });
       setNewBoardTitle('');
       setIsCreating(false);
-      router.push(`/board/${board.id}`);
+      // Stay on home page to show the new board in the list
     } catch {
       // Fallback to store
-      const board = createBoardStore({ title: newBoardTitle.trim() });
+      createBoardStore({ title: newBoardTitle.trim() });
       setNewBoardTitle('');
       setIsCreating(false);
-      router.push(`/board/${board.id}`);
     }
   };
 

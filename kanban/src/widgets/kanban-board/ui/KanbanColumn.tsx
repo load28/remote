@@ -42,7 +42,7 @@ export function KanbanColumn({ column, onCardClick }: KanbanColumnProps) {
         </div>
       </SortableContext>
       <div className={styles.addCard}>
-        <AddCardButton columnId={column.id} />
+        <AddCardButton columnId={column.id} boardId={column.boardId} />
       </div>
     </div>
   );
