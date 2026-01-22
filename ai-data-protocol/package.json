@@ -1,0 +1,35 @@
+{
+  "name": "ai-data-protocol",
+  "version": "0.1.0",
+  "description": "UI-independent protocol for AI-powered data visualization",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "example": "npx ts-node src/examples/usage.ts"
+  },
+  "keywords": [
+    "ai",
+    "data",
+    "protocol",
+    "visualization",
+    "ui-independent"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}
