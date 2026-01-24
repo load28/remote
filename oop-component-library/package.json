@@ -1,0 +1,19 @@
+{
+  "name": "oop-component-library",
+  "version": "1.0.0",
+  "description": "A pure OOP-based component library without React",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "example:todo": "npx http-server examples/todo-app -o -c-1",
+    "example:counter": "npx http-server examples/counter -o -c-1"
+  },
+  "keywords": ["oop", "component", "vanilla", "typescript"],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "http-server": "^14.1.1"
+  }
+}

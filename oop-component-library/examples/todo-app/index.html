@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OOP Todo App</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background-color: #f3f4f6;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .app {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .app__header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .app__title {
+      font-size: 32px;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+
+    .app__subtitle {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .todo-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .todo-form__input {
+      flex: 1;
+    }
+
+    .todo-filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .todo-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .todo-stats__text {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .todo-item__checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .todo-item__text {
+      flex: 1;
+      font-size: 16px;
+    }
+
+    .todo-item__text--completed {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+
+    .todo-item__delete {
+      background: none;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      font-size: 18px;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .todo-item__delete:hover {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="module">
+    // Core classes
+    class EventEmitter {
+      constructor() {
+        this.events = new Map();
+      }
+
+      on(event, handler) {
+        if (!this.events.has(event)) {
+          this.events.set(event, new Set());
+        }
+        this.events.get(event).add(handler);
+        return () => this.off(event, handler);
+      }
+
+      off(event, handler) {
+        const handlers = this.events.get(event);
+        if (handlers) {
+          handlers.delete(handler);
+        }
+      }
+
+      emit(event, data) {
+        const handlers = this.events.get(event);
+        if (handlers) {
+          handlers.forEach(handler => handler(data));
+        }
+      }
+    }
+
+    class State {
+      constructor(initialState) {
+        this._state = { ...initialState };
+        this.listeners = new Set();
+      }
+
+      get state() {
+        return this._state;
+      }
+
+      setState(partial) {
+        const oldState = { ...this._state };
+        const updates = typeof partial === 'function' ? partial(this._state) : partial;
+        Object.assign(this._state, updates);
+        this.listeners.forEach(listener => listener(this._state, oldState));
+      }
+
+      subscribe(listener) {
+        this.listeners.add(listener);
+        return () => this.listeners.delete(listener);
+      }
+    }
+
+    class Component extends EventEmitter {
+      constructor(props, initialState) {
+        super();
+        this.props = props;
+        this.state = new State(initialState);
+        this.element = null;
+        this.container = null;
+        this.mounted = false;
+        this.unsubscribers = [];
+
+        this.unsubscribers.push(
+          this.state.subscribe(() => {
+            if (this.mounted) {
+              this.update();
+            }
+          })
+        );
+      }
+
+      mount(container) {
+        this.container = typeof container === 'string'
+          ? document.querySelector(container)
+          : container;
+
+        this.beforeMount();
+        this.render();
+        this.mounted = true;
+        this.afterMount();
+      }
+
+      unmount() {
+        this.beforeUnmount();
+        this.unsubscribers.forEach(unsub => unsub());
+        if (this.element && this.element.parentNode) {
+          this.element.parentNode.removeChild(this.element);
+        }
+        this.mounted = false;
+      }
+
+      render() {
+        const html = this.template();
+        const template = document.createElement('template');
+        template.innerHTML = html.trim();
+        const newElement = template.content.firstChild;
+
+        if (this.element && this.container) {
+          this.container.replaceChild(newElement, this.element);
+        } else if (this.container) {
+          this.container.appendChild(newElement);
+        }
+
+        this.element = newElement;
+        this.bindEvents();
+      }
+
+      update() {
+        if (!this.mounted) return;
+        this.beforeUpdate();
+        this.render();
+        this.afterUpdate();
+      }
+
+      setState(partial) {
+        this.state.setState(partial);
+      }
+
+      $(selector) {
+        return this.element?.querySelector(selector);
+      }
+
+      $$(selector) {
+        return this.element?.querySelectorAll(selector) || [];
+      }
+
+      // Lifecycle methods
+      beforeMount() {}
+      afterMount() {}
+      beforeUpdate() {}
+      afterUpdate() {}
+      beforeUnmount() {}
+      template() { return ''; }
+      bindEvents() {}
+    }
+
+    // Todo Item
+    class TodoItem extends Component {
+      constructor(props) {
+        super(props, {});
+      }
+
+      template() {
+        const { todo } = this.props;
+        const textClass = todo.completed ? 'todo-item__text todo-item__text--completed' : 'todo-item__text';
+
+        return `
+          <div class="todo-item">
+            <input
+              type="checkbox"
+              class="todo-item__checkbox"
+              ${todo.completed ? 'checked' : ''}
+            />
+            <span class="${textClass}">${this.escapeHtml(todo.text)}</span>
+            <button class="todo-item__delete" title="삭제">×</button>
+          </div>
+        `;
+      }
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      bindEvents() {
+        const checkbox = this.$('.todo-item__checkbox');
+        const deleteBtn = this.$('.todo-item__delete');
+
+        checkbox?.addEventListener('change', () => {
+          this.emit('toggle', this.props.todo.id);
+        });
+
+        deleteBtn?.addEventListener('click', () => {
+          this.emit('delete', this.props.todo.id);
+        });
+      }
+    }
+
+    // Todo App
+    class TodoApp extends Component {
+      constructor() {
+        super({}, {
+          todos: JSON.parse(localStorage.getItem('todos') || '[]'),
+          filter: 'all',
+          newTodoText: ''
+        });
+
+        this.todoItems = new Map();
+      }
+
+      template() {
+        const { todos, filter } = this.state.state;
+
+        const filteredTodos = this.getFilteredTodos();
+        const completedCount = todos.filter(t => t.completed).length;
+        const totalCount = todos.length;
+
+        return `
+          <div class="app">
+            <header class="app__header">
+              <h1 class="app__title">Todo App</h1>
+              <p class="app__subtitle">OOP 컴포넌트 라이브러리 예시</p>
+            </header>
+
+            <div class="todo-form">
+              <input
+                type="text"
+                class="todo-form__input"
+                placeholder="할 일을 입력하세요..."
+                style="padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; outline: none; flex: 1;"
+              />
+              <button
+                class="todo-form__submit"
+                style="padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;"
+              >
+                추가
+              </button>
+            </div>
+
+            <div class="todo-filters">
+              ${this.renderFilterButton('all', '전체', filter)}
+              ${this.renderFilterButton('active', '진행중', filter)}
+              ${this.renderFilterButton('completed', '완료', filter)}
+            </div>
+
+            ${totalCount > 0 ? `
+              <div class="todo-stats">
+                <span class="todo-stats__text">${completedCount}/${totalCount} 완료</span>
+                ${completedCount > 0 ? `
+                  <button class="todo-stats__clear" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px;">
+                    완료된 항목 삭제
+                  </button>
+                ` : ''}
+              </div>
+            ` : ''}
+
+            <div class="todo-list" style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              ${filteredTodos.length > 0
+                ? filteredTodos.map((todo, index) => `
+                    <div
+                      class="todo-list__item"
+                      data-todo-id="${todo.id}"
+                      style="padding: 16px; border-bottom: 1px solid #e5e7eb; ${index === filteredTodos.length - 1 ? 'border-bottom: none;' : ''}"
+                    ></div>
+                  `).join('')
+                : `<p style="padding: 40px; text-align: center; color: #9ca3af;">
+                    ${filter === 'all' ? '할 일이 없습니다. 새로운 할 일을 추가해보세요!' :
+                      filter === 'active' ? '진행중인 할 일이 없습니다.' : '완료된 할 일이 없습니다.'}
+                  </p>`
+              }
+            </div>
+          </div>
+        `;
+      }
+
+      renderFilterButton(value, label, currentFilter) {
+        const isActive = currentFilter === value;
+        const style = isActive
+          ? 'background: #3b82f6; color: white; border: none;'
+          : 'background: white; color: #374151; border: 1px solid #d1d5db;';
+
+        return `
+          <button
+            class="todo-filter"
+            data-filter="${value}"
+            style="${style} padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer;"
+          >
+            ${label}
+          </button>
+        `;
+      }
+
+      getFilteredTodos() {
+        const { todos, filter } = this.state.state;
+
+        switch (filter) {
+          case 'active':
+            return todos.filter(t => !t.completed);
+          case 'completed':
+            return todos.filter(t => t.completed);
+          default:
+            return todos;
+        }
+      }
+
+      afterMount() {
+        this.mountTodoItems();
+      }
+
+      afterUpdate() {
+        this.mountTodoItems();
+        this.saveTodos();
+      }
+
+      mountTodoItems() {
+        const filteredTodos = this.getFilteredTodos();
+
+        // 기존 아이템 언마운트
+        this.todoItems.forEach((item, id) => {
+          if (!filteredTodos.find(t => t.id === id)) {
+            item.unmount();
+            this.todoItems.delete(id);
+          }
+        });
+
+        // 새 아이템 마운트
+        filteredTodos.forEach(todo => {
+          const container = this.$(`[data-todo-id="${todo.id}"]`);
+          if (!container) return;
+
+          let item = this.todoItems.get(todo.id);
+
+          if (!item) {
+            item = new TodoItem({ todo });
+            item.on('toggle', (id) => this.toggleTodo(id));
+            item.on('delete', (id) => this.deleteTodo(id));
+            this.todoItems.set(todo.id, item);
+          } else {
+            item.props = { todo };
+          }
+
+          item.mount(container);
+        });
+      }
+
+      bindEvents() {
+        const input = this.$('.todo-form__input');
+        const submitBtn = this.$('.todo-form__submit');
+        const clearBtn = this.$('.todo-stats__clear');
+
+        // 할 일 추가
+        const addTodo = () => {
+          const text = input?.value.trim();
+          if (text) {
+            this.addTodo(text);
+            input.value = '';
+          }
+        };
+
+        submitBtn?.addEventListener('click', addTodo);
+        input?.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') addTodo();
+        });
+
+        // 필터 변경
+        this.$$('.todo-filter').forEach(btn => {
+          btn.addEventListener('click', () => {
+            this.setState({ filter: btn.dataset.filter });
+          });
+        });
+
+        // 완료된 항목 삭제
+        clearBtn?.addEventListener('click', () => {
+          this.clearCompleted();
+        });
+      }
+
+      addTodo(text) {
+        const newTodo = {
+          id: Date.now().toString(),
+          text,
+          completed: false
+        };
+
+        this.setState(prev => ({
+          todos: [...prev.todos, newTodo]
+        }));
+      }
+
+      toggleTodo(id) {
+        this.setState(prev => ({
+          todos: prev.todos.map(todo =>
+            todo.id === id ? { ...todo, completed: !todo.completed } : todo
+          )
+        }));
+      }
+
+      deleteTodo(id) {
+        this.setState(prev => ({
+          todos: prev.todos.filter(todo => todo.id !== id)
+        }));
+      }
+
+      clearCompleted() {
+        this.setState(prev => ({
+          todos: prev.todos.filter(todo => !todo.completed)
+        }));
+      }
+
+      saveTodos() {
+        localStorage.setItem('todos', JSON.stringify(this.state.state.todos));
+      }
+    }
+
+    // 앱 시작
+    const app = new TodoApp();
+    app.mount('#app');
+  </script>
+</body>
+</html>

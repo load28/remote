@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OOP Counter App - 컴포넌트 조합 예시</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    /* Component Styles */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn--primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn--secondary {
+      background: white;
+      color: #374151;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn--danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn--small { padding: 8px 16px; font-size: 14px; }
+    .btn--medium { padding: 12px 24px; font-size: 16px; }
+    .btn--large { padding: 16px 32px; font-size: 18px; }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .card__header {
+      padding: 24px 32px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .card__title {
+      font-size: 24px;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .card__subtitle {
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    .card__body {
+      padding: 32px;
+    }
+
+    .counter-display {
+      text-align: center;
+      padding: 40px;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
+
+    .counter-value {
+      font-size: 80px;
+      font-weight: 700;
+      color: #0369a1;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .counter-label {
+      font-size: 14px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .counter-controls {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .counter-history {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .counter-history__title {
+      font-size: 14px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .counter-history__list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .counter-history__item {
+      padding: 6px 12px;
+      background: white;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #475569;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .counter-history__item--positive {
+      color: #059669;
+      background: #ecfdf5;
+    }
+
+    .counter-history__item--negative {
+      color: #dc2626;
+      background: #fef2f2;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+      animation: slideIn 0.3s ease;
+    }
+
+    .modal__header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal__title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .modal__close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #6b7280;
+      cursor: pointer;
+    }
+
+    .modal__body {
+      padding: 24px;
+    }
+
+    .modal__footer {
+      padding: 16px 24px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-field:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="module">
+    // ========================
+    // Core: EventEmitter
+    // ========================
+    class EventEmitter {
+      constructor() {
+        this.events = new Map();
+      }
+
+      on(event, handler) {
+        if (!this.events.has(event)) {
+          this.events.set(event, new Set());
+        }
+        this.events.get(event).add(handler);
+        return () => this.off(event, handler);
+      }
+
+      off(event, handler) {
+        this.events.get(event)?.delete(handler);
+      }
+
+      emit(event, data) {
+        this.events.get(event)?.forEach(handler => handler(data));
+      }
+    }
+
+    // ========================
+    // Core: State
+    // ========================
+    class State {
+      constructor(initialState) {
+        this._state = { ...initialState };
+        this.listeners = new Set();
+      }
+
+      get state() {
+        return this._state;
+      }
+
+      setState(partial) {
+        const oldState = { ...this._state };
+        const updates = typeof partial === 'function' ? partial(this._state) : partial;
+        Object.assign(this._state, updates);
+        this.listeners.forEach(listener => listener(this._state, oldState));
+      }
+
+      subscribe(listener) {
+        this.listeners.add(listener);
+        return () => this.listeners.delete(listener);
+      }
+    }
+
+    // ========================
+    // Core: Component Base Class
+    // ========================
+    class Component extends EventEmitter {
+      constructor(props = {}, initialState = {}) {
+        super();
+        this.props = props;
+        this.state = new State(initialState);
+        this.element = null;
+        this.container = null;
+        this.mounted = false;
+        this.children = new Map();
+        this.unsubscribers = [];
+
+        this.unsubscribers.push(
+          this.state.subscribe(() => {
+            if (this.mounted) this.update();
+          })
+        );
+      }
+
+      mount(container) {
+        this.container = typeof container === 'string'
+          ? document.querySelector(container)
+          : container;
+
+        this.beforeMount();
+        this.render();
+        this.mounted = true;
+        this.afterMount();
+      }
+
+      unmount() {
+        this.beforeUnmount();
+        this.children.forEach(child => child.unmount());
+        this.children.clear();
+        this.unsubscribers.forEach(unsub => unsub());
+        if (this.element?.parentNode) {
+          this.element.parentNode.removeChild(this.element);
+        }
+        this.mounted = false;
+        this.afterUnmount();
+      }
+
+      render() {
+        const html = this.template();
+        const template = document.createElement('template');
+        template.innerHTML = html.trim();
+        const newElement = template.content.firstChild;
+
+        if (this.element && this.container) {
+          this.container.replaceChild(newElement, this.element);
+        } else if (this.container) {
+          this.container.appendChild(newElement);
+        }
+
+        this.element = newElement;
+        this.bindEvents();
+        this.mountChildren();
+      }
+
+      update() {
+        if (!this.mounted) return;
+        this.beforeUpdate();
+        this.render();
+        this.afterUpdate();
+      }
+
+      setState(partial) {
+        this.state.setState(partial);
+      }
+
+      setProps(newProps) {
+        this.props = { ...this.props, ...newProps };
+        this.update();
+      }
+
+      $(selector) {
+        return this.element?.querySelector(selector);
+      }
+
+      $$(selector) {
+        return this.element?.querySelectorAll(selector) || [];
+      }
+
+      addChild(key, ChildClass, props, containerSelector) {
+        if (this.children.has(key)) {
+          this.children.get(key).unmount();
+        }
+        const child = new ChildClass(props);
+        this.children.set(key, child);
+        return child;
+      }
+
+      mountChildren() {
+        this.children.forEach((child, key) => {
+          const container = this.$(`[data-child="${key}"]`);
+          if (container) child.mount(container);
+        });
+      }
+
+      // Lifecycle hooks
+      beforeMount() {}
+      afterMount() {}
+      beforeUpdate() {}
+      afterUpdate() {}
+      beforeUnmount() {}
+      afterUnmount() {}
+      template() { return ''; }
+      bindEvents() {}
+    }
+
+    // ========================
+    // Components: Button
+    // ========================
+    class Button extends Component {
+      constructor(props) {
+        super(props, {});
+      }
+
+      template() {
+        const { text, variant = 'primary', size = 'medium', disabled } = this.props;
+        return `
+          <button class="btn btn--${variant} btn--${size}" ${disabled ? 'disabled' : ''}>
+            ${text}
+          </button>
+        `;
+      }
+
+      bindEvents() {
+        this.element?.addEventListener('click', () => {
+          if (!this.props.disabled) {
+            this.props.onClick?.();
+            this.emit('click');
+          }
+        });
+      }
+    }
+
+    // ========================
+    // Components: Modal
+    // ========================
+    class Modal extends Component {
+      constructor(props) {
+        super(props, { isOpen: props.isOpen || false });
+      }
+
+      template() {
+        const { title } = this.props;
+        const { isOpen } = this.state.state;
+
+        if (!isOpen) return '<div style="display:none"></div>';
+
+        return `
+          <div class="modal-overlay">
+            <div class="modal">
+              <div class="modal__header">
+                <h3 class="modal__title">${title}</h3>
+                <button class="modal__close">&times;</button>
+              </div>
+              <div class="modal__body" data-child="content"></div>
+              <div class="modal__footer">
+                <div data-child="cancelBtn"></div>
+                <div data-child="confirmBtn"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      afterMount() {
+        this.setupButtons();
+      }
+
+      afterUpdate() {
+        this.setupButtons();
+      }
+
+      setupButtons() {
+        if (!this.state.state.isOpen) return;
+
+        const cancelBtn = new Button({
+          text: '취소',
+          variant: 'secondary',
+          size: 'medium',
+          onClick: () => this.close()
+        });
+
+        const confirmBtn = new Button({
+          text: '확인',
+          variant: 'primary',
+          size: 'medium',
+          onClick: () => {
+            this.props.onConfirm?.();
+            this.close();
+          }
+        });
+
+        this.addChild('cancelBtn', Button, cancelBtn.props);
+        this.addChild('confirmBtn', Button, confirmBtn.props);
+        this.mountChildren();
+      }
+
+      bindEvents() {
+        this.$('.modal__close')?.addEventListener('click', () => this.close());
+        this.$('.modal-overlay')?.addEventListener('click', (e) => {
+          if (e.target.classList.contains('modal-overlay')) this.close();
+        });
+      }
+
+      open() {
+        this.setState({ isOpen: true });
+        this.emit('open');
+      }
+
+      close() {
+        this.setState({ isOpen: false });
+        this.props.onClose?.();
+        this.emit('close');
+      }
+    }
+
+    // ========================
+    // Components: SetValueModal Content
+    // ========================
+    class SetValueContent extends Component {
+      constructor(props) {
+        super(props, { value: props.initialValue || 0 });
+      }
+
+      template() {
+        const { value } = this.state.state;
+        return `
+          <div class="input-group">
+            <label class="input-label">카운터 값 설정</label>
+            <input type="number" class="input-field" value="${value}" />
+          </div>
+        `;
+      }
+
+      bindEvents() {
+        this.$('.input-field')?.addEventListener('input', (e) => {
+          this.setState({ value: parseInt(e.target.value) || 0 });
+          this.props.onChange?.(parseInt(e.target.value) || 0);
+        });
+      }
+
+      getValue() {
+        return this.state.state.value;
+      }
+    }
+
+    // ========================
+    // Main App: Counter
+    // ========================
+    class CounterApp extends Component {
+      constructor() {
+        super({}, {
+          count: 0,
+          history: [],
+          showModal: false
+        });
+
+        this.setValueContent = null;
+        this.pendingValue = 0;
+      }
+
+      template() {
+        const { count, history, showModal } = this.state.state;
+
+        return `
+          <div class="card">
+            <div class="card__header">
+              <h1 class="card__title">Counter App</h1>
+              <p class="card__subtitle">OOP 컴포넌트 조합 예시 - 부모-자식 컴포넌트 통신</p>
+            </div>
+
+            <div class="card__body">
+              <div class="counter-display">
+                <div class="counter-value">${count}</div>
+                <div class="counter-label">Current Count</div>
+              </div>
+
+              <div class="counter-controls">
+                <div data-child="decrementBtn"></div>
+                <div data-child="incrementBtn"></div>
+                <div data-child="resetBtn"></div>
+                <div data-child="setValueBtn"></div>
+              </div>
+
+              ${history.length > 0 ? `
+                <div class="counter-history">
+                  <div class="counter-history__title">변경 이력</div>
+                  <div class="counter-history__list">
+                    ${history.slice(-10).map(item => `
+                      <span class="counter-history__item counter-history__item--${item.change > 0 ? 'positive' : 'negative'}">
+                        ${item.change > 0 ? '+' : ''}${item.change} → ${item.value}
+                      </span>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            <div data-child="modal"></div>
+          </div>
+        `;
+      }
+
+      afterMount() {
+        this.createChildComponents();
+      }
+
+      afterUpdate() {
+        this.createChildComponents();
+      }
+
+      createChildComponents() {
+        const { showModal, count } = this.state.state;
+
+        // Decrement Button
+        const decrementBtn = this.addChild('decrementBtn', Button, {
+          text: '- 감소',
+          variant: 'secondary',
+          size: 'medium',
+          onClick: () => this.decrement()
+        });
+
+        // Increment Button
+        const incrementBtn = this.addChild('incrementBtn', Button, {
+          text: '+ 증가',
+          variant: 'primary',
+          size: 'medium',
+          onClick: () => this.increment()
+        });
+
+        // Reset Button
+        const resetBtn = this.addChild('resetBtn', Button, {
+          text: '초기화',
+          variant: 'danger',
+          size: 'medium',
+          onClick: () => this.reset()
+        });
+
+        // Set Value Button
+        const setValueBtn = this.addChild('setValueBtn', Button, {
+          text: '값 설정',
+          variant: 'secondary',
+          size: 'medium',
+          onClick: () => this.openSetValueModal()
+        });
+
+        // Modal
+        const modal = this.addChild('modal', Modal, {
+          title: '카운터 값 설정',
+          isOpen: showModal,
+          onConfirm: () => this.applySetValue(),
+          onClose: () => this.setState({ showModal: false })
+        });
+
+        this.mountChildren();
+
+        // Modal content 마운트
+        if (showModal) {
+          const contentContainer = this.$('[data-child="modal"] [data-child="content"]');
+          if (contentContainer) {
+            this.setValueContent = new SetValueContent({
+              initialValue: count,
+              onChange: (value) => { this.pendingValue = value; }
+            });
+            this.setValueContent.mount(contentContainer);
+            this.pendingValue = count;
+          }
+        }
+      }
+
+      increment() {
+        this.updateCount(1);
+      }
+
+      decrement() {
+        this.updateCount(-1);
+      }
+
+      reset() {
+        const currentCount = this.state.state.count;
+        if (currentCount !== 0) {
+          this.setState(prev => ({
+            count: 0,
+            history: [...prev.history, { change: -currentCount, value: 0 }]
+          }));
+        }
+      }
+
+      updateCount(change) {
+        this.setState(prev => ({
+          count: prev.count + change,
+          history: [...prev.history, { change, value: prev.count + change }]
+        }));
+      }
+
+      openSetValueModal() {
+        this.setState({ showModal: true });
+      }
+
+      applySetValue() {
+        const newValue = this.pendingValue;
+        const currentValue = this.state.state.count;
+        const change = newValue - currentValue;
+
+        if (change !== 0) {
+          this.setState(prev => ({
+            count: newValue,
+            history: [...prev.history, { change, value: newValue }]
+          }));
+        }
+      }
+    }
+
+    // ========================
+    // 앱 시작
+    // ========================
+    const app = new CounterApp();
+    app.mount('#app');
+  </script>
+</body>
+</html>
