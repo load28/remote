@@ -43,14 +43,16 @@ import BabelPluginReactCompiler, {
  * @param {string} [options.target] - React 타겟 버전 ('17' | '18' | '19')
  * @param {string} [options.compilationMode] - 컴파일 모드 ('all' | 'infer' | 'annotation' | 'syntax')
  * @param {boolean} [options.captureAst] - Codegen AST도 수집할지 여부
- * @returns {{ snapshots: PipelineSnapshot[], events: CompileEvent[], error: Error|null }}
+ * @param {boolean} [options.codegen] - 코드 생성(Codegen) 결과도 반환할지 여부 (기본: false)
+ * @returns {{ snapshots: PipelineSnapshot[], events: CompileEvent[], error: Error|null, generatedCode: string|null }}
  */
 export function analyzeSource(sourceCode, filename, options = {}) {
-  const { target = '19', compilationMode = 'all', captureAst = false } = options;
+  const { target = '19', compilationMode = 'all', captureAst = false, codegen = false } = options;
 
   const snapshots = [];
   const events = [];
   let error = null;
+  let generatedCode = null;
 
   const language = detectLanguage(filename);
 
@@ -89,7 +91,7 @@ export function analyzeSource(sourceCode, filename, options = {}) {
     });
 
     // React Compiler 바벨 플러그인만 직접 적용 (FBT 플러그인 제외)
-    transformFromAstSync(ast, sourceCode, {
+    const result = transformFromAstSync(ast, sourceCode, {
       filename,
       highlightCode: false,
       retainLines: true,
@@ -98,11 +100,15 @@ export function analyzeSource(sourceCode, filename, options = {}) {
       configFile: false,
       babelrc: false,
     });
+
+    if (codegen && result && result.code) {
+      generatedCode = result.code;
+    }
   } catch (err) {
     error = err;
   }
 
-  return { snapshots, events, error };
+  return { snapshots, events, error, generatedCode };
 }
 
 /**

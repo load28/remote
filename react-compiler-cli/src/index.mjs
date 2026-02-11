@@ -11,6 +11,7 @@
  *   rcc <file> -v                 각 단계의 Raw IR도 함께 표시
  *   rcc <file> -a                 모든 패스의 전체 분석 결과 표시
  *   rcc <file> -a -v              전체 분석 + 전체 IR 출력
+ *   rcc <file> --codegen          코드 생성(Codegen) 결과도 함께 출력
  *   rcc hir <file>                HIR만 출력
  *   rcc scopes <file>             Reactive Scope 요약
  *   rcc pipeline <file>           패스 목록만 출력
@@ -56,6 +57,7 @@ program
   .option('-o, --output <file>', '터미널 대신 파일로 출력')
   .option('--target <version>', 'React 타겟 버전 (17, 18, 19)', '19')
   .option('--mode <mode>', '컴파일 모드 (all, infer, annotation, syntax)', 'all')
+  .option('--codegen', '코드 생성(Codegen) 결과도 함께 출력 (기본: 생성 안 함)')
   .option('--json', 'JSON 형식으로 출력')
   .action((file, opts) => {
     if (opts.all) {
@@ -205,11 +207,11 @@ program
 //   3. Effect Analysis           → Effect 분류 (Read/Mutate/Freeze/Capture)
 //   4. Reactive Analysis         → Reactive 표시 ({reactive} 마킹)
 //   5. Scope Generation          → 최종 ReactiveFunction + Scope 요약
-//   (6. Code Generation          → 제외)
+//   6. Code Generation           → --codegen 옵션 사용 시 출력 (기본: 제외)
 
 function runCompactAnalysis(file, opts) {
   const { source, filename } = readSource(file);
-  const result = analyzeSource(source, filename, { target: opts.target });
+  const result = analyzeSource(source, filename, { target: opts.target, codegen: !!opts.codegen });
 
   const PIPELINE_STAGES = [
     {
@@ -272,7 +274,7 @@ function runCompactAnalysis(file, opts) {
   const scopes = lastReactive ? extractReactiveScopes(lastReactive) : [];
 
   if (opts.json) {
-    const json = JSON.stringify({
+    const jsonObj = {
       stages: stages.map((s) => ({
         stage: s.stage,
         description: s.desc,
@@ -283,7 +285,11 @@ function runCompactAnalysis(file, opts) {
       reactiveScopes: scopes,
       events: result.events,
       error: result.error?.message || null,
-    }, null, 2);
+    };
+    if (result.generatedCode) {
+      jsonObj.generatedCode = result.generatedCode;
+    }
+    const json = JSON.stringify(jsonObj, null, 2);
 
     if (opts.output) {
       writeOutput(opts.output, json);
@@ -294,10 +300,10 @@ function runCompactAnalysis(file, opts) {
   }
 
   if (opts.output) {
-    const text = formatCompactPlain(stages, scopes, extracted, result.events, result.error, { verbose: opts.verbose });
+    const text = formatCompactPlain(stages, scopes, extracted, result.events, result.error, { verbose: opts.verbose, generatedCode: result.generatedCode });
     writeOutput(opts.output, text);
   } else {
-    const text = formatCompact(stages, scopes, extracted, result.events, result.error, { verbose: opts.verbose });
+    const text = formatCompact(stages, scopes, extracted, result.events, result.error, { verbose: opts.verbose, generatedCode: result.generatedCode });
     console.log(text);
   }
 }
@@ -309,10 +315,11 @@ function runFullAnalysis(file, opts) {
   const result = analyzeSource(source, filename, {
     target: opts.target,
     compilationMode: opts.mode,
+    codegen: !!opts.codegen,
   });
 
   if (opts.json) {
-    const json = JSON.stringify({
+    const jsonObj = {
       passes: result.snapshots.map((s) => ({
         kind: s.kind,
         name: s.name,
@@ -320,7 +327,11 @@ function runFullAnalysis(file, opts) {
       })),
       events: result.events,
       error: result.error?.message || null,
-    }, null, 2);
+    };
+    if (result.generatedCode) {
+      jsonObj.generatedCode = result.generatedCode;
+    }
+    const json = JSON.stringify(jsonObj, null, 2);
 
     if (opts.output) {
       writeOutput(opts.output, json);
@@ -338,6 +349,7 @@ function runFullAnalysis(file, opts) {
       verbose: opts.verbose,
       phase: opts.phase,
       pass: opts.pass,
+      generatedCode: result.generatedCode,
     });
     console.log(text);
   }
