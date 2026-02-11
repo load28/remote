@@ -315,7 +315,8 @@ export function formatReactiveScopesPlain(scopes) {
  * @param {Array} events - 컴파일러 이벤트
  * @param {Error|null} error
  */
-export function formatCompact(stages, scopes, extracted, events, error) {
+export function formatCompact(stages, scopes, extracted, events, error, options = {}) {
+  const { verbose = false } = options;
   const STAGE_COLORS = [
     chalk.bold.blue,     // 1. HIR
     chalk.bold.green,    // 2. SSA
@@ -367,7 +368,7 @@ export function formatCompact(stages, scopes, extracted, events, error) {
       lines.push(indented);
     }
 
-    // 2. SSA: phi 함수 + 바인딩 요약
+    // 2. SSA: phi 함수 + 바인딩 요약 (+ verbose 시 raw IR)
     if (i === 1) {
       const { phis, bindings } = extracted;
 
@@ -390,6 +391,13 @@ export function formatCompact(stages, scopes, extracted, events, error) {
           }
         }
         lines.push(chalk.dim(`  Total phi nodes: ${bindings.phiCount}`));
+      }
+
+      if (verbose) {
+        lines.push('');
+        lines.push(chalk.dim('  ── Raw SSA IR ──'));
+        const indented = snap.printed.split('\n').map((l) => '  ' + l).join('\n');
+        lines.push(indented);
       }
     }
 
@@ -420,13 +428,22 @@ export function formatCompact(stages, scopes, extracted, events, error) {
 
         if (details.length > 0) {
           lines.push(chalk.yellow('  Instructions with effects:'));
-          for (const d of details.slice(0, 15)) {
+          const showAll = verbose;
+          const limit = showAll ? details.length : 20;
+          for (const d of details.slice(0, limit)) {
             const effs = d.effects.join(', ');
             lines.push(`    [${d.id}] ${chalk.dim(d.instruction)} ${d.lvalue ? chalk.bold(d.lvalue) : ''} → ${effs}`);
           }
-          if (details.length > 15) {
-            lines.push(chalk.dim(`    ... (${details.length - 15} more)`));
+          if (!showAll && details.length > limit) {
+            lines.push(chalk.dim(`    ... (${details.length - limit} more, use --verbose to see all)`));
           }
+        }
+
+        if (verbose) {
+          lines.push('');
+          lines.push(chalk.dim('  ── Raw Effect IR ──'));
+          const indented = snap.printed.split('\n').map((l) => '  ' + l).join('\n');
+          lines.push(indented);
         }
       } else {
         lines.push(chalk.dim('  (effect 데이터 없음)'));
@@ -451,6 +468,13 @@ export function formatCompact(stages, scopes, extracted, events, error) {
             const typeStr = v.type ? chalk.dim(` : ${v.type}`) : '';
             lines.push(`    ${v.name}${typeStr}`);
           }
+        }
+
+        if (verbose) {
+          lines.push('');
+          lines.push(chalk.dim('  ── Raw Reactive IR ──'));
+          const indented = snap.printed.split('\n').map((l) => '  ' + l).join('\n');
+          lines.push(indented);
         }
       } else {
         lines.push(chalk.dim('  (reactive 데이터 없음)'));
@@ -493,7 +517,8 @@ export function formatCompact(stages, scopes, extracted, events, error) {
 /**
  * compact 모드: 파일 출력용 plain text
  */
-export function formatCompactPlain(stages, scopes, extracted, events, error) {
+export function formatCompactPlain(stages, scopes, extracted, events, error, options = {}) {
+  const { verbose = false } = options;
   const lines = [];
 
   lines.push('='.repeat(60));
@@ -552,6 +577,11 @@ export function formatCompactPlain(stages, scopes, extracted, events, error) {
         }
         lines.push(`  Total phi nodes: ${bindings.phiCount}`);
       }
+      if (verbose) {
+        lines.push('');
+        lines.push('  -- Raw SSA IR --');
+        lines.push(snap.printed);
+      }
     }
 
     // 3. Effect: counts
@@ -569,6 +599,11 @@ export function formatCompactPlain(stages, scopes, extracted, events, error) {
             lines.push(`    [${d.id}] ${d.instruction} ${d.lvalue || ''} → ${d.effects.join(', ')}`);
           }
         }
+      }
+      if (verbose) {
+        lines.push('');
+        lines.push('  -- Raw Effect IR --');
+        lines.push(snap.printed);
       }
     }
 
@@ -588,6 +623,11 @@ export function formatCompactPlain(stages, scopes, extracted, events, error) {
             lines.push(`    ${v.name}${v.type ? ` : ${v.type}` : ''}`);
           }
         }
+      }
+      if (verbose) {
+        lines.push('');
+        lines.push('  -- Raw Reactive IR --');
+        lines.push(snap.printed);
       }
     }
 
