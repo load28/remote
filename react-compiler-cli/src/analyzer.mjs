@@ -167,6 +167,202 @@ export function extractReactiveScopes(reactiveSnapshot) {
   return scopes;
 }
 
+/**
+ * HIR 스냅샷(SSA 이후)에서 phi 함수 목록을 추출한다.
+ * 블로그: "total_2 = φ(total_0, total_1)" 형태.
+ */
+export function extractPhiFunctions(hirSnapshot) {
+  if (!hirSnapshot || hirSnapshot.kind !== 'hir') return [];
+  const phis = [];
+  const blocks = hirSnapshot.raw.body?.blocks;
+  if (!blocks) return phis;
+
+  for (const [blockId, block] of blocks) {
+    if (!block.phis) continue;
+    for (const phi of block.phis) {
+      const target = resolveIdentName(phi.place?.identifier);
+      const operands = [];
+      if (phi.operands) {
+        for (const [fromBlock, place] of phi.operands) {
+          operands.push({ block: fromBlock, name: resolveIdentName(place?.identifier) });
+        }
+      }
+      phis.push({ block: blockId, target, operands });
+    }
+  }
+  return phis;
+}
+
+/**
+ * HIR 스냅샷(Effect 분석 이후)에서 effect 통계를 추출한다.
+ * 블로그: "11 Read, 2 Mutate, 1 Create" 형태.
+ */
+export function extractEffectSummary(hirSnapshot) {
+  if (!hirSnapshot || hirSnapshot.kind !== 'hir') return null;
+  const blocks = hirSnapshot.raw.body?.blocks;
+  if (!blocks) return null;
+
+  const counts = {};
+  const details = [];
+
+  for (const [, block] of blocks) {
+    for (const instr of block.instructions) {
+      // instruction-level effects
+      if (instr.effects) {
+        for (const eff of instr.effects) {
+          const kind = eff.kind;
+          counts[kind] = (counts[kind] || 0) + 1;
+        }
+      }
+      // place-level effects (lvalue, operands)
+      collectPlaceEffect(instr.lvalue, counts);
+      collectValuePlaceEffects(instr.value, counts);
+
+      // 의미 있는 effect가 있는 instruction 기록
+      if (instr.effects && instr.effects.length > 0) {
+        const instrName = instr.value?.kind || 'unknown';
+        const lname = resolveIdentName(instr.lvalue?.identifier);
+        details.push({
+          id: instr.id,
+          instruction: instrName,
+          lvalue: lname,
+          effects: instr.effects.map((e) => e.kind),
+        });
+      }
+    }
+  }
+
+  return { counts, details };
+}
+
+function collectPlaceEffect(place, counts) {
+  if (!place || !place.effect || place.effect === '<unknown>') return;
+  const key = `place:${place.effect}`;
+  counts[key] = (counts[key] || 0) + 1;
+}
+
+function collectValuePlaceEffects(value, counts) {
+  if (!value) return;
+  // args, callee, object, property 등에서 effect 수집
+  const places = [];
+  if (value.callee) places.push(value.callee);
+  if (value.object) places.push(value.object);
+  if (value.value && value.value.kind === 'Identifier') places.push(value.value);
+  if (value.place) places.push(value.place);
+  if (value.args) {
+    for (const arg of value.args) {
+      if (arg.kind === 'Spread') places.push(arg.place);
+      else if (arg.kind === 'Identifier') places.push(arg);
+    }
+  }
+  for (const p of places) {
+    collectPlaceEffect(p, counts);
+  }
+}
+
+/**
+ * HIR 스냅샷(Reactive 분석 이후)에서 reactive/non-reactive 변수를 분류한다.
+ * 블로그: "reactive: items, coupon, user / non-reactive: 'VIP', 0"
+ */
+export function extractReactiveVariables(hirSnapshot) {
+  if (!hirSnapshot || hirSnapshot.kind !== 'hir') return null;
+  const blocks = hirSnapshot.raw.body?.blocks;
+  if (!blocks) return null;
+
+  const reactive = new Map();   // name → type 정보
+  const nonReactive = new Map();
+
+  for (const [, block] of blocks) {
+    // phi에서도 reactive 체크
+    if (block.phis) {
+      for (const phi of block.phis) {
+        classifyPlace(phi.place, reactive, nonReactive);
+      }
+    }
+    for (const instr of block.instructions) {
+      classifyPlace(instr.lvalue, reactive, nonReactive);
+      // value 내부의 place들도 분류
+      classifyValuePlaces(instr.value, reactive, nonReactive);
+    }
+  }
+
+  return {
+    reactive: [...reactive.entries()].map(([name, info]) => ({ name, ...info })),
+    nonReactive: [...nonReactive.entries()].map(([name, info]) => ({ name, ...info })),
+  };
+}
+
+function classifyPlace(place, reactive, nonReactive) {
+  if (!place || place.kind !== 'Identifier') return;
+  const name = resolveIdentName(place.identifier);
+  if (!name || name.startsWith('$')) return; // 임시 변수 건너뛰기
+
+  const info = { type: formatType(place.identifier?.type) };
+  if (place.reactive) {
+    reactive.set(name, info);
+  } else {
+    nonReactive.set(name, info);
+  }
+}
+
+function classifyValuePlaces(value, reactive, nonReactive) {
+  if (!value) return;
+  const places = [];
+  if (value.place) places.push(value.place);
+  if (value.value && value.value.kind === 'Identifier') places.push(value.value);
+  if (value.lvalue?.place) places.push(value.lvalue.place);
+  for (const p of places) {
+    classifyPlace(p, reactive, nonReactive);
+  }
+}
+
+function formatType(type) {
+  if (!type) return null;
+  if (type.kind === 'Primitive') return 'Primitive';
+  if (type.kind === 'Function') return 'Function';
+  if (type.kind === 'Object') return type.shapeId ? `Object<${type.shapeId}>` : 'Object';
+  if (type.kind === 'Poly') return 'Poly';
+  return type.kind || null;
+}
+
+/**
+ * HIR 스냅샷에서 변수 바인딩(재할당) 정보를 추출한다.
+ */
+export function extractBindingInfo(hirSnapshot) {
+  if (!hirSnapshot || hirSnapshot.kind !== 'hir') return null;
+  const blocks = hirSnapshot.raw.body?.blocks;
+  if (!blocks) return null;
+
+  const assignments = new Map(); // name → count
+
+  for (const [, block] of blocks) {
+    for (const instr of block.instructions) {
+      const kind = instr.value?.kind;
+      if (kind === 'StoreLocal' || kind === 'StoreContext' || kind === 'DeclareLocal' || kind === 'DeclareContext') {
+        const place = instr.value.lvalue?.place || instr.lvalue;
+        const name = resolveIdentName(place?.identifier);
+        if (name && !name.startsWith('$')) {
+          assignments.set(name, (assignments.get(name) || 0) + 1);
+        }
+      }
+    }
+  }
+
+  const phiCount = [...blocks.values()].reduce((sum, b) => sum + (b.phis?.size || 0), 0);
+
+  return {
+    variables: [...assignments.entries()].map(([name, count]) => ({ name, assignments: count })),
+    phiCount,
+  };
+}
+
+function resolveIdentName(ident) {
+  if (!ident) return null;
+  if (ident.name?.value) return ident.name.value;
+  if (typeof ident.name === 'string') return ident.name;
+  return null;
+}
+
 function walkReactiveBlock(block, scopes) {
   if (!Array.isArray(block)) return;
   for (const stmt of block) {

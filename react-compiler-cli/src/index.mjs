@@ -22,7 +22,16 @@ import { program } from 'commander';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import chalk from 'chalk';
-import { analyzeSource, filterSnapshots, findSnapshotByPass, extractReactiveScopes } from './analyzer.mjs';
+import {
+  analyzeSource,
+  filterSnapshots,
+  findSnapshotByPass,
+  extractReactiveScopes,
+  extractPhiFunctions,
+  extractEffectSummary,
+  extractReactiveVariables,
+  extractBindingInfo,
+} from './analyzer.mjs';
 import {
   formatForTerminal,
   formatForFile,
@@ -145,15 +154,31 @@ program
       },
     ];
 
-    const stages = [];
+    // 각 단계의 스냅샷 찾기
+    const snapMap = {};
     for (const spec of PIPELINE_STAGES) {
       const snap = result.snapshots.find((s) => s.kind === spec.kind && spec.match(s.name));
-      stages.push({
-        stage: spec.stage,
-        desc: spec.desc,
-        snap: snap ? { kind: snap.kind, name: snap.name, printed: snap.printed, raw: snap.raw } : null,
-      });
+      snapMap[spec.stage] = snap ? { kind: snap.kind, name: snap.name, printed: snap.printed, raw: snap.raw } : null;
     }
+
+    // 각 단계에서 구조화된 요약 데이터 추출
+    const ssaSnap = snapMap['2. SSA & Phi Functions'];
+    const effectSnap = snapMap['3. Effect Analysis'];
+    const reactiveSnap = snapMap['4. Reactive Analysis'];
+
+    const extracted = {
+      phis: ssaSnap ? extractPhiFunctions(ssaSnap) : [],
+      bindings: ssaSnap ? extractBindingInfo(ssaSnap) : null,
+      effects: effectSnap ? extractEffectSummary(effectSnap) : null,
+      reactiveVars: reactiveSnap ? extractReactiveVariables(reactiveSnap) : null,
+    };
+
+    // stages 배열에 snap + extracted 데이터 병합
+    const stages = PIPELINE_STAGES.map((spec) => ({
+      stage: spec.stage,
+      desc: spec.desc,
+      snap: snapMap[spec.stage],
+    }));
 
     // 마지막 ReactiveFunction에서 scope 추출
     const reactiveSnaps = filterSnapshots(result.snapshots, 'reactive');
@@ -168,6 +193,7 @@ program
           pass: s.snap?.name || null,
           content: s.snap?.printed || null,
         })),
+        extracted,
         reactiveScopes: scopes,
         events: result.events,
         error: result.error?.message || null,
@@ -182,10 +208,10 @@ program
     }
 
     if (opts.output) {
-      const text = formatCompactPlain(stages, scopes, result.events, result.error);
+      const text = formatCompactPlain(stages, scopes, extracted, result.events, result.error);
       writeOutput(opts.output, text);
     } else {
-      const text = formatCompact(stages, scopes, result.events, result.error);
+      const text = formatCompact(stages, scopes, extracted, result.events, result.error);
       console.log(text);
     }
   });

@@ -305,20 +305,17 @@ export function formatReactiveScopesPlain(scopes) {
 /**
  * compact 모드: 블로그 파이프라인 단계별 터미널 출력
  *
- * https://www.load28.com/posts/react-compiler 에 기술된 단계를 따른다:
- *   1. HIR & Control Flow Graph
- *   2. SSA & Phi Functions
- *   3. Effect Analysis
- *   4. Reactive Analysis
- *   5. Scope Generation
- *   (6. Code Generation → 제외)
+ * https://www.load28.com/posts/react-compiler 에 기술된 단계를 따르되
+ * 각 단계에서 raw IR 대신 구조화된 요약 데이터를 출력한다.
+ * (https://www.load28.com/posts/refactor-functional-programming 참고)
  *
  * @param {Array} stages - { stage, desc, snap } 배열
  * @param {Array} scopes - extractReactiveScopes 결과
+ * @param {Object} extracted - { phis, bindings, effects, reactiveVars }
  * @param {Array} events - 컴파일러 이벤트
  * @param {Error|null} error
  */
-export function formatCompact(stages, scopes, events, error) {
+export function formatCompact(stages, scopes, extracted, events, error) {
   const STAGE_COLORS = [
     chalk.bold.blue,     // 1. HIR
     chalk.bold.green,    // 2. SSA
@@ -358,16 +355,118 @@ export function formatCompact(stages, scopes, events, error) {
     lines.push(chalk.dim(`  ${desc}`));
     lines.push(chalk.dim('─'.repeat(60)));
 
-    if (snap) {
+    if (!snap) {
+      lines.push(chalk.dim('  (해당 패스 없음)'));
+      lines.push('');
+      continue;
+    }
+
+    // 1. HIR: raw IR 출력 (제어 흐름이 핵심이므로)
+    if (i === 0) {
       const indented = snap.printed.split('\n').map((l) => '  ' + l).join('\n');
       lines.push(indented);
-    } else {
-      lines.push(chalk.dim('  (해당 패스 없음)'));
     }
+
+    // 2. SSA: phi 함수 + 바인딩 요약
+    if (i === 1) {
+      const { phis, bindings } = extracted;
+
+      if (phis.length > 0) {
+        lines.push(chalk.green('  Phi Functions:'));
+        for (const phi of phis) {
+          const ops = phi.operands.map((o) => `bb${o.block}: ${o.name || '?'}`).join(', ');
+          lines.push(`    ${chalk.bold(phi.target || '?')} = φ(${ops})`);
+        }
+      } else {
+        lines.push(chalk.dim('  Phi Functions: (none - no control flow merge)'));
+      }
+
+      if (bindings) {
+        const reassigned = bindings.variables.filter((v) => v.assignments > 1);
+        if (reassigned.length > 0) {
+          lines.push(chalk.green('  Reassigned variables:'));
+          for (const v of reassigned) {
+            lines.push(`    ${chalk.bold(v.name)}: ${v.assignments} assignments`);
+          }
+        }
+        lines.push(chalk.dim(`  Total phi nodes: ${bindings.phiCount}`));
+      }
+    }
+
+    // 3. Effect: effect 통계 요약
+    if (i === 2) {
+      const { effects } = extracted;
+      if (effects) {
+        const { counts, details } = effects;
+
+        // aliasing effect 종류별 카운트
+        const aliasingKeys = Object.keys(counts).filter((k) => !k.startsWith('place:'));
+        const placeKeys = Object.keys(counts).filter((k) => k.startsWith('place:'));
+
+        if (aliasingKeys.length > 0) {
+          lines.push(chalk.yellow('  Aliasing Effects:'));
+          for (const key of aliasingKeys.sort()) {
+            lines.push(`    ${chalk.bold(key)}: ${counts[key]}`);
+          }
+        }
+
+        if (placeKeys.length > 0) {
+          lines.push(chalk.yellow('  Place Effects:'));
+          for (const key of placeKeys.sort()) {
+            const label = key.replace('place:', '');
+            lines.push(`    ${chalk.bold(label)}: ${counts[key]}`);
+          }
+        }
+
+        if (details.length > 0) {
+          lines.push(chalk.yellow('  Instructions with effects:'));
+          for (const d of details.slice(0, 15)) {
+            const effs = d.effects.join(', ');
+            lines.push(`    [${d.id}] ${chalk.dim(d.instruction)} ${d.lvalue ? chalk.bold(d.lvalue) : ''} → ${effs}`);
+          }
+          if (details.length > 15) {
+            lines.push(chalk.dim(`    ... (${details.length - 15} more)`));
+          }
+        }
+      } else {
+        lines.push(chalk.dim('  (effect 데이터 없음)'));
+      }
+    }
+
+    // 4. Reactive: reactive vs non-reactive 변수 분류
+    if (i === 3) {
+      const { reactiveVars } = extracted;
+      if (reactiveVars) {
+        const { reactive, nonReactive } = reactiveVars;
+        if (reactive.length > 0) {
+          lines.push(chalk.magenta('  Reactive (props/state 의존):'));
+          for (const v of reactive) {
+            const typeStr = v.type ? chalk.dim(` : ${v.type}`) : '';
+            lines.push(`    ${chalk.bold(v.name)}${typeStr}`);
+          }
+        }
+        if (nonReactive.length > 0) {
+          lines.push(chalk.dim('  Non-reactive (상수/리터럴):'));
+          for (const v of nonReactive) {
+            const typeStr = v.type ? chalk.dim(` : ${v.type}`) : '';
+            lines.push(`    ${v.name}${typeStr}`);
+          }
+        }
+      } else {
+        lines.push(chalk.dim('  (reactive 데이터 없음)'));
+      }
+    }
+
+    // 5. Scope: ReactiveFunction IR + scope 요약
+    if (i === 4) {
+      const indented = snap.printed.split('\n').map((l) => '  ' + l).join('\n');
+      lines.push(indented);
+    }
+
     lines.push('');
   }
 
-  // Scope 요약 (5단계 보충)
+  // Scope 요약
   lines.push(chalk.bold.cyan('  ┌─ Scope Summary'));
   lines.push(chalk.dim('  │  각 scope = 독립적 메모이제이션 단위. deps가 바뀔 때만 재계산.'));
 
@@ -394,7 +493,7 @@ export function formatCompact(stages, scopes, events, error) {
 /**
  * compact 모드: 파일 출력용 plain text
  */
-export function formatCompactPlain(stages, scopes, events, error) {
+export function formatCompactPlain(stages, scopes, extracted, events, error) {
   const lines = [];
 
   lines.push('='.repeat(60));
@@ -413,16 +512,90 @@ export function formatCompactPlain(stages, scopes, events, error) {
   }
   lines.push('');
 
-  for (const { stage, desc, snap } of stages) {
+  for (let i = 0; i < stages.length; i++) {
+    const { stage, desc, snap } = stages[i];
     lines.push('-'.repeat(60));
     lines.push(`[${stage}]`);
     lines.push(desc);
     lines.push('-'.repeat(60));
-    if (snap) {
-      lines.push(snap.printed);
-    } else {
+
+    if (!snap) {
       lines.push('  (해당 패스 없음)');
+      lines.push('');
+      continue;
     }
+
+    // 1. HIR: raw IR
+    if (i === 0) {
+      lines.push(snap.printed);
+    }
+
+    // 2. SSA: phi + bindings
+    if (i === 1) {
+      const { phis, bindings } = extracted;
+      if (phis.length > 0) {
+        lines.push('  Phi Functions:');
+        for (const phi of phis) {
+          const ops = phi.operands.map((o) => `bb${o.block}: ${o.name || '?'}`).join(', ');
+          lines.push(`    ${phi.target || '?'} = phi(${ops})`);
+        }
+      } else {
+        lines.push('  Phi Functions: (none)');
+      }
+      if (bindings) {
+        const reassigned = bindings.variables.filter((v) => v.assignments > 1);
+        if (reassigned.length > 0) {
+          lines.push('  Reassigned:');
+          for (const v of reassigned) {
+            lines.push(`    ${v.name}: ${v.assignments} assignments`);
+          }
+        }
+        lines.push(`  Total phi nodes: ${bindings.phiCount}`);
+      }
+    }
+
+    // 3. Effect: counts
+    if (i === 2) {
+      const { effects } = extracted;
+      if (effects) {
+        const { counts, details } = effects;
+        lines.push('  Effect counts:');
+        for (const [key, val] of Object.entries(counts).sort()) {
+          lines.push(`    ${key}: ${val}`);
+        }
+        if (details.length > 0) {
+          lines.push('  Instructions with effects:');
+          for (const d of details) {
+            lines.push(`    [${d.id}] ${d.instruction} ${d.lvalue || ''} → ${d.effects.join(', ')}`);
+          }
+        }
+      }
+    }
+
+    // 4. Reactive: variable classification
+    if (i === 3) {
+      const { reactiveVars } = extracted;
+      if (reactiveVars) {
+        if (reactiveVars.reactive.length > 0) {
+          lines.push('  Reactive (props/state dependent):');
+          for (const v of reactiveVars.reactive) {
+            lines.push(`    ${v.name}${v.type ? ` : ${v.type}` : ''}`);
+          }
+        }
+        if (reactiveVars.nonReactive.length > 0) {
+          lines.push('  Non-reactive (constants):');
+          for (const v of reactiveVars.nonReactive) {
+            lines.push(`    ${v.name}${v.type ? ` : ${v.type}` : ''}`);
+          }
+        }
+      }
+    }
+
+    // 5. Scope: ReactiveFunction IR
+    if (i === 4) {
+      lines.push(snap.printed);
+    }
+
     lines.push('');
   }
 
