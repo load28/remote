@@ -8,6 +8,7 @@
  *
  * 사용법:
  *   rcc analyze <file>           전체 파이프라인 분석
+ *   rcc compact <file>           AI에게 유의미한 핵심 스냅샷만 출력
  *   rcc hir <file>               HIR만 출력
  *   rcc scopes <file>            Reactive Scope 요약
  *   rcc pipeline <file>          패스 목록만 출력
@@ -25,6 +26,8 @@ import { analyzeSource, filterSnapshots, findSnapshotByPass, extractReactiveScop
 import {
   formatForTerminal,
   formatForFile,
+  formatCompact,
+  formatCompactPlain,
   formatReactiveScopes,
   formatReactiveScopesPlain,
   groupByPhase,
@@ -82,6 +85,72 @@ program
         phase: opts.phase,
         pass: opts.pass,
       });
+      console.log(text);
+    }
+  });
+
+// ─── compact: AI에게 유의미한 핵심 스냅샷만 출력 ───
+//
+// 44개+ 패스 중 AI가 React 코드를 이해하는 데 실제로 필요한 건 4가지:
+//   1. 초기 HIR        → 컴포넌트 제어 흐름 구조
+//   2. Effect 분석     → 연산별 Read/Mutate/Freeze (순수성 판단)
+//   3. Reactive 표시   → props/state 의존 값 (리렌더링 원인)
+//   4. 최종 Scope 요약 → 메모이제이션 단위와 의존성 그래프
+
+program
+  .command('compact <file>')
+  .description('Output only the key analysis snapshots that matter for understanding React code')
+  .option('-o, --output <file>', 'Write output to file instead of terminal')
+  .option('--json', 'Output as JSON')
+  .option('--target <version>', 'React target version (17, 18, 19)', '19')
+  .action((file, opts) => {
+    const { source, filename } = readSource(file);
+    const result = analyzeSource(source, filename, { target: opts.target });
+
+    // 핵심 패스만 선별
+    const KEY_PASSES = [
+      { kind: 'hir', match: (n) => n === 'HIR', label: 'Initial HIR', desc: 'Component control flow structure' },
+      { kind: 'hir', match: (n) => n === 'InferMutationAliasingEffects', label: 'Effect Analysis', desc: 'Read/Mutate/Freeze/Capture classification per operation' },
+      { kind: 'hir', match: (n) => n === 'InferReactivePlaces', label: 'Reactive Analysis', desc: 'Which values depend on props/state (marked {reactive})' },
+    ];
+
+    const keySnapshots = [];
+    for (const spec of KEY_PASSES) {
+      const snap = result.snapshots.find((s) => s.kind === spec.kind && spec.match(s.name));
+      if (snap) keySnapshots.push({ ...snap, label: spec.label, desc: spec.desc });
+    }
+
+    // 마지막 ReactiveFunction에서 scope 추출
+    const reactiveSnaps = filterSnapshots(result.snapshots, 'reactive');
+    const lastReactive = reactiveSnaps[reactiveSnaps.length - 1];
+    const scopes = lastReactive ? extractReactiveScopes(lastReactive) : [];
+
+    if (opts.json) {
+      const json = JSON.stringify({
+        keySnapshots: keySnapshots.map((s) => ({
+          label: s.label,
+          description: s.desc,
+          pass: s.name,
+          content: s.printed,
+        })),
+        reactiveScopes: scopes,
+        events: result.events,
+        error: result.error?.message || null,
+      }, null, 2);
+
+      if (opts.output) {
+        writeOutput(opts.output, json);
+      } else {
+        console.log(json);
+      }
+      return;
+    }
+
+    if (opts.output) {
+      const text = formatCompactPlain(keySnapshots, scopes, result.events, result.error);
+      writeOutput(opts.output, text);
+    } else {
+      const text = formatCompact(keySnapshots, scopes, result.events, result.error);
       console.log(text);
     }
   });

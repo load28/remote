@@ -302,6 +302,127 @@ export function formatReactiveScopesPlain(scopes) {
   return lines.join('\n');
 }
 
+/**
+ * compact 모드: AI에게 유의미한 핵심 스냅샷만 터미널 출력
+ *
+ * 44개+ 패스 중 4가지만 선별:
+ *   1. Initial HIR       → 제어 흐름 구조
+ *   2. Effect Analysis    → 연산별 Read/Mutate/Freeze
+ *   3. Reactive Analysis  → props/state 의존 표시 ({reactive})
+ *   4. Reactive Scopes    → 메모이제이션 단위 + 의존성
+ */
+export function formatCompact(keySnapshots, scopes, events, error) {
+  const lines = [];
+
+  lines.push('');
+  lines.push(chalk.bold.cyan('╔══════════════════════════════════════════════════════════════╗'));
+  lines.push(chalk.bold.cyan('║') + chalk.bold.white('     React Compiler Analysis (compact)                      ') + chalk.bold.cyan('║'));
+  lines.push(chalk.bold.cyan('╚══════════════════════════════════════════════════════════════╝'));
+  lines.push('');
+
+  // 이벤트 요약
+  for (const event of events) {
+    if (event.kind === 'CompileSuccess') {
+      lines.push(chalk.green(`  ✓ ${event.fnName || 'anonymous'}: ${event.memoSlots} memo slots, ${event.memoBlocks} blocks, ${event.memoValues} values`));
+    } else if (event.kind === 'CompileSkip') {
+      lines.push(chalk.yellow(`  ⊘ Skipped: ${event.reason}`));
+    }
+  }
+  if (error) {
+    lines.push(chalk.red(`  ✗ Error: ${error.message || error}`));
+  }
+  lines.push('');
+
+  // 핵심 스냅샷 출력
+  for (const snap of keySnapshots) {
+    const phaseColor = snap.label.includes('HIR') ? chalk.bold.blue
+      : snap.label.includes('Effect') ? chalk.bold.yellow
+      : chalk.bold.magenta;
+
+    lines.push(phaseColor(`▎ ${snap.label}`));
+    lines.push(chalk.dim(`  ${snap.desc}`));
+    lines.push(chalk.dim('─'.repeat(60)));
+    const indented = snap.printed.split('\n').map((l) => '  ' + l).join('\n');
+    lines.push(indented);
+    lines.push('');
+  }
+
+  // Reactive Scopes
+  lines.push(chalk.bold.cyan('▎ Reactive Scopes (Memoization Units)'));
+  lines.push(chalk.dim('  What gets cached together and what triggers recalculation'));
+  lines.push(chalk.dim('─'.repeat(60)));
+
+  if (scopes.length === 0) {
+    lines.push(chalk.dim('  No reactive scopes found.'));
+  } else {
+    for (const scope of scopes) {
+      const status = scope.pruned ? chalk.red('[pruned]') : chalk.green('[active]');
+      lines.push(`  ${chalk.bold(`Scope #${scope.id}`)} ${status}`);
+      if (scope.dependencies.length > 0) {
+        lines.push(`    deps      : ${chalk.cyan(scope.dependencies.join(', '))}`);
+      } else {
+        lines.push(`    deps      : ${chalk.dim('(none - constant)')}`);
+      }
+      if (scope.declarations.length > 0) {
+        lines.push(`    produces  : ${chalk.yellow(scope.declarations.join(', '))}`);
+      }
+    }
+  }
+  lines.push('');
+
+  return lines.join('\n');
+}
+
+/**
+ * compact 모드: 파일 출력용 plain text
+ */
+export function formatCompactPlain(keySnapshots, scopes, events, error) {
+  const lines = [];
+
+  lines.push('='.repeat(60));
+  lines.push(' React Compiler Analysis (compact)');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  for (const event of events) {
+    if (event.kind === 'CompileSuccess') {
+      lines.push(`[OK] ${event.fnName || 'anonymous'}: ${event.memoSlots} memo slots, ${event.memoBlocks} blocks, ${event.memoValues} values`);
+    }
+  }
+  if (error) {
+    lines.push(`[Error] ${error.message || error}`);
+  }
+  lines.push('');
+
+  for (const snap of keySnapshots) {
+    lines.push('-'.repeat(60));
+    lines.push(`[${snap.label}] ${snap.desc}`);
+    lines.push('-'.repeat(60));
+    lines.push(snap.printed);
+    lines.push('');
+  }
+
+  lines.push('-'.repeat(60));
+  lines.push('[Reactive Scopes] Memoization units and dependencies');
+  lines.push('-'.repeat(60));
+
+  if (scopes.length === 0) {
+    lines.push('  No reactive scopes found.');
+  } else {
+    for (const scope of scopes) {
+      const status = scope.pruned ? '[pruned]' : '[active]';
+      lines.push(`  Scope #${scope.id} ${status}`);
+      lines.push(`    deps: ${scope.dependencies.length > 0 ? scope.dependencies.join(', ') : '(none)'}`);
+      if (scope.declarations.length > 0) {
+        lines.push(`    produces: ${scope.declarations.join(', ')}`);
+      }
+    }
+  }
+  lines.push('');
+
+  return lines.join('\n');
+}
+
 // ─── Helpers ────
 
 function getEventIcon(kind) {
