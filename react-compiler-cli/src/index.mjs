@@ -89,17 +89,21 @@ program
     }
   });
 
-// ─── compact: AI에게 유의미한 핵심 스냅샷만 출력 ───
+// ─── compact: 블로그 파이프라인 단계별 핵심 스냅샷 출력 ───
 //
-// 44개+ 패스 중 AI가 React 코드를 이해하는 데 실제로 필요한 건 4가지:
-//   1. 초기 HIR        → 컴포넌트 제어 흐름 구조
-//   2. Effect 분석     → 연산별 Read/Mutate/Freeze (순수성 판단)
-//   3. Reactive 표시   → props/state 의존 값 (리렌더링 원인)
-//   4. 최종 Scope 요약 → 메모이제이션 단위와 의존성 그래프
+// https://www.load28.com/posts/react-compiler 의 파이프라인 단계를 따르되
+// 각 단계에서 의미있는 최종 결과 하나만 출력한다:
+//
+//   1. HIR & Control Flow Graph  → 초기 HIR (기본 블록 + 제어 흐름)
+//   2. SSA & Phi Functions       → SSA 변환 후 (단일 할당 + φ 함수)
+//   3. Effect Analysis           → Effect 분류 (Read/Mutate/Freeze/Capture)
+//   4. Reactive Analysis         → Reactive 표시 ({reactive} 마킹)
+//   5. Scope Generation          → 최종 ReactiveFunction + Scope 요약
+//   (6. Code Generation          → 제외)
 
 program
   .command('compact <file>')
-  .description('Output only the key analysis snapshots that matter for understanding React code')
+  .description('Show one key snapshot per blog pipeline stage (HIR → SSA → Effect → Reactive → Scope)')
   .option('-o, --output <file>', 'Write output to file instead of terminal')
   .option('--json', 'Output as JSON')
   .option('--target <version>', 'React target version (17, 18, 19)', '19')
@@ -107,17 +111,48 @@ program
     const { source, filename } = readSource(file);
     const result = analyzeSource(source, filename, { target: opts.target });
 
-    // 핵심 패스만 선별
-    const KEY_PASSES = [
-      { kind: 'hir', match: (n) => n === 'HIR', label: 'Initial HIR', desc: 'Component control flow structure' },
-      { kind: 'hir', match: (n) => n === 'InferMutationAliasingEffects', label: 'Effect Analysis', desc: 'Read/Mutate/Freeze/Capture classification per operation' },
-      { kind: 'hir', match: (n) => n === 'InferReactivePlaces', label: 'Reactive Analysis', desc: 'Which values depend on props/state (marked {reactive})' },
+    // 블로그 파이프라인 단계별 핵심 패스 1개씩 선별
+    const PIPELINE_STAGES = [
+      {
+        stage: '1. HIR & Control Flow Graph',
+        desc: 'AST를 기본 블록(basic block) 단위의 제어 흐름 그래프로 변환. 조건 분기, 루프 등 실행 흐름이 드러난다.',
+        kind: 'hir',
+        match: (n) => n === 'HIR',
+      },
+      {
+        stage: '2. SSA & Phi Functions',
+        desc: '각 변수가 한 번만 할당되는 SSA 형태로 변환. 분기 합류점에 φ(phi) 함수가 삽입되어 데이터 의존성이 명시된다.',
+        kind: 'hir',
+        match: (n) => n === 'SSA',
+      },
+      {
+        stage: '3. Effect Analysis',
+        desc: '각 연산이 값을 어떻게 다루는지 분류: Read(읽기), Mutate(변경), Freeze(불변화), Capture(참조 캡처). 메모이제이션 안전성 판단의 핵심.',
+        kind: 'hir',
+        match: (n) => n === 'InferMutationAliasingEffects',
+      },
+      {
+        stage: '4. Reactive Analysis',
+        desc: 'props/state에서 파생된 값에 {reactive} 표시. 이 값이 바뀌면 리렌더링이 필요하다는 뜻.',
+        kind: 'hir',
+        match: (n) => n === 'InferReactivePlaces',
+      },
+      {
+        stage: '5. Scope Generation',
+        desc: '동일한 의존성을 공유하는 연산들을 하나의 reactive scope로 그룹핑. 각 scope가 독립적인 메모이제이션 단위가 된다.',
+        kind: 'reactive',
+        match: (n) => n === 'BuildReactiveFunction',
+      },
     ];
 
-    const keySnapshots = [];
-    for (const spec of KEY_PASSES) {
+    const stages = [];
+    for (const spec of PIPELINE_STAGES) {
       const snap = result.snapshots.find((s) => s.kind === spec.kind && spec.match(s.name));
-      if (snap) keySnapshots.push({ ...snap, label: spec.label, desc: spec.desc });
+      stages.push({
+        stage: spec.stage,
+        desc: spec.desc,
+        snap: snap ? { kind: snap.kind, name: snap.name, printed: snap.printed, raw: snap.raw } : null,
+      });
     }
 
     // 마지막 ReactiveFunction에서 scope 추출
@@ -127,11 +162,11 @@ program
 
     if (opts.json) {
       const json = JSON.stringify({
-        keySnapshots: keySnapshots.map((s) => ({
-          label: s.label,
+        stages: stages.map((s) => ({
+          stage: s.stage,
           description: s.desc,
-          pass: s.name,
-          content: s.printed,
+          pass: s.snap?.name || null,
+          content: s.snap?.printed || null,
         })),
         reactiveScopes: scopes,
         events: result.events,
@@ -147,10 +182,10 @@ program
     }
 
     if (opts.output) {
-      const text = formatCompactPlain(keySnapshots, scopes, result.events, result.error);
+      const text = formatCompactPlain(stages, scopes, result.events, result.error);
       writeOutput(opts.output, text);
     } else {
-      const text = formatCompact(keySnapshots, scopes, result.events, result.error);
+      const text = formatCompact(stages, scopes, result.events, result.error);
       console.log(text);
     }
   });

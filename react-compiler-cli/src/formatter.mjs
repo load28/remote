@@ -303,24 +303,40 @@ export function formatReactiveScopesPlain(scopes) {
 }
 
 /**
- * compact 모드: AI에게 유의미한 핵심 스냅샷만 터미널 출력
+ * compact 모드: 블로그 파이프라인 단계별 터미널 출력
  *
- * 44개+ 패스 중 4가지만 선별:
- *   1. Initial HIR       → 제어 흐름 구조
- *   2. Effect Analysis    → 연산별 Read/Mutate/Freeze
- *   3. Reactive Analysis  → props/state 의존 표시 ({reactive})
- *   4. Reactive Scopes    → 메모이제이션 단위 + 의존성
+ * https://www.load28.com/posts/react-compiler 에 기술된 단계를 따른다:
+ *   1. HIR & Control Flow Graph
+ *   2. SSA & Phi Functions
+ *   3. Effect Analysis
+ *   4. Reactive Analysis
+ *   5. Scope Generation
+ *   (6. Code Generation → 제외)
+ *
+ * @param {Array} stages - { stage, desc, snap } 배열
+ * @param {Array} scopes - extractReactiveScopes 결과
+ * @param {Array} events - 컴파일러 이벤트
+ * @param {Error|null} error
  */
-export function formatCompact(keySnapshots, scopes, events, error) {
+export function formatCompact(stages, scopes, events, error) {
+  const STAGE_COLORS = [
+    chalk.bold.blue,     // 1. HIR
+    chalk.bold.green,    // 2. SSA
+    chalk.bold.yellow,   // 3. Effect
+    chalk.bold.magenta,  // 4. Reactive
+    chalk.bold.cyan,     // 5. Scope
+  ];
+
   const lines = [];
 
   lines.push('');
   lines.push(chalk.bold.cyan('╔══════════════════════════════════════════════════════════════╗'));
-  lines.push(chalk.bold.cyan('║') + chalk.bold.white('     React Compiler Analysis (compact)                      ') + chalk.bold.cyan('║'));
+  lines.push(chalk.bold.cyan('║') + chalk.bold.white('     React Compiler Pipeline Analysis                       ') + chalk.bold.cyan('║'));
+  lines.push(chalk.bold.cyan('║') + chalk.dim('     https://www.load28.com/posts/react-compiler             ') + chalk.bold.cyan('║'));
   lines.push(chalk.bold.cyan('╚══════════════════════════════════════════════════════════════╝'));
   lines.push('');
 
-  // 이벤트 요약
+  // 컴파일 결과 요약
   for (const event of events) {
     if (event.kind === 'CompileSuccess') {
       lines.push(chalk.green(`  ✓ ${event.fnName || 'anonymous'}: ${event.memoSlots} memo slots, ${event.memoBlocks} blocks, ${event.memoValues} values`));
@@ -333,41 +349,43 @@ export function formatCompact(keySnapshots, scopes, events, error) {
   }
   lines.push('');
 
-  // 핵심 스냅샷 출력
-  for (const snap of keySnapshots) {
-    const phaseColor = snap.label.includes('HIR') ? chalk.bold.blue
-      : snap.label.includes('Effect') ? chalk.bold.yellow
-      : chalk.bold.magenta;
+  // 단계별 출력
+  for (let i = 0; i < stages.length; i++) {
+    const { stage, desc, snap } = stages[i];
+    const color = STAGE_COLORS[i] || chalk.bold.white;
 
-    lines.push(phaseColor(`▎ ${snap.label}`));
-    lines.push(chalk.dim(`  ${snap.desc}`));
+    lines.push(color(`▎ ${stage}`));
+    lines.push(chalk.dim(`  ${desc}`));
     lines.push(chalk.dim('─'.repeat(60)));
-    const indented = snap.printed.split('\n').map((l) => '  ' + l).join('\n');
-    lines.push(indented);
+
+    if (snap) {
+      const indented = snap.printed.split('\n').map((l) => '  ' + l).join('\n');
+      lines.push(indented);
+    } else {
+      lines.push(chalk.dim('  (해당 패스 없음)'));
+    }
     lines.push('');
   }
 
-  // Reactive Scopes
-  lines.push(chalk.bold.cyan('▎ Reactive Scopes (Memoization Units)'));
-  lines.push(chalk.dim('  What gets cached together and what triggers recalculation'));
-  lines.push(chalk.dim('─'.repeat(60)));
+  // Scope 요약 (5단계 보충)
+  lines.push(chalk.bold.cyan('  ┌─ Scope Summary'));
+  lines.push(chalk.dim('  │  각 scope = 독립적 메모이제이션 단위. deps가 바뀔 때만 재계산.'));
 
   if (scopes.length === 0) {
-    lines.push(chalk.dim('  No reactive scopes found.'));
+    lines.push(chalk.dim('  │  (reactive scope 없음)'));
   } else {
     for (const scope of scopes) {
-      const status = scope.pruned ? chalk.red('[pruned]') : chalk.green('[active]');
-      lines.push(`  ${chalk.bold(`Scope #${scope.id}`)} ${status}`);
-      if (scope.dependencies.length > 0) {
-        lines.push(`    deps      : ${chalk.cyan(scope.dependencies.join(', '))}`);
-      } else {
-        lines.push(`    deps      : ${chalk.dim('(none - constant)')}`);
-      }
-      if (scope.declarations.length > 0) {
-        lines.push(`    produces  : ${chalk.yellow(scope.declarations.join(', '))}`);
-      }
+      const status = scope.pruned ? chalk.red('pruned') : chalk.green('active');
+      const deps = scope.dependencies.length > 0
+        ? chalk.cyan(scope.dependencies.join(', '))
+        : chalk.dim('(none)');
+      const decls = scope.declarations.length > 0
+        ? chalk.yellow(scope.declarations.join(', '))
+        : '';
+      lines.push(`  │  ${chalk.bold(`#${scope.id}`)} [${status}] deps=[${deps}]${decls ? ` → ${decls}` : ''}`);
     }
   }
+  lines.push(chalk.bold.cyan('  └─'));
   lines.push('');
 
   return lines.join('\n');
@@ -376,11 +394,12 @@ export function formatCompact(keySnapshots, scopes, events, error) {
 /**
  * compact 모드: 파일 출력용 plain text
  */
-export function formatCompactPlain(keySnapshots, scopes, events, error) {
+export function formatCompactPlain(stages, scopes, events, error) {
   const lines = [];
 
   lines.push('='.repeat(60));
-  lines.push(' React Compiler Analysis (compact)');
+  lines.push(' React Compiler Pipeline Analysis');
+  lines.push(' https://www.load28.com/posts/react-compiler');
   lines.push('='.repeat(60));
   lines.push('');
 
@@ -394,28 +413,32 @@ export function formatCompactPlain(keySnapshots, scopes, events, error) {
   }
   lines.push('');
 
-  for (const snap of keySnapshots) {
+  for (const { stage, desc, snap } of stages) {
     lines.push('-'.repeat(60));
-    lines.push(`[${snap.label}] ${snap.desc}`);
+    lines.push(`[${stage}]`);
+    lines.push(desc);
     lines.push('-'.repeat(60));
-    lines.push(snap.printed);
+    if (snap) {
+      lines.push(snap.printed);
+    } else {
+      lines.push('  (해당 패스 없음)');
+    }
     lines.push('');
   }
 
   lines.push('-'.repeat(60));
-  lines.push('[Reactive Scopes] Memoization units and dependencies');
+  lines.push('[Scope Summary]');
+  lines.push('각 scope = 독립적 메모이제이션 단위. deps가 바뀔 때만 재계산.');
   lines.push('-'.repeat(60));
 
   if (scopes.length === 0) {
-    lines.push('  No reactive scopes found.');
+    lines.push('  (reactive scope 없음)');
   } else {
     for (const scope of scopes) {
-      const status = scope.pruned ? '[pruned]' : '[active]';
-      lines.push(`  Scope #${scope.id} ${status}`);
-      lines.push(`    deps: ${scope.dependencies.length > 0 ? scope.dependencies.join(', ') : '(none)'}`);
-      if (scope.declarations.length > 0) {
-        lines.push(`    produces: ${scope.declarations.join(', ')}`);
-      }
+      const status = scope.pruned ? 'pruned' : 'active';
+      const deps = scope.dependencies.length > 0 ? scope.dependencies.join(', ') : '(none)';
+      const decls = scope.declarations.length > 0 ? ` → ${scope.declarations.join(', ')}` : '';
+      lines.push(`  #${scope.id} [${status}] deps=[${deps}]${decls}`);
     }
   }
   lines.push('');
