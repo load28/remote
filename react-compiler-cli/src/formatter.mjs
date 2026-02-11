@@ -91,7 +91,7 @@ export function groupByPhase(snapshots) {
  * 전체 분석 결과를 터미널용 문자열로 포매팅한다.
  */
 export function formatForTerminal(analysisResult, options = {}) {
-  const { verbose = false, phase: filterPhase = null, pass: filterPass = null } = options;
+  const { verbose = false, phase: filterPhase = null, pass: filterPass = null, generatedCode = null } = options;
   const { snapshots, events, error } = analysisResult;
   const lines = [];
 
@@ -175,6 +175,16 @@ export function formatForTerminal(analysisResult, options = {}) {
       }
       lines.push('');
     }
+  }
+
+  // Code Generation (--codegen 옵션 사용 시)
+  if (generatedCode) {
+    lines.push(chalk.bold.red('▎ Code Generation'));
+    lines.push(chalk.dim('  React Compiler가 생성한 최종 코드'));
+    lines.push(chalk.dim('─'.repeat(60)));
+    const indented = generatedCode.split('\n').map((l) => '  ' + l).join('\n');
+    lines.push(indented);
+    lines.push('');
   }
 
   return lines.join('\n');
@@ -316,7 +326,7 @@ export function formatReactiveScopesPlain(scopes) {
  * @param {Error|null} error
  */
 export function formatCompact(stages, scopes, extracted, events, error, options = {}) {
-  const { verbose = false } = options;
+  const { verbose = false, generatedCode = null } = options;
   const STAGE_COLORS = [
     chalk.bold.blue,     // 1. HIR
     chalk.bold.green,    // 2. SSA
@@ -511,6 +521,16 @@ export function formatCompact(stages, scopes, extracted, events, error, options 
   lines.push(chalk.bold.cyan('  └─'));
   lines.push('');
 
+  // 6. Code Generation (--codegen 옵션 사용 시)
+  if (generatedCode) {
+    lines.push(chalk.bold.red('▎ 6. Code Generation'));
+    lines.push(chalk.dim('  React Compiler가 생성한 최종 코드. useMemoCache 등 메모이제이션 런타임이 삽입된다.'));
+    lines.push(chalk.dim('─'.repeat(60)));
+    const indented = generatedCode.split('\n').map((l) => '  ' + l).join('\n');
+    lines.push(indented);
+    lines.push('');
+  }
+
   return lines.join('\n');
 }
 
@@ -518,7 +538,7 @@ export function formatCompact(stages, scopes, extracted, events, error, options 
  * compact 모드: 파일 출력용 plain text
  */
 export function formatCompactPlain(stages, scopes, extracted, events, error, options = {}) {
-  const { verbose = false } = options;
+  const { verbose = false, generatedCode = null } = options;
   const lines = [];
 
   lines.push('='.repeat(60));
@@ -655,6 +675,16 @@ export function formatCompactPlain(stages, scopes, extracted, events, error, opt
     }
   }
   lines.push('');
+
+  // 6. Code Generation (--codegen 옵션 사용 시)
+  if (generatedCode) {
+    lines.push('-'.repeat(60));
+    lines.push('[6. Code Generation]');
+    lines.push('React Compiler가 생성한 최종 코드. useMemoCache 등 메모이제이션 런타임이 삽입된다.');
+    lines.push('-'.repeat(60));
+    lines.push(generatedCode);
+    lines.push('');
+  }
 
   return lines.join('\n');
 }
