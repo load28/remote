@@ -33,7 +33,10 @@ export function useLogStream({ logGroup, maxLines = 1000 }: UseLogStreamOptions)
   const connect = useCallback(() => {
     // Don't connect if unmounted or already connected
     if (!mountedRef.current) return;
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+    if (
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      wsRef.current?.readyState === WebSocket.CONNECTING
+    ) return;
 
     // Don't connect if there's no log group to subscribe to
     if (!logGroupRef.current) return;
