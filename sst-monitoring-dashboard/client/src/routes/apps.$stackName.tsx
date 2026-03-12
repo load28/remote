@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type SstResource,
   type FunctionInfo,
@@ -21,29 +21,44 @@ function AppDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedLogGroup, setSelectedLogGroup] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"resources" | "functions" | "logs">("resources");
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [res, fns] = await Promise.all([
+        api.getResources(stackName),
+        api.getFunctions(stackName),
+      ]);
+      setResources(res);
+      setFunctions(fns);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to fetch data");
+    } finally {
+      setLoading(false);
+    }
+  }, [stackName]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [res, fns] = await Promise.all([
-          api.getResources(stackName),
-          api.getFunctions(stackName),
-        ]);
-        setResources(res);
-        setFunctions(fns);
-        setError(null);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to fetch data");
-      } finally {
-        setLoading(false);
+    fetchData();
+    intervalRef.current = setInterval(fetchData, 15000);
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        clearInterval(intervalRef.current);
+      } else {
+        fetchData();
+        intervalRef.current = setInterval(fetchData, 15000);
       }
     };
+    document.addEventListener("visibilitychange", handleVisibility);
 
-    fetchData();
-    const interval = setInterval(fetchData, 15000);
-    return () => clearInterval(interval);
-  }, [stackName]);
+    return () => {
+      clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [fetchData]);
 
   // Group resources by type
   const resourcesByType = resources.reduce<Record<string, SstResource[]>>(

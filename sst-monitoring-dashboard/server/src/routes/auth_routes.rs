@@ -67,7 +67,7 @@ pub async fn register(
         }
     });
 
-    tracing::info!("User registered: {} (verification token: {})", user.email, verification_token);
+    tracing::info!("User registered: {}", user.email);
 
     (
         StatusCode::CREATED,

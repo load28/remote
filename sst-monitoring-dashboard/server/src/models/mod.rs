@@ -82,7 +82,6 @@ pub struct LogGroupQuery {
 #[derive(Debug, Deserialize)]
 pub struct AppQuery {
     pub stage: Option<String>,
-    pub region: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

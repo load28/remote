@@ -67,11 +67,6 @@ pub struct AuthResponse {
     pub user: User,
 }
 
-#[derive(Debug, Serialize)]
-pub struct MessageResponse {
-    pub message: String,
-}
-
 #[derive(Debug, Deserialize)]
 pub struct VerifyEmailQuery {
     pub token: String,

@@ -3,6 +3,7 @@ use aws_sdk_lambda::Client;
 use crate::models::FunctionInfo;
 
 /// List Lambda functions, optionally filtered by prefix
+#[allow(dead_code)]
 pub async fn list_functions(
     client: &Client,
     prefix: Option<&str>,

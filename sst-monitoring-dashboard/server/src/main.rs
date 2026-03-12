@@ -10,7 +10,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 use tracing_subscriber::EnvFilter;
 
 use app_state::AppState;
@@ -42,10 +42,19 @@ async fn main() {
     };
 
     // CORS configuration
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+    let cors = {
+        let allowed_origin = std::env::var("CORS_ORIGIN").unwrap_or_else(|_| "*".to_string());
+        let cors = CorsLayer::new()
+            .allow_methods(tower_http::cors::Any)
+            .allow_headers(tower_http::cors::Any);
+        if allowed_origin == "*" {
+            tracing::warn!("CORS_ORIGIN not set, allowing all origins. Set CORS_ORIGIN for production.");
+            cors.allow_origin(tower_http::cors::Any)
+        } else {
+            let origin: axum::http::HeaderValue = allowed_origin.parse().expect("Invalid CORS_ORIGIN value");
+            cors.allow_origin(origin)
+        }
+    };
 
     // Build router
     let app = Router::new()
@@ -56,12 +65,12 @@ async fn main() {
         .route("/api/auth/me", get(routes::auth_routes::me))
         // Admin endpoints (requires admin role)
         .route("/api/admin/users", get(routes::admin::list_users))
-        .route("/api/admin/users/:user_id/approve", post(routes::admin::approve_user))
-        .route("/api/admin/users/:user_id/reject", post(routes::admin::reject_user))
+        .route("/api/admin/users/{user_id}/approve", post(routes::admin::approve_user))
+        .route("/api/admin/users/{user_id}/reject", post(routes::admin::reject_user))
         // App/Stack endpoints (requires auth)
         .route("/api/apps", get(routes::apps::list_apps))
-        .route("/api/apps/:stack_name/resources", get(routes::apps::get_app_resources))
-        .route("/api/apps/:stack_name/functions", get(routes::apps::get_app_functions))
+        .route("/api/apps/{stack_name}/resources", get(routes::apps::get_app_resources))
+        .route("/api/apps/{stack_name}/functions", get(routes::apps::get_app_functions))
         // Log endpoints (requires auth)
         .route("/api/logs/groups", get(routes::logs::list_log_groups))
         .route("/api/logs/events", get(routes::logs::get_logs))

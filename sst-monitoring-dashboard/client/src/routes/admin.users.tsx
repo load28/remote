@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { type User, authApi, getToken } from "../lib/auth";
 
@@ -7,6 +7,7 @@ export const Route = createFileRoute("/admin/users")({
 });
 
 function AdminUsersPage() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,9 +16,18 @@ function AdminUsersPage() {
   // Redirect if not logged in
   useEffect(() => {
     if (!getToken()) {
-      window.location.href = "/login";
+      navigate({ to: "/login" });
+      return;
     }
-  }, []);
+    // Verify admin role via /me endpoint
+    authApi.me().then((user) => {
+      if (user.role !== "admin") {
+        navigate({ to: "/" });
+      }
+    }).catch(() => {
+      navigate({ to: "/login" });
+    });
+  }, [navigate]);
 
   const fetchUsers = async () => {
     try {

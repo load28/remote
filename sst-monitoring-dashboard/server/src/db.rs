@@ -41,7 +41,7 @@ pub fn init_db() -> Db {
             params![id, "admin@sst-monitor.local", password_hash],
         )
         .expect("Failed to seed admin user");
-        tracing::info!("Seeded default admin user: admin@sst-monitor.local / admin123!");
+        tracing::info!("Seeded default admin user: admin@sst-monitor.local (change password on first login)");
     }
 
     Arc::new(Mutex::new(conn))
@@ -98,7 +98,7 @@ pub fn get_user_by_email(db: &Db, email: &str) -> Result<User, String> {
     conn.query_row(
         "SELECT id, email, password_hash, role, status, email_verified_at, approved_at, created_at FROM users WHERE email = ?1",
         params![email],
-        |row| Ok(map_user_row(row)),
+        |row| map_user_row(row),
     )
     .map_err(|_| "User not found".to_string())
 }
@@ -112,7 +112,7 @@ fn get_user_by_id_inner(conn: &Connection, id: &str) -> Result<User, String> {
     conn.query_row(
         "SELECT id, email, password_hash, role, status, email_verified_at, approved_at, created_at FROM users WHERE id = ?1",
         params![id],
-        |row| Ok(map_user_row(row)),
+        |row| map_user_row(row),
     )
     .map_err(|_| "User not found".to_string())
 }
@@ -124,7 +124,7 @@ pub fn list_users(db: &Db) -> Result<Vec<User>, String> {
         .map_err(|e| e.to_string())?;
 
     let users = stmt
-        .query_map([], |row| Ok(map_user_row(row)))
+        .query_map([], |row| map_user_row(row))
         .map_err(|e| e.to_string())?
         .filter_map(|r| r.ok())
         .collect();
@@ -166,24 +166,27 @@ pub fn reject_user(db: &Db, user_id: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn map_user_row(row: &rusqlite::Row) -> User {
-    User {
-        id: row.get(0).unwrap(),
-        email: row.get(1).unwrap(),
-        password_hash: row.get(2).unwrap(),
-        role: match row.get::<_, String>(3).unwrap().as_str() {
+fn map_user_row(row: &rusqlite::Row) -> rusqlite::Result<User> {
+    let role_str: String = row.get(3)?;
+    let status_str: String = row.get(4)?;
+
+    Ok(User {
+        id: row.get(0)?,
+        email: row.get(1)?,
+        password_hash: row.get(2)?,
+        role: match role_str.as_str() {
             "admin" => UserRole::Admin,
             _ => UserRole::User,
         },
-        status: match row.get::<_, String>(4).unwrap().as_str() {
+        status: match status_str.as_str() {
             "pending_verification" => UserStatus::PendingVerification,
             "pending_approval" => UserStatus::PendingApproval,
             "active" => UserStatus::Active,
             "rejected" => UserStatus::Rejected,
             _ => UserStatus::PendingVerification,
         },
-        email_verified_at: row.get(5).unwrap(),
-        approved_at: row.get(6).unwrap(),
-        created_at: row.get(7).unwrap(),
-    }
+        email_verified_at: row.get(5)?,
+        approved_at: row.get(6)?,
+        created_at: row.get(7)?,
+    })
 }

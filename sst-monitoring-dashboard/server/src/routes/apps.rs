@@ -54,14 +54,17 @@ pub async fn get_app_functions(
         .filter(|id| !id.is_empty())
         .collect();
 
-    // Fetch details for each Lambda function found in the stack
-    let mut functions = Vec::new();
-    for function_name in &lambda_physical_ids {
-        match lambda::get_function(&clients.lambda, function_name).await {
-            Ok(info) => functions.push(info),
-            Err(_) => continue, // Skip functions that can't be described
-        }
-    }
+    // Fetch details for each Lambda function in parallel
+    let futures: Vec<_> = lambda_physical_ids
+        .iter()
+        .map(|name| lambda::get_function(&clients.lambda, name))
+        .collect();
+
+    let results = futures::future::join_all(futures).await;
+    let functions: Vec<FunctionInfo> = results
+        .into_iter()
+        .filter_map(|r| r.ok())
+        .collect();
 
     Ok(Json(functions))
 }

@@ -5,11 +5,22 @@ use axum::{
 };
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use std::env;
+use std::sync::Once;
 
 use crate::models::auth::{Claims, UserRole};
 
+static JWT_SECRET_WARN: Once = Once::new();
+
 fn jwt_secret() -> String {
-    env::var("JWT_SECRET").unwrap_or_else(|_| "sst-monitor-default-secret-change-me".to_string())
+    match env::var("JWT_SECRET") {
+        Ok(secret) => secret,
+        Err(_) => {
+            JWT_SECRET_WARN.call_once(|| {
+                tracing::warn!("JWT_SECRET not set! Using insecure default. Set JWT_SECRET env var for production.");
+            });
+            "sst-monitor-default-secret-change-me".to_string()
+        }
+    }
 }
 
 pub fn create_token(user_id: &str, email: &str, role: &UserRole) -> Result<String, String> {
