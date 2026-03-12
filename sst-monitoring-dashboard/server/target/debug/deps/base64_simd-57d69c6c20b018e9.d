@@ -1,0 +1,14 @@
+/home/user/remote/sst-monitoring-dashboard/server/target/debug/deps/base64_simd-57d69c6c20b018e9.d: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/lib.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/error.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/alsw.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/ascii.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/check.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/decode.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/encode.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/multiversion.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/heap.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/forgiving.rs
+
+/home/user/remote/sst-monitoring-dashboard/server/target/debug/deps/libbase64_simd-57d69c6c20b018e9.rmeta: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/lib.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/error.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/alsw.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/ascii.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/check.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/decode.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/encode.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/multiversion.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/heap.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/forgiving.rs
+
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/lib.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/error.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/alsw.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/ascii.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/check.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/decode.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/encode.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/multiversion.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/heap.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-simd-0.8.0/src/forgiving.rs:
