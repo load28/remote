@@ -26,18 +26,16 @@ pub async fn list_log_groups(
             .await
             .map_err(|e| format!("Failed to list log groups: {e}"))?;
 
-        if let Some(log_groups) = resp.log_groups {
-            for lg in log_groups {
-                groups.push(LogGroup {
-                    name: lg.log_group_name().unwrap_or_default().to_string(),
-                    arn: lg.arn().unwrap_or_default().to_string(),
-                    stored_bytes: lg.stored_bytes().unwrap_or(0),
-                    retention_days: lg.retention_in_days(),
-                });
-            }
+        for lg in resp.log_groups() {
+            groups.push(LogGroup {
+                name: lg.log_group_name().unwrap_or_default().to_string(),
+                arn: lg.arn().unwrap_or_default().to_string(),
+                stored_bytes: lg.stored_bytes().unwrap_or(0),
+                retention_days: lg.retention_in_days(),
+            });
         }
 
-        next_token = resp.next_token;
+        next_token = resp.next_token().map(|s| s.to_string());
         if next_token.is_none() {
             break;
         }

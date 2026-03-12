@@ -126,28 +126,26 @@ pub async fn list_stack_resources(
             .await
             .map_err(|e| format!("Failed to list resources: {e}"))?;
 
-        if let Some(summaries) = resp.stack_resource_summaries {
-            for summary in summaries {
-                resources.push(SstResource {
-                    logical_id: summary.logical_resource_id().unwrap_or_default().to_string(),
-                    physical_id: summary
-                        .physical_resource_id()
+        for summary in resp.stack_resource_summaries() {
+            resources.push(SstResource {
+                logical_id: summary.logical_resource_id().unwrap_or_default().to_string(),
+                physical_id: summary
+                    .physical_resource_id()
+                    .unwrap_or_default()
+                    .to_string(),
+                resource_type: summary.resource_type().unwrap_or_default().to_string(),
+                status: summary
+                    .resource_status()
+                    .map(|s| format!("{s:?}"))
+                    .unwrap_or_default(),
+                last_updated: summary.last_updated_timestamp().map(|t| {
+                    t.fmt(aws_sdk_cloudformation::primitives::DateTimeFormat::DateTime)
                         .unwrap_or_default()
-                        .to_string(),
-                    resource_type: summary.resource_type().unwrap_or_default().to_string(),
-                    status: summary
-                        .resource_status()
-                        .map(|s| format!("{s:?}"))
-                        .unwrap_or_default(),
-                    last_updated: summary.last_updated_timestamp().map(|t| {
-                        t.fmt(aws_sdk_cloudformation::primitives::DateTimeFormat::DateTime)
-                            .unwrap_or_default()
-                    }),
-                });
-            }
+                }),
+            });
         }
 
-        next_token = resp.next_token;
+        next_token = resp.next_token().map(|s| s.to_string());
         if next_token.is_none() {
             break;
         }

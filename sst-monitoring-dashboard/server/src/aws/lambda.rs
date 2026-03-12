@@ -22,30 +22,28 @@ pub async fn list_functions(
             .await
             .map_err(|e| format!("Failed to list functions: {e}"))?;
 
-        if let Some(fns) = resp.functions {
-            for f in fns {
-                let name = f.function_name().unwrap_or_default();
+        for f in resp.functions() {
+            let name = f.function_name().unwrap_or_default();
 
-                if let Some(p) = prefix {
-                    if !name.starts_with(p) {
-                        continue;
-                    }
+            if let Some(p) = prefix {
+                if !name.starts_with(p) {
+                    continue;
                 }
-
-                functions.push(FunctionInfo {
-                    function_name: name.to_string(),
-                    runtime: f.runtime().map(|r| format!("{r:?}")),
-                    memory_size: f.memory_size(),
-                    timeout: f.timeout(),
-                    last_modified: f.last_modified().map(|s| s.to_string()),
-                    code_size: f.code_size(),
-                    handler: f.handler().map(|s| s.to_string()),
-                    log_group: format!("/aws/lambda/{name}"),
-                });
             }
+
+            functions.push(FunctionInfo {
+                function_name: name.to_string(),
+                runtime: f.runtime().map(|r| format!("{r:?}")),
+                memory_size: f.memory_size(),
+                timeout: f.timeout(),
+                last_modified: f.last_modified().map(|s| s.to_string()),
+                code_size: f.code_size(),
+                handler: f.handler().map(|s| s.to_string()),
+                log_group: format!("/aws/lambda/{name}"),
+            });
         }
 
-        marker = resp.next_marker;
+        marker = resp.next_marker().map(|s| s.to_string());
         if marker.is_none() {
             break;
         }
