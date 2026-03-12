@@ -1,4 +1,21 @@
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
+
+/// Application error type that returns proper HTTP status codes.
+pub struct AppError(pub String);
+
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        (StatusCode::INTERNAL_SERVER_ERROR, self.0).into_response()
+    }
+}
+
+impl From<String> for AppError {
+    fn from(s: String) -> Self {
+        AppError(s)
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SstApp {
@@ -48,6 +65,11 @@ pub struct LogQuery {
     pub end_time: Option<i64>,
     pub filter_pattern: Option<String>,
     pub limit: Option<i32>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LogGroupQuery {
+    pub log_group: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

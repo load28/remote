@@ -37,8 +37,8 @@ async fn main() {
     let app = Router::new()
         // App/Stack endpoints
         .route("/api/apps", get(routes::apps::list_apps))
-        .route("/api/apps/{stack_name}/resources", get(routes::apps::get_app_resources))
-        .route("/api/apps/{stack_name}/functions", get(routes::apps::get_app_functions))
+        .route("/api/apps/:stack_name/resources", get(routes::apps::get_app_resources))
+        .route("/api/apps/:stack_name/functions", get(routes::apps::get_app_functions))
         // Log endpoints
         .route("/api/logs/groups", get(routes::logs::list_log_groups))
         .route("/api/logs/events", get(routes::logs::get_logs))

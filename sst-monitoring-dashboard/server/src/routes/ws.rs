@@ -42,7 +42,7 @@ async fn handle_socket(socket: WebSocket, clients: AwsClients) {
     let (stop_tx, stop_rx) = tokio::sync::watch::channel(false);
 
     // Task to forward messages from channel to WebSocket
-    let send_task = tokio::spawn(async move {
+    let mut send_task = tokio::spawn(async move {
         while let Some(msg) = rx.recv().await {
             if sender.send(Message::Text(msg.into())).await.is_err() {
                 break;
@@ -52,7 +52,7 @@ async fn handle_socket(socket: WebSocket, clients: AwsClients) {
 
     // Handle incoming messages from client
     let clients_clone = clients.clone();
-    let recv_task = tokio::spawn(async move {
+    let mut recv_task = tokio::spawn(async move {
         let mut tail_handle: Option<tokio::task::JoinHandle<()>> = None;
 
         while let Some(Ok(msg)) = receiver.next().await {
@@ -162,9 +162,13 @@ async fn handle_socket(socket: WebSocket, clients: AwsClients) {
         }
     });
 
-    // Wait for either task to finish
+    // Wait for either task to finish, then abort the other
     tokio::select! {
-        _ = send_task => {},
-        _ = recv_task => {},
+        _ = &mut send_task => {
+            recv_task.abort();
+        },
+        _ = &mut recv_task => {
+            send_task.abort();
+        },
     }
 }

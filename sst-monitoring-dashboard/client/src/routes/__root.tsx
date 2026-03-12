@@ -1,11 +1,13 @@
+/// <reference types="vite/client" />
 import {
   Outlet,
-  ScrollRestoration,
+  HeadContent,
+  Scripts,
   createRootRoute,
 } from "@tanstack/react-router";
-import { Meta, Scripts } from "@tanstack/start";
 import type { ReactNode } from "react";
 import { Sidebar } from "../components/Sidebar";
+import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -15,6 +17,7 @@ export const Route = createRootRoute({
       { title: "SST Monitor - Deployment Dashboard" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
@@ -41,11 +44,10 @@ function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
-        <Meta />
+        <HeadContent />
       </head>
       <body>
         {children}
-        <ScrollRestoration />
         <Scripts />
       </body>
     </html>

@@ -105,8 +105,7 @@ pub async fn tail_log_events(
     let mut req = client
         .filter_log_events()
         .log_group_name(log_group)
-        .limit(50)
-        .interleaved(true);
+        .limit(50);
 
     if let Some(token) = next_token {
         req = req.next_token(token);

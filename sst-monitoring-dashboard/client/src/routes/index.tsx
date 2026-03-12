@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { type SstApp, api } from "../lib/api";
 import { StatusBadge } from "../components/StatusBadge";
@@ -202,8 +202,9 @@ function AppsPage() {
 
 function AppCard({ app }: { app: SstApp }) {
   return (
-    <a
-      href={`/apps/${encodeURIComponent(app.stack_name)}`}
+    <Link
+      to="/apps/$stackName"
+      params={{ stackName: app.stack_name }}
       style={{
         display: "block",
         padding: 16,
@@ -311,6 +312,6 @@ function AppCard({ app }: { app: SstApp }) {
           ))}
         </div>
       )}
-    </a>
+    </Link>
   );
 }

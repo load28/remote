@@ -1,12 +1,12 @@
 use axum::{extract::State, extract::Path, Json};
 
 use crate::aws::{cloudformation, lambda, AwsClients};
-use crate::models::{AppQuery, FunctionInfo, SstApp, SstResource};
+use crate::models::{AppError, AppQuery, FunctionInfo, SstApp, SstResource};
 
 pub async fn list_apps(
     State(clients): State<AwsClients>,
     axum::extract::Query(query): axum::extract::Query<AppQuery>,
-) -> Result<Json<Vec<SstApp>>, String> {
+) -> Result<Json<Vec<SstApp>>, AppError> {
     let mut apps =
         cloudformation::list_sst_stacks(&clients.cf, query.stage.as_deref()).await?;
 
@@ -27,7 +27,7 @@ pub async fn list_apps(
 pub async fn get_app_resources(
     State(clients): State<AwsClients>,
     Path(stack_name): Path<String>,
-) -> Result<Json<Vec<SstResource>>, String> {
+) -> Result<Json<Vec<SstResource>>, AppError> {
     let resources = cloudformation::list_stack_resources(&clients.cf, &stack_name).await?;
     Ok(Json(resources))
 }
@@ -35,7 +35,7 @@ pub async fn get_app_resources(
 pub async fn get_app_functions(
     State(clients): State<AwsClients>,
     Path(stack_name): Path<String>,
-) -> Result<Json<Vec<FunctionInfo>>, String> {
+) -> Result<Json<Vec<FunctionInfo>>, AppError> {
     // SST functions typically have prefix: {stage}-{app}-
     let prefix = stack_name
         .rsplit_once('-')

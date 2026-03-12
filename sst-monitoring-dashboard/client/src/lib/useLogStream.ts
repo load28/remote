@@ -21,6 +21,12 @@ export function useLogStream({ logGroup, maxLines = 1000 }: UseLogStreamOptions)
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
+  const logGroupRef = useRef(logGroup);
+  const maxLinesRef = useRef(maxLines);
+
+  // Keep refs in sync
+  logGroupRef.current = logGroup;
+  maxLinesRef.current = maxLines;
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -32,8 +38,10 @@ export function useLogStream({ logGroup, maxLines = 1000 }: UseLogStreamOptions)
       setIsConnected(true);
       setError(null);
 
-      if (logGroup) {
-        ws.send(JSON.stringify({ action: "subscribe", log_group: logGroup }));
+      // Subscribe to current log group on connect
+      const currentGroup = logGroupRef.current;
+      if (currentGroup) {
+        ws.send(JSON.stringify({ action: "subscribe", log_group: currentGroup }));
       }
     };
 
@@ -44,7 +52,7 @@ export function useLogStream({ logGroup, maxLines = 1000 }: UseLogStreamOptions)
         case "logs":
           setLogs((prev) => {
             const newLogs = [...prev, ...msg.data];
-            return newLogs.slice(-maxLines);
+            return newLogs.slice(-maxLinesRef.current);
           });
           break;
         case "subscribed":
@@ -59,6 +67,7 @@ export function useLogStream({ logGroup, maxLines = 1000 }: UseLogStreamOptions)
     ws.onclose = () => {
       setIsConnected(false);
       setIsStreaming(false);
+      wsRef.current = null;
       // Reconnect after 3 seconds
       reconnectTimer.current = setTimeout(connect, 3000);
     };
@@ -66,9 +75,9 @@ export function useLogStream({ logGroup, maxLines = 1000 }: UseLogStreamOptions)
     ws.onerror = () => {
       setError("WebSocket connection error");
     };
-  }, [logGroup, maxLines]);
+  }, []); // No dependencies - stable reference
 
-  // Connect and subscribe when logGroup changes
+  // Connect once on mount
   useEffect(() => {
     connect();
 
@@ -81,11 +90,15 @@ export function useLogStream({ logGroup, maxLines = 1000 }: UseLogStreamOptions)
     };
   }, [connect]);
 
-  // Subscribe to new log group if already connected
+  // Subscribe to new log group when it changes (without reconnecting)
   useEffect(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN && logGroup) {
       setLogs([]);
+      setIsStreaming(false);
       wsRef.current.send(JSON.stringify({ action: "subscribe", log_group: logGroup }));
+    } else if (wsRef.current?.readyState === WebSocket.OPEN && !logGroup) {
+      wsRef.current.send(JSON.stringify({ action: "unsubscribe" }));
+      setIsStreaming(false);
     }
   }, [logGroup]);
 
