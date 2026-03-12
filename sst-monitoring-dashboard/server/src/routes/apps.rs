@@ -1,12 +1,16 @@
 use axum::{extract::Path, extract::State, Json};
 
-use crate::aws::{cloudformation, lambda, AwsClients};
+use crate::app_state::AppState;
+use crate::auth::AuthUser;
+use crate::aws::{cloudformation, lambda};
 use crate::models::{AppError, AppQuery, FunctionInfo, SstApp, SstResource};
 
 pub async fn list_apps(
-    State(clients): State<AwsClients>,
+    State(state): State<AppState>,
+    _auth: AuthUser,
     axum::extract::Query(query): axum::extract::Query<AppQuery>,
 ) -> Result<Json<Vec<SstApp>>, AppError> {
+    let clients = &state.aws;
     let mut apps =
         cloudformation::list_sst_stacks(&clients.cf, query.stage.as_deref()).await?;
 
@@ -25,17 +29,21 @@ pub async fn list_apps(
 }
 
 pub async fn get_app_resources(
-    State(clients): State<AwsClients>,
+    State(state): State<AppState>,
+    _auth: AuthUser,
     Path(stack_name): Path<String>,
 ) -> Result<Json<Vec<SstResource>>, AppError> {
+    let clients = &state.aws;
     let resources = cloudformation::list_stack_resources(&clients.cf, &stack_name).await?;
     Ok(Json(resources))
 }
 
 pub async fn get_app_functions(
-    State(clients): State<AwsClients>,
+    State(state): State<AppState>,
+    _auth: AuthUser,
     Path(stack_name): Path<String>,
 ) -> Result<Json<Vec<FunctionInfo>>, AppError> {
+    let clients = &state.aws;
     // Get Lambda function physical IDs from the stack's resources
     let resources = cloudformation::list_stack_resources(&clients.cf, &stack_name).await?;
 

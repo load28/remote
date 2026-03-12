@@ -1,0 +1,91 @@
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+export interface User {
+  id: string;
+  email: string;
+  role: "admin" | "user";
+  status: "pending_verification" | "pending_approval" | "active" | "rejected";
+  email_verified_at: string | null;
+  approved_at: string | null;
+  created_at: string;
+}
+
+export interface AuthState {
+  token: string | null;
+  user: User | null;
+}
+
+const TOKEN_KEY = "sst_monitor_token";
+
+export function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+async function authFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options?.headers as Record<string, string>),
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+
+  if (res.status === 401) {
+    clearToken();
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
+    throw new Error("Unauthorized");
+  }
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(data.error || `Request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export const authApi = {
+  register: (email: string, password: string) =>
+    authFetch<{ message: string; user: User }>("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+
+  login: (email: string, password: string) =>
+    authFetch<{ token: string; user: User }>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+
+  verifyEmail: (token: string) =>
+    authFetch<{ message: string; user: User }>(`/api/auth/verify-email?token=${encodeURIComponent(token)}`),
+
+  me: () => authFetch<User>("/api/auth/me"),
+
+  // Admin endpoints
+  listUsers: () => authFetch<User[]>("/api/admin/users"),
+
+  approveUser: (userId: string) =>
+    authFetch<{ message: string; user: User }>(`/api/admin/users/${userId}/approve`, {
+      method: "POST",
+    }),
+
+  rejectUser: (userId: string) =>
+    authFetch<{ message: string }>(`/api/admin/users/${userId}/reject`, {
+      method: "POST",
+    }),
+};

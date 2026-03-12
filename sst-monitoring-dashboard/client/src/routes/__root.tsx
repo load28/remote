@@ -4,9 +4,12 @@ import {
   HeadContent,
   Scripts,
   createRootRoute,
+  useRouterState,
+  useNavigate,
 } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Sidebar } from "../components/Sidebar";
+import { type User, authApi, getToken, clearToken } from "../lib/auth";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -27,11 +30,81 @@ export const Route = createRootRoute({
   component: RootComponent,
 });
 
+const PUBLIC_ROUTES = ["/login", "/register", "/verify-email"];
+
 function RootComponent() {
+  const routerState = useRouterState();
+  const navigate = useNavigate();
+  const currentPath = routerState.location.pathname;
+  const [user, setUser] = useState<User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  const isPublicRoute = PUBLIC_ROUTES.some((r) => currentPath.startsWith(r));
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      setAuthChecked(true);
+      if (!isPublicRoute) {
+        navigate({ to: "/login" });
+      }
+      return;
+    }
+
+    authApi
+      .me()
+      .then((u) => {
+        setUser(u);
+        setAuthChecked(true);
+      })
+      .catch(() => {
+        clearToken();
+        setAuthChecked(true);
+        if (!isPublicRoute) {
+          navigate({ to: "/login" });
+        }
+      });
+  }, [currentPath]);
+
+  const handleLogout = () => {
+    clearToken();
+    setUser(null);
+    navigate({ to: "/login" });
+  };
+
+  // Show nothing until auth check completes
+  if (!authChecked) {
+    return (
+      <RootDocument>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
+            color: "var(--text-secondary)",
+          }}
+        >
+          Loading...
+        </div>
+      </RootDocument>
+    );
+  }
+
+  // Public routes - no sidebar
+  if (isPublicRoute) {
+    return (
+      <RootDocument>
+        <Outlet />
+      </RootDocument>
+    );
+  }
+
+  // Protected routes - with sidebar
   return (
     <RootDocument>
       <div style={{ display: "flex", minHeight: "100vh" }}>
-        <Sidebar />
+        <Sidebar user={user} onLogout={handleLogout} />
         <main style={{ flex: 1, marginLeft: 240 }}>
           <Outlet />
         </main>

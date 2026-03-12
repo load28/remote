@@ -1,3 +1,5 @@
+import { clearToken, getToken } from "./auth";
+
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 export interface SstApp {
@@ -50,7 +52,20 @@ async function fetchApi<T>(path: string, params?: Record<string, string>): Promi
     });
   }
 
-  const res = await fetch(url.toString());
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(url.toString(), { headers });
+  if (res.status === 401) {
+    clearToken();
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
+    throw new Error("Unauthorized");
+  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`API error: ${res.status} - ${text}`);
@@ -76,6 +91,7 @@ export const api = {
 };
 
 export function getWsUrl(): string {
+  const token = getToken();
   const base = API_BASE.replace(/^http/, "ws");
-  return `${base}/ws`;
+  return `${base}/ws${token ? `?token=${encodeURIComponent(token)}` : ""}`;
 }
