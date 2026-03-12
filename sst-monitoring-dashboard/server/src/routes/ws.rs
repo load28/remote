@@ -76,9 +76,15 @@ async fn handle_socket(socket: WebSocket, clients: AwsClients) {
                             let mut stop = stop_rx.clone();
 
                             if let Some(log_group) = cmd.log_group {
+                                // Send ACK before starting tail to avoid race
+                                let ack = WsMessage {
+                                    event: "subscribed".to_string(),
+                                    data: serde_json::json!({"log_group": &log_group}),
+                                };
+                                let _ = tx.send(serde_json::to_string(&ack).unwrap()).await;
+
                                 let tail_tx = tx.clone();
                                 let clients = clients_clone.clone();
-                                let log_group_for_ack = log_group.clone();
 
                                 // Start tailing logs
                                 tail_handle = Some(tokio::spawn(async move {
@@ -133,12 +139,6 @@ async fn handle_socket(socket: WebSocket, clients: AwsClients) {
                                         }
                                     }
                                 }));
-
-                                let ack = WsMessage {
-                                    event: "subscribed".to_string(),
-                                    data: serde_json::json!({"log_group": log_group_for_ack}),
-                                };
-                                let _ = tx.send(serde_json::to_string(&ack).unwrap()).await;
                             }
                         }
                         "unsubscribe" => {

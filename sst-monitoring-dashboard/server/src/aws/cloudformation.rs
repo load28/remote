@@ -3,7 +3,8 @@ use aws_sdk_cloudformation::Client;
 use crate::models::{SstApp, SstResource, StackOutput};
 
 /// List all SST-related CloudFormation stacks.
-/// SST stacks typically follow the naming pattern: {stage}-{app}-{stack}
+/// SST v2+ stacks have tags: sst:app, sst:stage.
+/// Falls back to checking for SSTMetadata resource in the stack.
 pub async fn list_sst_stacks(
     client: &Client,
     stage_filter: Option<&str>,
@@ -11,53 +12,33 @@ pub async fn list_sst_stacks(
     let mut apps = Vec::new();
     let mut next_token: Option<String> = None;
 
+    // Step 1: Collect all active stacks
+    let mut candidate_names = Vec::new();
+
     loop {
-        let mut req = client.list_stacks().stack_status_filter(
-            aws_sdk_cloudformation::types::StackStatus::CreateComplete,
-        ).stack_status_filter(
-            aws_sdk_cloudformation::types::StackStatus::UpdateComplete,
-        ).stack_status_filter(
-            aws_sdk_cloudformation::types::StackStatus::UpdateRollbackComplete,
-        ).stack_status_filter(
-            aws_sdk_cloudformation::types::StackStatus::RollbackComplete,
-        );
+        let mut req = client
+            .list_stacks()
+            .stack_status_filter(aws_sdk_cloudformation::types::StackStatus::CreateComplete)
+            .stack_status_filter(aws_sdk_cloudformation::types::StackStatus::UpdateComplete)
+            .stack_status_filter(
+                aws_sdk_cloudformation::types::StackStatus::UpdateRollbackComplete,
+            )
+            .stack_status_filter(aws_sdk_cloudformation::types::StackStatus::RollbackComplete);
 
         if let Some(token) = &next_token {
             req = req.next_token(token);
         }
 
-        let resp = req.send().await.map_err(|e| format!("Failed to list stacks: {e}"))?;
+        let resp = req
+            .send()
+            .await
+            .map_err(|e| format!("Failed to list stacks: {e}"))?;
 
         if let Some(summaries) = resp.stack_summaries {
             for summary in summaries {
-                let stack_name = summary.stack_name().unwrap_or_default();
-
-                // SST v2+ stacks have tags with sst:app, sst:stage
-                // Also detect by naming convention
-                if is_sst_stack(stack_name) {
-                    if let Some(stage) = &stage_filter {
-                        if !stack_name.starts_with(stage) {
-                            continue;
-                        }
-                    }
-
-                    let (app_name, stage) = parse_sst_stack_name(stack_name);
-
-                    apps.push(SstApp {
-                        name: app_name,
-                        stage,
-                        region: String::new(), // filled by caller
-                        stack_name: stack_name.to_string(),
-                        status: summary
-                            .stack_status()
-                            .map(|s| format!("{s:?}"))
-                            .unwrap_or_default(),
-                        last_updated: summary
-                            .last_updated_time()
-                            .or(summary.creation_time())
-                            .map(|t| t.fmt(aws_sdk_cloudformation::primitives::DateTimeFormat::DateTime).unwrap_or_default()),
-                        outputs: Vec::new(),
-                    });
+                let name = summary.stack_name().unwrap_or_default().to_string();
+                if !name.is_empty() {
+                    candidate_names.push(name);
                 }
             }
         }
@@ -68,43 +49,81 @@ pub async fn list_sst_stacks(
         }
     }
 
-    // Enrich with stack details (outputs)
-    for app in &mut apps {
-        if let Ok(details) = get_stack_details(client, &app.stack_name).await {
-            app.outputs = details;
+    // Step 2: Describe each stack to check for SST tags
+    for stack_name in &candidate_names {
+        let resp = match client
+            .describe_stacks()
+            .stack_name(stack_name)
+            .send()
+            .await
+        {
+            Ok(r) => r,
+            Err(_) => continue,
+        };
+
+        let stack = match resp.stacks().first() {
+            Some(s) => s,
+            None => continue,
+        };
+
+        // Check for SST tags: sst:app and sst:stage
+        let tags = stack.tags();
+        let sst_app_tag = tags.iter().find(|t| t.key() == Some("sst:app"));
+        let sst_stage_tag = tags.iter().find(|t| t.key() == Some("sst:stage"));
+
+        let (app_name, stage) = if let (Some(app_tag), Some(stage_tag)) =
+            (sst_app_tag, sst_stage_tag)
+        {
+            (
+                app_tag.value().unwrap_or_default().to_string(),
+                stage_tag.value().unwrap_or_default().to_string(),
+            )
+        } else {
+            // No SST tags - skip this stack (not an SST stack)
+            continue;
+        };
+
+        // Apply stage filter
+        if let Some(filter) = &stage_filter {
+            if stage != *filter {
+                continue;
+            }
         }
+
+        let outputs: Vec<StackOutput> = stack
+            .outputs()
+            .iter()
+            .map(|o| StackOutput {
+                key: o.output_key().unwrap_or_default().to_string(),
+                value: o.output_value().unwrap_or_default().to_string(),
+            })
+            .collect();
+
+        let status = stack
+            .stack_status()
+            .map(|s| format!("{s:?}"))
+            .unwrap_or_default();
+
+        let last_updated = stack
+            .last_updated_time()
+            .or(stack.creation_time())
+            .map(|t| {
+                t.fmt(aws_sdk_cloudformation::primitives::DateTimeFormat::DateTime)
+                    .unwrap_or_default()
+            });
+
+        apps.push(SstApp {
+            name: app_name,
+            stage,
+            region: String::new(), // filled by caller
+            stack_name: stack_name.clone(),
+            status,
+            last_updated,
+            outputs,
+        });
     }
 
     Ok(apps)
-}
-
-async fn get_stack_details(
-    client: &Client,
-    stack_name: &str,
-) -> Result<Vec<StackOutput>, String> {
-    let resp = client
-        .describe_stacks()
-        .stack_name(stack_name)
-        .send()
-        .await
-        .map_err(|e| format!("Failed to describe stack: {e}"))?;
-
-    let outputs = resp
-        .stacks()
-        .first()
-        .map(|stack| {
-            stack
-                .outputs()
-                .iter()
-                .map(|o| StackOutput {
-                    key: o.output_key().unwrap_or_default().to_string(),
-                    value: o.output_value().unwrap_or_default().to_string(),
-                })
-                .collect()
-        })
-        .unwrap_or_default();
-
-    Ok(outputs)
 }
 
 /// List resources within a specific stack
@@ -155,26 +174,4 @@ pub async fn list_stack_resources(
     }
 
     Ok(resources)
-}
-
-fn is_sst_stack(name: &str) -> bool {
-    // SST stacks typically contain "sst" in metadata or follow pattern
-    // Common patterns: {stage}-{app}-{StackName}
-    // We also check for SSTMetadata resource later
-    // For now, use heuristic: contains at least 2 dashes (stage-app-stack)
-    let parts: Vec<&str> = name.split('-').collect();
-    parts.len() >= 2
-}
-
-fn parse_sst_stack_name(name: &str) -> (String, String) {
-    let parts: Vec<&str> = name.split('-').collect();
-    if parts.len() >= 3 {
-        let stage = parts[0].to_string();
-        let app = parts[1..parts.len() - 1].join("-");
-        (app, stage)
-    } else if parts.len() == 2 {
-        (parts[1].to_string(), parts[0].to_string())
-    } else {
-        (name.to_string(), "unknown".to_string())
-    }
 }

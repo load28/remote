@@ -1,4 +1,4 @@
-use axum::{extract::State, extract::Path, Json};
+use axum::{extract::Path, extract::State, Json};
 
 use crate::aws::{cloudformation, lambda, AwsClients};
 use crate::models::{AppError, AppQuery, FunctionInfo, SstApp, SstResource};
@@ -36,12 +36,24 @@ pub async fn get_app_functions(
     State(clients): State<AwsClients>,
     Path(stack_name): Path<String>,
 ) -> Result<Json<Vec<FunctionInfo>>, AppError> {
-    // SST functions typically have prefix: {stage}-{app}-
-    let prefix = stack_name
-        .rsplit_once('-')
-        .map(|(base, _)| format!("{base}-"))
-        .unwrap_or(stack_name.clone());
+    // Get Lambda function physical IDs from the stack's resources
+    let resources = cloudformation::list_stack_resources(&clients.cf, &stack_name).await?;
 
-    let functions = lambda::list_functions(&clients.lambda, Some(&prefix)).await?;
+    let lambda_physical_ids: Vec<String> = resources
+        .iter()
+        .filter(|r| r.resource_type == "AWS::Lambda::Function")
+        .map(|r| r.physical_id.clone())
+        .filter(|id| !id.is_empty())
+        .collect();
+
+    // Fetch details for each Lambda function found in the stack
+    let mut functions = Vec::new();
+    for function_name in &lambda_physical_ids {
+        match lambda::get_function(&clients.lambda, function_name).await {
+            Ok(info) => functions.push(info),
+            Err(_) => continue, // Skip functions that can't be described
+        }
+    }
+
     Ok(Json(functions))
 }

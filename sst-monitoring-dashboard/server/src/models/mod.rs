@@ -1,13 +1,18 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use axum::Json as AxumJson;
 use serde::{Deserialize, Serialize};
 
-/// Application error type that returns proper HTTP status codes.
+/// Application error type that returns proper HTTP status codes with JSON body.
 pub struct AppError(pub String);
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, self.0).into_response()
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            AxumJson(serde_json::json!({ "error": self.0 })),
+        )
+            .into_response()
     }
 }
 

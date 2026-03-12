@@ -74,7 +74,7 @@ export function Sidebar() {
         {navItems.map((item) => {
           const isActive =
             item.to === "/"
-              ? currentPath === "/"
+              ? currentPath === "/" || currentPath.startsWith("/apps")
               : currentPath.startsWith(item.to);
           return (
             <Link

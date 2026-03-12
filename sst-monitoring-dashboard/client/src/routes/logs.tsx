@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { type LogGroup, api } from "../lib/api";
 import { LogViewer } from "../components/LogViewer";
+import { formatBytes } from "../lib/format";
 
 export const Route = createFileRoute("/logs")({
   component: LogsPage,
@@ -161,12 +162,4 @@ function LogsPage() {
       </div>
     </div>
   );
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
-  if (bytes < 1024 * 1024 * 1024)
-    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)}GB`;
 }

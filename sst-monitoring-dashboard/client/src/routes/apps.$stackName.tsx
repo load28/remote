@@ -7,6 +7,7 @@ import {
 } from "../lib/api";
 import { StatusBadge } from "../components/StatusBadge";
 import { LogViewer } from "../components/LogViewer";
+import { formatBytes } from "../lib/format";
 
 export const Route = createFileRoute("/apps/$stackName")({
   component: AppDetailPage,
@@ -350,10 +351,4 @@ function AppDetailPage() {
       </div>
     </div>
   );
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
