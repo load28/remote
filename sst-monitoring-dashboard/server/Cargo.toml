@@ -1,0 +1,19 @@
+[package]
+name = "sst-monitor-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.7", features = ["ws"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tower-http = { version = "0.5", features = ["cors"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+aws-config = { version = "1", features = ["behavior-version-latest"] }
+aws-sdk-cloudformation = "1"
+aws-sdk-cloudwatchlogs = "1"
+aws-sdk-lambda = "1"
+chrono = { version = "0.4", features = ["serde"] }
+futures = "0.3"

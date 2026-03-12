@@ -1,0 +1,10 @@
+/home/user/remote/sst-monitoring-dashboard/server/target/debug/deps/aws_smithy_json-7fcd2445a94be8f2.d: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/lib.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/deserialize.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/deserialize/error.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/deserialize/token.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/escape.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/serialize.rs
+
+/home/user/remote/sst-monitoring-dashboard/server/target/debug/deps/libaws_smithy_json-7fcd2445a94be8f2.rmeta: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/lib.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/deserialize.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/deserialize/error.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/deserialize/token.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/escape.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/serialize.rs
+
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/lib.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/deserialize.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/deserialize/error.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/deserialize/token.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/escape.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-smithy-json-0.62.5/src/serialize.rs:
