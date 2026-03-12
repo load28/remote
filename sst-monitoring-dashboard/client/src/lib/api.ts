@@ -1,6 +1,5 @@
-import { clearToken, getToken } from "./auth";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
+import { getToken } from "./auth";
+import { API_BASE, fetchJson } from "./httpClient";
 
 export interface SstApp {
   name: string;
@@ -44,50 +43,21 @@ export interface FunctionInfo {
   log_group: string;
 }
 
-async function fetchApi<T>(path: string, params?: Record<string, string>): Promise<T> {
-  const url = new URL(path, API_BASE);
-  if (params) {
-    Object.entries(params).forEach(([k, v]) => {
-      if (v) url.searchParams.set(k, v);
-    });
-  }
-
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(url.toString(), { headers });
-  if (res.status === 401) {
-    clearToken();
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
-    }
-    throw new Error("Unauthorized");
-  }
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API error: ${res.status} - ${text}`);
-  }
-  return res.json();
-}
-
 export const api = {
   listApps: (stage?: string) =>
-    fetchApi<SstApp[]>("/api/apps", stage ? { stage } : undefined),
+    fetchJson<SstApp[]>("/api/apps", stage ? { params: { stage } } : undefined),
 
   getResources: (stackName: string) =>
-    fetchApi<SstResource[]>(`/api/apps/${encodeURIComponent(stackName)}/resources`),
+    fetchJson<SstResource[]>(`/api/apps/${encodeURIComponent(stackName)}/resources`),
 
   getFunctions: (stackName: string) =>
-    fetchApi<FunctionInfo[]>(`/api/apps/${encodeURIComponent(stackName)}/functions`),
+    fetchJson<FunctionInfo[]>(`/api/apps/${encodeURIComponent(stackName)}/functions`),
 
   listLogGroups: (prefix?: string) =>
-    fetchApi<LogGroup[]>("/api/logs/groups", prefix ? { log_group: prefix } : undefined),
+    fetchJson<LogGroup[]>("/api/logs/groups", prefix ? { params: { log_group: prefix } } : undefined),
 
   getLogs: (logGroup: string, opts?: { start_time?: string; end_time?: string; filter_pattern?: string; limit?: string }) =>
-    fetchApi<LogEvent[]>("/api/logs/events", { log_group: logGroup, ...opts }),
+    fetchJson<LogEvent[]>("/api/logs/events", { params: { log_group: logGroup, ...opts } }),
 };
 
 export function getWsUrl(): string {

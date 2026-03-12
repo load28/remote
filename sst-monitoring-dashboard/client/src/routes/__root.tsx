@@ -10,6 +10,7 @@ import {
 import { type ReactNode, useEffect, useState } from "react";
 import { Sidebar } from "../components/Sidebar";
 import { type User, authApi, getToken, clearToken } from "../lib/auth";
+import { UnauthorizedError } from "../lib/httpClient";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -41,6 +42,20 @@ function RootComponent() {
 
   const isPublicRoute = PUBLIC_ROUTES.some((r) => currentPath.startsWith(r));
 
+  // Global handler: catch UnauthorizedError from any API call and redirect
+  useEffect(() => {
+    const handleUnauth = (event: PromiseRejectionEvent) => {
+      if (event.reason instanceof UnauthorizedError) {
+        event.preventDefault();
+        clearToken();
+        setUser(null);
+        navigate({ to: "/login" });
+      }
+    };
+    window.addEventListener("unhandledrejection", handleUnauth);
+    return () => window.removeEventListener("unhandledrejection", handleUnauth);
+  }, [navigate]);
+
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -64,7 +79,7 @@ function RootComponent() {
           navigate({ to: "/login" });
         }
       });
-  }, [currentPath]);
+  }, [currentPath, isPublicRoute, navigate]);
 
   const handleLogout = () => {
     clearToken();
