@@ -1,3 +1,5 @@
+pub mod auth;
+
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json as AxumJson;
@@ -80,7 +82,6 @@ pub struct LogGroupQuery {
 #[derive(Debug, Deserialize)]
 pub struct AppQuery {
     pub stage: Option<String>,
-    pub region: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -8,15 +8,32 @@ use axum::{
 use futures::{SinkExt, StreamExt};
 use std::time::Duration;
 
+use crate::app_state::AppState;
+use crate::auth::validate_token;
 use crate::aws::{cloudwatch, AwsClients};
 use crate::models::WsMessage;
+
+#[derive(serde::Deserialize)]
+pub struct WsQuery {
+    pub token: Option<String>,
+}
 
 /// WebSocket handler for real-time log streaming
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
-    State(clients): State<AwsClients>,
+    State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<WsQuery>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| handle_socket(socket, clients))
+    // Validate token from query parameter
+    if let Some(token) = &query.token {
+        if validate_token(token).is_err() {
+            return axum::http::StatusCode::UNAUTHORIZED.into_response();
+        }
+    } else {
+        return axum::http::StatusCode::UNAUTHORIZED.into_response();
+    }
+
+    ws.on_upgrade(move |socket| handle_socket(socket, state.aws)).into_response()
 }
 
 #[derive(serde::Deserialize)]

@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.7", features = ["ws"] }
+axum-extra = { version = "0.9", features = ["typed-header"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -17,3 +18,11 @@ aws-sdk-cloudwatchlogs = "1"
 aws-sdk-lambda = "1"
 chrono = { version = "0.4", features = ["serde"] }
 futures = "0.3"
+# Auth dependencies
+rusqlite = { version = "0.31", features = ["bundled"] }
+bcrypt = "0.15"
+jsonwebtoken = "9"
+lettre = { version = "0.11", features = ["tokio1-native-tls", "builder"] }
+uuid = { version = "1", features = ["v4"] }
+rand = "0.8"
+async-trait = "0.1"

@@ -64,7 +64,13 @@ export function useLogStream({ logGroup, maxLines = 1000 }: UseLogStreamOptions)
     ws.onmessage = (event) => {
       if (!mountedRef.current) return;
 
-      const msg = JSON.parse(event.data);
+      let msg: { event?: string; data?: unknown };
+      try {
+        msg = JSON.parse(event.data);
+      } catch {
+        console.warn("Failed to parse WebSocket message:", event.data);
+        return;
+      }
 
       switch (msg.event) {
         case "connected":
@@ -74,7 +80,7 @@ export function useLogStream({ logGroup, maxLines = 1000 }: UseLogStreamOptions)
           // Set streaming before appending logs to avoid "No logs" flash
           setIsStreaming(true);
           setLogs((prev) => {
-            const newLogs = [...prev, ...msg.data];
+            const newLogs = [...prev, ...(msg.data as LogEvent[])];
             return newLogs.slice(-maxLinesRef.current);
           });
           break;
@@ -82,7 +88,7 @@ export function useLogStream({ logGroup, maxLines = 1000 }: UseLogStreamOptions)
           setIsStreaming(true);
           break;
         case "error":
-          setError(msg.data.message);
+          setError((msg.data as { message: string }).message);
           break;
       }
     };

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type SstApp, api } from "../lib/api";
 import { StatusBadge } from "../components/StatusBadge";
 
@@ -12,8 +12,9 @@ function AppsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stageFilter, setStageFilter] = useState("");
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
-  const fetchApps = async () => {
+  const fetchApps = useCallback(async () => {
     try {
       setLoading(true);
       const data = await api.listApps(stageFilter || undefined);
@@ -24,14 +25,27 @@ function AppsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [stageFilter]);
 
   useEffect(() => {
     fetchApps();
-    // Poll every 10 seconds for updates
-    const interval = setInterval(fetchApps, 10000);
-    return () => clearInterval(interval);
-  }, [stageFilter]);
+    intervalRef.current = setInterval(fetchApps, 10000);
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        clearInterval(intervalRef.current);
+      } else {
+        fetchApps();
+        intervalRef.current = setInterval(fetchApps, 10000);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [fetchApps]);
 
   // Group apps by stage
   const stages = apps.reduce<Record<string, SstApp[]>>((acc, app) => {
