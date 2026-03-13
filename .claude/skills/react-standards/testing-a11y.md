@@ -98,7 +98,14 @@ function isUserResponse(data: unknown): data is UserResponse {
 
 **분류:** NEVER (일반 fetch에 Suspense 기대)
 
-**WHY:** Suspense는 **thrown Promise**를 감지하여 동작한다. `useEffect` 안의 `fetch`는 Promise를 throw하지 않으므로 Suspense fallback이 절대 표시되지 않는다. Suspense 호환 API(`React.lazy`, `use()`, TanStack Query Suspense 모드)만 동작한다.
+**WHY:** Suspense는 **thrown Promise**를 감지하여 동작한다. `useEffect` 안의 `fetch`는 Promise를 throw하지 않으므로 Suspense fallback이 절대 표시되지 않는다. Suspense 호환 API만 동작한다.
+
+**Suspense 호환 API (React 버전별):**
+| API | React 버전 |
+|-----|-----------|
+| `React.lazy()` | 16.6+ |
+| TanStack Query `suspense: true` | 18+ |
+| `use()` hook | **19+** |
 
 ```tsx
 // ❌ BAD: Suspense가 동작하지 않음
@@ -108,15 +115,18 @@ function UserProfile() {
   return <div>{user?.name}</div>; // Suspense fallback 절대 안 보임
 }
 
-// ✅ GOOD: React 19 use() 사용
+// ✅ GOOD (React 19+): use()로 Promise 읽기
 function UserProfile({ userPromise }: { userPromise: Promise<User> }) {
   const user = use(userPromise); // Promise를 throw → Suspense 동작
   return <div>{user.name}</div>;
 }
 
-// ✅ GOOD: React.lazy로 코드 스플리팅
+// ✅ GOOD (React 16.6+): React.lazy로 코드 스플리팅
 const LazyComponent = lazy(() => import('./HeavyComponent'));
 <Suspense fallback={<Skeleton />}><LazyComponent /></Suspense>
+
+// ✅ GOOD (React 18+): TanStack Query Suspense 모드
+const { data } = useSuspenseQuery({ queryKey: ['users'], queryFn: fetchUsers });
 ```
 
 ---
@@ -163,6 +173,8 @@ Integration (적당히): 컴포넌트 + 훅 + API 모킹 조합
 E2E (적게):      핵심 사용자 시나리오 (로그인, 결제 등)
 ```
 
+**검증:** E2E 테스트만으로 비즈니스 로직을 검증하거나, unit 테스트로만 UI 통합을 검증하는 것은 계층이 잘못된 것. 순수 함수/유틸리티에 대한 unit 테스트가 없으면 REJECT.
+
 ---
 
 ## T-08: 사용자 관점 쿼리
@@ -186,6 +198,8 @@ screen.getByTestId('submit-btn')                 // 최후수단: test-id
 **분류:** ALWAYS
 
 **WHY:** 먼저 수정하면 "정말 고쳤는지" 확인할 수 없다. 재현 테스트를 먼저 작성하면: (1) 버그를 정확히 이해하고, (2) 수정 후 테스트가 통과하여 검증되며, (3) 동일 버그의 재발을 영구적으로 방지한다.
+
+**검증:** 버그 수정 PR에 재현 테스트가 없으면 REJECT. 커밋 순서: 재현 테스트(fail) → 수정(pass).
 
 ---
 

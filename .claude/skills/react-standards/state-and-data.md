@@ -128,9 +128,11 @@ function EmailInput({ email, onEmailChange }: {
 
 ## S-06: 함수형 setState 사용
 
-**분류:** ALWAYS
+**분류:** ALWAYS (이전 값 기반 업데이트 시)
 
 **WHY:** React는 이벤트 핸들러 내 setState를 배칭한다. `setState(count + 1)`을 3번 호출하면 3번 모두 같은 `count`를 읽어 결과는 +1이다. 함수형 업데이트 `setState(prev => prev + 1)`은 항상 최신 값을 기반으로 계산한다.
+
+**적용 범위:** 이전 state 값을 기반으로 새 값을 계산하는 경우에 적용한다. 이전 값과 무관하게 새 값을 설정하는 경우(`setState('hello')`, `setState(newUser)`)에는 직접 값 전달이 더 명확하다.
 
 ```tsx
 // ❌ BAD: 직접 값 → 배칭 시 마지막 값만 적용
@@ -154,7 +156,7 @@ const handleClick = () => {
 
 **분류:** NEVER (단일 Context에 모든 상태)
 
-**WHY:** Context Provider의 value가 변경되면 해당 Context를 구독하는 **모든** 컴포넌트가 리렌더된다. `React.memo`도 Context 업데이트는 우회할 수 없다. 하나의 Context에 auth + theme + locale을 넣으면, theme만 바뀌어도 auth를 읽는 컴포넌트까지 리렌더된다.
+**WHY:** Context Provider의 value가 변경되면 해당 Context를 구독하는 **모든** 컴포넌트가 리렌더된다. `React.memo`로 감싸도 Context 업데이트에는 효과가 없다(단, Provider 내부에서 `useMemo`로 children을 메모이제이션하면 Provider의 자식 트리 리렌더를 방지할 수 있다). 하나의 Context에 auth + theme + locale을 넣으면, theme만 바뀌어도 auth를 읽는 컴포넌트까지 리렌더된다.
 
 ```tsx
 // ❌ BAD: 모든 것을 하나의 Context에
@@ -227,7 +229,7 @@ function AppProvider({ children }: PropsWithChildren) {
 
 **분류:** ALWAYS
 
-**WHY:** `useState(expensiveComputation())`은 매 렌더마다 `expensiveComputation()`을 실행한다(결과는 초기화 시에만 사용되지만). 함수를 전달하면 초기 렌더에서만 실행된다.
+**WHY:** `useState(expensiveComputation())`에서 `expensiveComputation()`은 매 렌더마다 호출된다. React는 반환값을 초기 렌더에서만 사용하고 이후 렌더에서는 무시하지만, **함수 호출 자체는 매번 일어나** CPU를 낭비한다. `useState(() => expensiveComputation())`처럼 함수를 전달하면 React가 초기 렌더에서만 이 함수를 호출한다.
 
 ```tsx
 // ❌ BAD: 매 렌더마다 JSON.parse 실행
@@ -265,6 +267,21 @@ useEffect(() => {
 
 **WHY:** ref는 즉시 변경되지만, state는 다음 렌더까지 이전 값을 유지한다. 같은 핸들러에서 setState 후 ref.current를 읽으면 ref는 최신이지만 state는 아직 이전 값이다. 이 차이를 인지하고 사용한다.
 
+```tsx
+// ⚠️ 주의: 같은 핸들러에서 ref와 state의 타이밍 차이
+const countRef = useRef(0);
+const [count, setCount] = useState(0);
+
+const handleClick = () => {
+  countRef.current = 1;           // 즉시 반영
+  setCount(1);                    // 다음 렌더까지 대기
+  console.log(countRef.current);  // 1 (최신)
+  console.log(count);             // 0 (아직 이전 값)
+};
+```
+
+**검증:** 같은 핸들러 내에서 setState 직후 해당 state 값을 읽어 로직에 사용하는 코드가 있으면, 함수형 업데이트(S-06) 또는 ref 기반으로 전환 필요.
+
 ---
 
 ## S-13: controlled vs uncontrolled 택일
@@ -273,6 +290,8 @@ useEffect(() => {
 
 **WHY:** 한 컴포넌트 안에서 controlled(value + onChange)와 uncontrolled(defaultValue + ref)를 혼합하면, 어느 쪽이 진실 소스인지 모호해져 예측 불가능한 동작이 된다. 하나를 선택하고 일관되게 사용한다.
 
+**검증:** 동일 input 요소에 `value`와 `defaultValue`가 동시에 존재하거나, `value` props를 받으면서 내부 useState로 별도 상태를 관리하면 REJECT.
+
 ---
 
 ## S-14: Context Provider value useMemo
@@ -280,6 +299,8 @@ useEffect(() => {
 **분류:** ALWAYS
 
 **WHY:** Provider의 value prop에 매 렌더마다 새 객체를 전달하면, 내용이 동일해도 모든 소비자가 리렌더된다 (참조 불일치). useMemo로 실제 변경 시에만 새 참조를 생성한다. (→ S-07 예시 참조)
+
+**검증:** Context Provider의 `value` prop에 inline 객체(`value={{ user, setUser }}`)가 있으면 `useMemo`로 감싸야 한다.
 
 ---
 

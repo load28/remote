@@ -101,6 +101,8 @@ interface UserCardProps {
 
 **WHY:** 250줄을 넘는 컴포넌트 파일은 높은 확률로 여러 관심사를 혼합하고 있다. 커스텀 훅 추출, 하위 컴포넌트 분리, 비즈니스 로직 추출을 통해 줄인다.
 
+**검증:** `wc -l`로 파일 줄 수 확인. 250줄 초과 시 분리 필요.
+
 ---
 
 ## C-06: 불필요한 wrapper div 금지
@@ -126,6 +128,8 @@ return (
   </>
 );
 ```
+
+**검증:** 스타일/레이아웃/시맨틱 역할 없이 단순히 복수 자식을 감싸기 위한 `<div>`가 있으면 Fragment로 교체.
 
 ---
 
@@ -153,6 +157,8 @@ function UserListPage() {                    // 조합만 담당
   );
 }
 ```
+
+**검증:** 컴포넌트 역할을 "~하고(and) ~하는" 없이 한 문장으로 설명할 수 없으면 분리 필요.
 
 ---
 
@@ -185,6 +191,8 @@ function UserListPage() {                    // 조합만 담당
 </Card>
 ```
 
+**검증:** 컴포넌트에 `renderXxx`, `xxxContent`, `xxxIcon` 같은 슬롯 props가 3개 이상이면 합성으로 전환 검토.
+
 ---
 
 ## C-09: Compound Component 패턴
@@ -214,13 +222,49 @@ function UserListPage() {                    // 조합만 담당
 
 **WHY:** 파일당 하나의 exported 컴포넌트를 유지하면, 파일명으로 컴포넌트를 찾을 수 있고, 코드 스플리팅이 자연스럽다. 내부 헬퍼 컴포넌트(export하지 않는)는 같은 파일에 둘 수 있다.
 
+**예외:** Compound Component 패턴(C-09)에서 `ParentComponent.SubComponent` 형태로 서브 컴포넌트를 부모에 할당하는 경우, 파일에서 부모만 export하고 서브 컴포넌트는 부모의 프로퍼티로 노출한다.
+
+**검증:** 한 파일에서 2개 이상의 `export function`/`export const` 컴포넌트가 있으면 분리 필요 (Compound Component 제외).
+
 ---
 
 ## C-11: 외부 라이브러리 래퍼
 
 **분류:** ALWAYS
 
-**WHY:** UI 라이브러리(DatePicker, Toast 등)를 직접 사용하면 라이브러리 교체 시 사용처 전체를 수정해야 한다. 래퍼 컴포넌트를 통해 도메인 인터페이스로 변환한다. (→ A-09 Anti-Corruption Layer 참조)
+**WHY:** UI 라이브러리(DatePicker, Toast 등)를 직접 사용하면 라이브러리 교체 시 사용처 전체를 수정해야 한다. 래퍼 컴포넌트를 통해 도메인 인터페이스로 변환한다.
+
+A-09(Anti-Corruption Layer)의 컴포넌트 특화 적용이다. A-09가 HTTP 클라이언트/SDK 등 **서비스 계층** 래핑에 초점을 맞추는 반면, C-11은 **UI 컴포넌트** 래핑에 초점을 맞춘다.
+
+```tsx
+// ❌ BAD: 외부 DatePicker를 직접 사용 (12개 파일에서)
+import { DatePicker } from 'some-datepicker-lib';
+<DatePicker format="YYYY-MM-DD" locale="ko" onChange={...} />
+
+// ✅ GOOD: 래퍼로 격리 — 교체 시 이 파일만 수정
+// src/shared/components/DateInput.tsx
+import { DatePicker } from 'some-datepicker-lib';
+
+export interface DateInputProps {
+  value: Date | null;
+  onChange: (date: Date | null) => void;
+  label?: string;
+}
+
+export function DateInput({ value, onChange, label }: DateInputProps) {
+  return (
+    <DatePicker
+      format="YYYY-MM-DD"
+      locale="ko"
+      value={value}
+      onChange={onChange}
+      aria-label={label}
+    />
+  );
+}
+```
+
+**검증:** 외부 UI 라이브러리 컴포넌트가 2개 이상 파일에서 직접 import되면 래퍼 생성 필요.
 
 ---
 
@@ -280,7 +324,25 @@ const handleClick = useCallback(() => {
 
 **분류:** ALWAYS
 
-**WHY:** → A-02 참조. Feature 간 직접 import 금지, 공유 필요 시 shared/ 추출.
+**WHY:** → A-02 참조. 이 규칙은 컴포넌트 설계 관점에서의 추가 가이드를 제공한다.
+
+**컴포넌트 배치 원칙:**
+- 하나의 feature에서만 사용되는 컴포넌트 → `features/<name>/components/`에 배치
+- 2개 이상 feature에서 사용되는 컴포넌트 → `shared/components/`로 추출
+- Feature 간 통신이 필요하면 → shared 이벤트, Context, 또는 상위 조합 컴포넌트로 해결
+
+```
+// ❌ BAD: feature 내부 컴포넌트를 다른 feature에서 직접 import
+import { UserAvatar } from '@/features/user/components/UserAvatar';
+// features/chat/components/ChatMessage.tsx에서 위와 같이 import
+
+// ✅ GOOD: 공유 컴포넌트로 추출
+import { Avatar } from '@/shared/components/Avatar';
+// 또는 barrel을 통해
+import { UserAvatar } from '@/features/user'; // user feature가 public API로 노출
+```
+
+**검증:** Feature 간 직접 import(`features/A/components/` → `features/B/components/`) 발견 시 REJECT.
 
 ---
 
@@ -290,15 +352,18 @@ const handleClick = useCallback(() => {
 
 **WHY:** React 19에서 다수의 레거시 API와 타입이 제거되었다. 제거된 API를 사용하면 React 19 마이그레이션이 차단되고, 제거 예정 API는 향후 메이저 버전에서 동일한 문제를 야기한다. 현재 권장 패턴으로 대체한다.
 
-### 제거된 기능
+**버전 주의:** 아래 "제거된 기능" 섹션은 **React 19 이상**에 해당한다. React 18 이하를 사용하는 프로젝트에서는 `forwardRef`, `defaultProps` 등이 여전히 유효하다. 프로젝트의 `package.json`에서 React 버전을 반드시 확인한다.
+
+### 제거된 기능 (React 19+)
 
 ```tsx
 // ❌ BAD: forwardRef (React 19에서 불필요 — ref가 일반 prop)
+// ⚠️ React 18 이하에서는 forwardRef가 여전히 필요
 const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
   return <input ref={ref} {...props} />;
 });
 
-// ✅ GOOD: ref를 일반 prop으로 받음
+// ✅ GOOD (React 19+): ref를 일반 prop으로 받음
 function Input({ ref, ...props }: InputProps & { ref?: React.Ref<HTMLInputElement> }) {
   return <input ref={ref} {...props} />;
 }
@@ -383,3 +448,25 @@ function App(props: Props) { ... }
 ```
 
 **참고:** `React.FC`는 제거되지 않았으나, children을 더 이상 암묵적으로 포함하지 않는다. 일반 함수 선언을 권장한다.
+
+### React 19 신규 API (활용 권장)
+
+React 19 이상을 사용하는 프로젝트에서는 다음 새 API를 적극 활용한다:
+
+| API | 용도 | 이전 패턴 |
+|-----|------|-----------|
+| `use()` | Promise/Context 읽기 (조건부 호출 가능) | `useContext` + `useEffect`+`useState` |
+| `useOptimistic()` | 서버 응답 전 낙관적 UI 업데이트 | 수동 optimistic update 로직 |
+| `useFormStatus()` | 폼 제출 상태 (pending 등) | 수동 isSubmitting state |
+| `useActionState()` | 폼 액션 결과 + 에러 상태 관리 | useState + try/catch |
+
+```tsx
+// ✅ React 19: use()로 조건부 Context/Promise 읽기
+function UserProfile({ shouldLoad }: { shouldLoad: boolean }) {
+  if (!shouldLoad) return null;
+  const user = use(userPromise); // 조건부 호출 가능 (useContext와 달리)
+  return <div>{user.name}</div>;
+}
+```
+
+**검증:** `forwardRef`, `defaultProps`, `propTypes`, string ref, `findDOMNode`, `UNSAFE_` lifecycle, Legacy Context, `React.SFC/VFC` 사용 시 REJECT (React 19+).

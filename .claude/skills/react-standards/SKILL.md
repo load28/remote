@@ -100,7 +100,7 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 - [ ] A-03: 느슨한 결합 (컴포넌트 역할 한 문장 설명 가능, "그리고" 없이)
 - [ ] A-04: 높은 응집도 (관련 코드가 같은 모듈에 위치)
 - [ ] A-05: 레이어 분리 (비즈니스 로직이 컴포넌트 밖 순수 함수로 존재)
-- [ ] A-06: 의존성 역전 (third-party SDK 직접 import 없음, 추상에 의존)
+- [ ] A-06: 의존성 역전 (교체 가능성 있는 third-party SDK 직접 import 없음, 추상에 의존)
 - [ ] A-07: 모듈 경계 (barrel file public API만 사용, 내부 경로 import 없음)
 - [ ] A-08: 단방향 데이터 흐름 (props down, events up)
 - [ ] A-09: Anti-Corruption Layer (third-party 라이브러리 래퍼로 격리)
@@ -131,7 +131,7 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 - [ ] C-12: key로 컴포넌트 상태 리셋 (해당 시)
 - [ ] C-13: 클로저 트랩 확인 (오래된 state 캡처 없음)
 - [ ] C-14: Feature 기반 폴더 구조
-- [ ] C-15: React 19 제거 예정/제거된 기능·타입 미사용 (forwardRef, defaultProps, propTypes, string ref, findDOMNode, UNSAFE_ lifecycle, 레거시 Context, React.SFC/VFC)
+- [ ] C-15: React 제거 예정/제거된 기능·타입 미사용 (React 19+: forwardRef, defaultProps, propTypes, string ref, findDOMNode, UNSAFE_ lifecycle, 레거시 Context, React.SFC/VFC)
 
 #### 상태 & 데이터 (S)
 - [ ] S-01: state 직접 변경(mutate) 없음
@@ -139,7 +139,7 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 - [ ] S-03: 파생 가능한 값 state 미저장
 - [ ] S-04: 수동 fetch 패턴 미사용 (TanStack Query/SWR 사용)
 - [ ] S-05: props→state 복사 패턴 없음
-- [ ] S-06: 함수형 setState (prev => prev + 1) 사용
+- [ ] S-06: 함수형 setState (이전 값 기반 업데이트 시 prev => prev + 1 사용)
 - [ ] S-07: Context 분리 (단일 Context에 모든 상태 없음)
 - [ ] S-08: 서버 상태 / 클라이언트 상태 분리
 - [ ] S-09: 상태 코로케이션 (사용처 가까이 배치)
@@ -153,9 +153,9 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 
 #### 성능 (P)
 - [ ] P-01: 프로파일링 기반 최적화 (추측 금지)
-- [ ] P-02: 50+ 리스트 가상화 적용
+- [ ] P-02: 대량 리스트 가상화 적용 (스크롤 필요한 50+ 항목)
 - [ ] P-03: 모듈 레벨 기본값 상수 (inline 기본값 금지)
-- [ ] P-04: 삼항 연산자 조건부 렌더 (&& 미사용)
+- [ ] P-04: 삼항 연산자 조건부 렌더 (number/string 조건에서 && 미사용)
 - [ ] P-05: inline style 객체 없음
 - [ ] P-06: barrel file(export *) 미남용
 - [ ] P-07: 요청 워터폴 제거 (Promise.all, 병렬 fetch)

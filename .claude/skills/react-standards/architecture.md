@@ -76,11 +76,6 @@ function Parent() {
   };
 }
 
-// ❌ BAD: 모듈 레벨 mutable 변수로 통신
-let sharedData = {};
-function ComponentA() { sharedData.value = 'hello'; }
-function ComponentB() { return <div>{sharedData.value}</div>; }
-
 // ✅ GOOD: props와 콜백으로만 통신
 function Parent() {
   const [value, setValue] = useState('');
@@ -178,8 +173,10 @@ function OrderSummary({ orderId }: { orderId: string }) {
 
 **WHY:** 커스텀 훅이 Firebase/Supabase 등 특정 SDK를 직접 import하면, 테스트마다 해당 SDK를 모킹해야 하고, 라이브러리 교체 시 모든 훅을 수정해야 한다. 추상(인터페이스)에 의존하면 구현체를 자유롭게 교체할 수 있다.
 
+**적용 범위:** 교체 가능성이 있는 외부 의존성(인증 SDK, HTTP 클라이언트, 스토리지, 분석 등)에 적용한다. React 자체, CSS 프레임워크, 빌드 도구 등 프로젝트의 기반 기술에는 적용하지 않는다. 소규모 프로젝트에서 교체 가능성이 없는 의존성까지 인터페이스화하는 것은 과잉 설계다.
+
 ```tsx
-// ❌ BAD: 특정 구현체에 직접 의존
+// ❌ BAD: 교체 가능성 있는 구현체에 직접 의존 (여러 파일에서)
 import { supabase } from '../lib/supabase';
 
 function useUsers() {
@@ -207,7 +204,7 @@ const supabaseUserRepo: UserRepository = {
 };
 ```
 
-**검증:** 커스텀 훅/서비스가 third-party SDK를 직접 import하면 REJECT.
+**검증:** 교체 가능성이 있는 third-party SDK를 2개 이상 파일에서 직접 import하면 REJECT.
 
 ---
 

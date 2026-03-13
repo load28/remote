@@ -76,20 +76,26 @@ function Button({ onClick }: ButtonProps) {
 
 ## N-04: Boolean is*/has*/can*/should* 접두사
 
-**분류:** ALWAYS
+**분류:** ALWAYS (커스텀 props/state에 적용)
 
-**WHY:** Boolean 값은 접두사 없이 `disabled`, `active`, `loading` 같은 형용사/동사만 사용하면 타입 추론 없이는 boolean인지 string인지 알 수 없다. 접두사로 "예/아니오 질문"임을 명시한다.
+**WHY:** Boolean 값은 접두사 없이 `active`, `loading` 같은 형용사/동사만 사용하면 타입 추론 없이는 boolean인지 string인지 알 수 없다. 접두사로 "예/아니오 질문"임을 명시한다.
+
+**적용 범위:** 커스텀 컴포넌트의 props와 로컬 state에 적용한다. HTML 네이티브 속성(`disabled`, `hidden`, `checked`, `required` 등)은 브라우저 표준이므로 접두사를 붙이지 않는다.
 
 ```tsx
-// ❌ BAD
+// ❌ BAD: 커스텀 props/state에 접두사 없음
 const [loading, setLoading] = useState(false);
 const [admin, setAdmin] = useState(false);
 <Modal visible={true} />
 
-// ✅ GOOD
+// ✅ GOOD: 커스텀 props/state에 접두사
 const [isLoading, setIsLoading] = useState(false);
 const [isAdmin, setIsAdmin] = useState(false);
 <Modal isVisible={true} />
+
+// ✅ OK: HTML 네이티브 속성은 그대로
+<button disabled={isLoading}>저장</button>
+<input required checked={isChecked} />
 
 // 접두사 가이드:
 // is  → 현재 상태   (isLoading, isVisible, isActive)

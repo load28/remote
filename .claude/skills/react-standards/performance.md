@@ -6,13 +6,17 @@
 
 **WHY:** 추측 기반 최적화는 실제 병목이 아닌 곳에 복잡성을 추가한다. React DevTools Profiler, Lighthouse, Chrome Performance 탭으로 실제 병목을 확인한 뒤에만 최적화한다.
 
+**검증:** `useMemo`, `useCallback`, `React.memo`를 추가할 때 프로파일링 데이터(스크린샷, 수치) 없이 "느릴 것 같아서"라는 이유면 REJECT. 단, P-03(모듈 상수), P-05(inline style), S-14(Provider value) 등 구조적으로 항상 적용하는 규칙은 예외.
+
 ---
 
-## P-02: 50+ 리스트 가상화
+## P-02: 대량 리스트 가상화
 
-**분류:** ALWAYS (50개 이상 항목)
+**분류:** ALWAYS (스크롤이 필요한 대량 리스트)
 
 **WHY:** 1000개 항목을 모두 DOM에 렌더하면 수십만 개의 DOM 노드가 생성된다. 가상화(react-window, @tanstack/react-virtual)는 화면에 보이는 항목만 렌더하여 초기 렌더 시간과 메모리 사용량을 90%+ 줄인다.
+
+**적용 기준:** 정확한 임계값은 항목의 복잡도에 따라 다르지만, 일반적 가이드라인으로 **스크롤이 필요한 50개 이상의 리스트**에 적용한다. 단순 텍스트 리스트는 100개까지도 괜찮을 수 있고, 복잡한 카드 UI는 20개부터 성능 이슈가 발생할 수 있다. 의심스러우면 P-01(프로파일링)로 확인한다.
 
 ```tsx
 // ❌ BAD: 1000개 항목 전부 렌더
@@ -67,9 +71,11 @@ function Select({ options = EMPTY_OPTIONS }: { options?: string[] }) {
 
 ## P-04: 삼항 연산자 조건부 렌더
 
-**분류:** NEVER (`&&` 사용)
+**분류:** NEVER (number/string 조건에서 `&&` 사용)
 
-**WHY:** `count && <Component />`에서 count가 `0`이면 React가 falsy 값 `0`을 그대로 렌더한다. `""` 빈 문자열도 마찬가지. 삼항 연산자는 항상 명시적으로 null을 반환한다.
+**WHY:** `count && <Component />`에서 count가 `0`이면 React가 falsy 값 `0`을 그대로 렌더한다. `""` 빈 문자열도 마찬가지. 삼항 연산자는 항상 명시적으로 null을 반환하여 이 함정을 방지한다.
+
+**적용 범위:** `number`, `string`, `null | undefined` 타입이 조건으로 사용될 때 특히 위험하다. 이미 `boolean`임이 보장된 값(`isLoggedIn && <Dashboard />`)에서는 `&&`가 안전하지만, **일관성을 위해 삼항 연산자를 권장**한다.
 
 ```tsx
 // ❌ BAD: count=0일 때 화면에 "0" 렌더됨
@@ -81,6 +87,9 @@ function Select({ options = EMPTY_OPTIONS }: { options?: string[] }) {
 // ✅ GOOD: 삼항 연산자로 명시적 null
 {count > 0 ? <Badge count={count} /> : null}
 {message ? <Alert text={message} /> : null}
+
+// ✅ OK: boolean은 안전하지만 삼항 권장
+{isLoggedIn ? <Dashboard /> : null}
 ```
 
 ---
@@ -177,13 +186,17 @@ function Dashboard() {
 
 **WHY:** Analytics, 광고, 챗봇 등 서드파티 스크립트는 hydration 이후에 로드해야 한다. 메인 스레드를 블로킹하면 LCP, FID 등 Core Web Vitals에 직접적인 악영향을 준다.
 
+**검증:** `<script>` 태그에 `defer`/`async` 없이 서드파티 URL을 로드하면 REJECT. Next.js `<Script strategy="lazyOnload">` 등 프레임워크 기능 활용 권장.
+
 ---
 
 ## P-10: 정적 JSX 모듈 레벨 추출
 
-**분류:** ALWAYS
+**분류:** ALWAYS (React Compiler 미사용 프로젝트)
 
 **WHY:** 렌더 함수 안의 정적 JSX(변하지 않는 구조)도 매 렌더마다 새 React element 객체를 생성한다. 모듈 레벨에 추출하면 동일 참조를 재사용하여 reconciliation을 건너뛸 수 있다.
+
+**참고:** React Compiler(구 React Forget)가 활성화된 프로젝트에서는 컴파일러가 이를 자동으로 최적화하므로 수동 추출이 불필요할 수 있다. 컴파일러 미사용 프로젝트에서는 여전히 유효한 최적화다.
 
 ```tsx
 // ❌ BAD: 매 렌더마다 새 element
