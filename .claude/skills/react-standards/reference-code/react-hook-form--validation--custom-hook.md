@@ -1,148 +1,204 @@
 ---
-tags: [react-hook-form, form, validation, custom-hook, discriminated-union, generic]
-rules: [S-13, T-13, T-14, N-05, A-05, A-09, C-04]
-description: React Hook Form 폼 패턴 — Zod 스키마 검증 + 타입 안전 폼 + 커스텀 훅 분리
+tags: [react-hook-form, form, validation, zod, controlled, custom-hook, generic]
+rules: [S-13, T-14, T-04, A-05, A-09]
+description: React Hook Form 폼 패턴 — Zod input/output 타입 분리, register vs Controller 사용 기준
 ---
 
-```tsx
-// shared/lib/form.ts — React Hook Form + Zod 통합 래퍼 (A-09)
-// ✅ react-hook-form을 직접 import하는 유일한 파일
+## 규칙 1: Zod input/output 타입 분리
 
-import { useForm, UseFormReturn, UseFormProps, FieldValues, Path } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { ZodSchema } from 'zod';
-
-// ✅ 제네릭 래퍼 — Zod 스키마만 전달하면 타입 추론 완료
-export function useZodForm<T extends FieldValues>(
-  schema: ZodSchema<T>,
-  options?: Omit<UseFormProps<T>, 'resolver'>,
-): UseFormReturn<T> {
-  return useForm<T>({
-    resolver: zodResolver(schema),
-    ...options,
-  });
-}
-```
+> HTML 폼 입력은 항상 `string`이다. 그러나 서버에 보내는 값은 `number`, `Date`, `boolean` 등
+> 다양한 타입이다. `z.infer`(= `z.output`)만 사용하면 폼 입력 타입과 제출 타입이 불일치한다.
 
 ```tsx
-// {Feature}/schemas/{feature}Schema.ts — 검증 스키마 (A-05: 비즈니스 로직 분리)
-// ✅ React import 없음 → 순수 스키마 → 서버/클라이언트 공용
-
-import { z } from 'zod';
-
-export const createUserSchema = z.object({
-  name: z
-    .string()
-    .min(2, '이름은 2자 이상이어야 합니다')
-    .max(50, '이름은 50자 이하여야 합니다'),
-  email: z
-    .string()
-    .email('올바른 이메일 형식이 아닙니다'),
-  role: z.enum(['admin', 'member', 'viewer']),
-  bio: z.string().max(200).optional(),
+// ❌ BAD: z.infer만 사용 → 폼 입력 시 string인데 타입은 number
+const schema = z.object({
+  age: z.coerce.number().min(1).max(120),
+  birthDate: z.coerce.date(),
 });
 
-export type CreateUserInput = z.infer<typeof createUserSchema>;
+type FormValues = z.infer<typeof schema>;
+// → { age: number; birthDate: Date }
+// → 하지만 <input> 값은 string → register 시 타입 불일치
+
+// ✅ GOOD: z.input과 z.output을 분리하여 사용
+const schema = z.object({
+  age: z.coerce.number().min(1).max(120),
+  birthDate: z.coerce.date(),
+  isAgree: z.coerce.boolean(),
+});
+
+// 폼 필드 타입 — 사용자가 입력하는 값 (string 기반)
+type FormInput = z.input<typeof schema>;
+// → { age: string; birthDate: string; isAgree: string }
+
+// 제출 결과 타입 — Zod가 변환한 후 값
+type FormOutput = z.output<typeof schema>;
+// → { age: number; birthDate: Date; isAgree: boolean }
 ```
 
 ```tsx
-// {Feature}/hooks/useCreateUserForm.ts — 폼 로직 커스텀 훅 (N-05)
-// ✅ 폼 상태 + 제출 로직을 훅으로 분리 → 컴포넌트는 UI만 담당
+// ✅ GOOD: useForm에 input/output 타입 모두 전달
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
-import { useZodForm } from '@/shared/lib/form';
-import { createUserSchema, CreateUserInput } from '../schemas/userSchema';
-import { useCreateUser } from './useCreateUser'; // TanStack Query mutation
+const form = useForm<FormInput, unknown, FormOutput>({
+  //                 ^^^^^^^^           ^^^^^^^^^^
+  //                 폼 필드 타입        handleSubmit 콜백 파라미터 타입
+  resolver: zodResolver(schema),
+  defaultValues: {
+    age: '',         // ✅ string — FormInput 타입에 맞음
+    birthDate: '',   // ✅ string
+    isAgree: '',     // ✅ string
+  },
+});
 
-export function useCreateUserForm(onSuccess?: () => void) {
-  const form = useZodForm(createUserSchema, {
-    defaultValues: {
-      name: '',
-      email: '',
-      role: 'member',
-      bio: '',
-    },
-  });
-
-  const createUser = useCreateUser();
-
-  const handleSubmit = form.handleSubmit(async (input: CreateUserInput) => {
-    await createUser.mutateAsync(input);
-    form.reset();
-    onSuccess?.();
-  });
-
-  return {
-    form,
-    handleSubmit,
-    isSubmitting: createUser.isPending,
-  };
-}
+// handleSubmit 콜백에서 data는 FormOutput 타입 (변환 완료)
+form.handleSubmit((data) => {
+  data.age;       // number ✅
+  data.birthDate; // Date ✅
+  data.isAgree;   // boolean ✅
+});
 ```
 
 ```tsx
-// {Feature}/components/CreateUserForm.tsx — UI 컴포넌트
-// ✅ 컴포넌트는 렌더링만 담당 — 로직은 훅에 위임 (C-04: props 최소화)
+// ✅ GOOD: z.pipe()로 복잡한 변환 체인
+const priceSchema = z.object({
+  // string → 숫자 추출 → number 검증
+  price: z
+    .string()
+    .transform((val) => val.replace(/[^0-9]/g, ''))
+    .pipe(z.coerce.number().min(0).max(1_000_000)),
 
-import { useCreateUserForm } from '../hooks/useCreateUserForm';
-import { FormField } from '@/shared/components/FormField';
+  // string → Date → 미래 날짜 검증
+  scheduledAt: z
+    .string()
+    .transform((val) => new Date(val))
+    .pipe(z.date().min(new Date(), '미래 날짜만 선택 가능합니다')),
+});
 
-export interface CreateUserFormProps {
-  onSuccess?: () => void;
-}
+type PriceFormInput = z.input<typeof priceSchema>;
+// → { price: string; scheduledAt: string }
 
-export function CreateUserForm({ onSuccess }: CreateUserFormProps) {
-  const { form, handleSubmit, isSubmitting } = useCreateUserForm(onSuccess);
-  const { register, formState: { errors } } = form;
+type PriceFormOutput = z.output<typeof priceSchema>;
+// → { price: number; scheduledAt: Date }
+```
+
+---
+
+## 규칙 2: register vs Controller 사용 기준
+
+> `register` = uncontrolled (DOM 기반, 리렌더 최소).
+> `Controller` = controlled (React state 기반, 리렌더 발생).
+> **기본은 register, 필요할 때만 Controller.**
+
+```
+사용 기준 판단:
+
+1. 네이티브 HTML 요소인가? (<input>, <select>, <textarea>)
+   → YES → register 사용
+
+2. 서드파티 UI 라이브러리 컴포넌트인가? (MUI, Ant Design, React Select 등)
+   → YES → Controller 사용 (ref를 직접 노출하지 않음)
+
+3. 값의 타입이 string이 아닌가? (Slider min/max, Rating 숫자, Color Picker 등)
+   → YES → Controller 사용
+
+4. 다른 필드 값에 따라 동적으로 변하는가?
+   → YES → Controller 사용 (watch + Controller 조합)
+```
+
+```tsx
+// ✅ register — 네이티브 HTML 요소
+function NativeForm() {
+  const { register, formState: { errors } } = useForm<FormInput, unknown, FormOutput>({
+    resolver: zodResolver(schema),
+  });
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
-      <FormField label="이름" error={errors.name?.message}>
-        <input {...register('name')} />
-      </FormField>
-
-      <FormField label="이메일" error={errors.email?.message}>
-        <input type="email" {...register('email')} />
-      </FormField>
-
-      <FormField label="역할" error={errors.role?.message}>
-        <select {...register('role')}>
-          <option value="member">멤버</option>
-          <option value="admin">관리자</option>
-          <option value="viewer">뷰어</option>
-        </select>
-      </FormField>
-
-      <FormField label="소개" error={errors.bio?.message}>
-        <textarea {...register('bio')} />
-      </FormField>
-
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? '생성 중...' : '사용자 생성'}
-      </button>
+    <form>
+      {/* ✅ 네이티브 input → register */}
+      <input {...register('name')} />
+      <input type="email" {...register('email')} />
+      <input type="number" {...register('age')} />
+      <select {...register('role')}>
+        <option value="admin">관리자</option>
+        <option value="member">멤버</option>
+      </select>
+      <textarea {...register('bio')} />
     </form>
   );
 }
 ```
 
 ```tsx
-// shared/components/FormField.tsx — 재사용 폼 필드 래퍼
-// ✅ 시맨틱 HTML + 접근성 (T-11)
+// ✅ Controller — 서드파티 컴포넌트 / 비표준 값 타입
+import { Controller } from 'react-hook-form';
 
-export interface FormFieldProps {
-  label: string;
-  error?: string;
-  children: React.ReactElement;
-}
+function ControllerForm() {
+  const { control, formState: { errors } } = useForm<FormInput, unknown, FormOutput>({
+    resolver: zodResolver(schema),
+  });
 
-export function FormField({ label, error, children }: FormFieldProps) {
   return (
-    <div>
-      <label>
-        {label}
-        {children}
-      </label>
-      {error ? <p role="alert">{error}</p> : null}
-    </div>
+    <form>
+      {/* ✅ 서드파티 DatePicker → Controller */}
+      <Controller
+        name="birthDate"
+        control={control}
+        render={({ field }) => (
+          <DatePicker
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+          />
+        )}
+      />
+
+      {/* ✅ 비표준 값 타입 (number[]) → Controller */}
+      <Controller
+        name="priceRange"
+        control={control}
+        render={({ field }) => (
+          <RangeSlider
+            min={0}
+            max={100}
+            value={field.value}
+            onChange={field.onChange}
+          />
+        )}
+      />
+
+      {/* ✅ 커스텀 토글 (ref 미지원) → Controller */}
+      <Controller
+        name="isPublic"
+        control={control}
+        render={({ field }) => (
+          <ToggleSwitch
+            isChecked={field.value === 'true'}
+            onToggle={(checked) => field.onChange(String(checked))}
+          />
+        )}
+      />
+    </form>
   );
 }
+```
+
+```tsx
+// ❌ BAD: 네이티브 input에 Controller 사용 — 불필요한 리렌더
+<Controller
+  name="name"
+  control={control}
+  render={({ field }) => <input {...field} />}
+/>
+
+// ✅ GOOD: 네이티브 input에는 register
+<input {...register('name')} />
+
+// ❌ BAD: 같은 필드에 register + Controller 동시 사용 — 이중 등록 에러
+<Controller
+  name="email"
+  control={control}
+  render={({ field }) => <input {...field} {...register('email')} />}
+/>
 ```
