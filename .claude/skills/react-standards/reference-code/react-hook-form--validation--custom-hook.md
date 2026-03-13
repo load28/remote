@@ -1,7 +1,7 @@
 ---
 tags: [react-hook-form, form, validation, zod, controlled, custom-hook, generic]
-rules: [S-13, T-14, T-04, A-05, A-09]
-description: React Hook Form 폼 패턴 — Zod input/output 타입 분리, register vs Controller 사용 기준
+rules: [S-13, T-14, T-04, A-05, A-09, S-01]
+description: React Hook Form 폼 패턴 — Zod input/output 타입 분리, register vs Controller 사용 기준, watch 조건부 필드, useFieldArray, 서버 에러 핸들링
 ---
 
 ## 규칙 1: Zod input/output 타입 분리
@@ -201,4 +201,385 @@ function ControllerForm() {
   control={control}
   render={({ field }) => <input {...field} {...register('email')} />}
 />
+```
+
+---
+
+## 규칙 3: watch + 조건부 필드
+
+> `watch`는 구독한 필드가 변경될 때마다 리렌더를 발생시킨다.
+> 전체 `watch()`가 아닌 **특정 필드만 구독**하여 리렌더 범위를 최소화한다.
+> 조건부 스키마는 Zod의 `discriminatedUnion` 또는 `superRefine`으로 처리한다.
+
+```tsx
+// ❌ BAD: watch() 전체 구독 → 어떤 필드든 변경되면 리렌더
+const allValues = watch(); // 모든 필드 변경에 반응
+
+// ❌ BAD: 조건부 필드의 검증을 컴포넌트에서 수동 처리
+const type = watch('type');
+if (type === 'business' && !getValues('companyName')) {
+  setError('companyName', { message: '필수' });
+}
+
+// ✅ GOOD: 특정 필드만 구독
+const accountType = watch('accountType');
+
+// ✅ GOOD: 조건부 검증은 Zod 스키마에서 처리 (A-05: 비즈니스 로직 분리)
+const accountSchema = z.discriminatedUnion('accountType', [
+  z.object({
+    accountType: z.literal('personal'),
+    name: z.string().min(1),
+    email: z.string().email(),
+  }),
+  z.object({
+    accountType: z.literal('business'),
+    name: z.string().min(1),
+    email: z.string().email(),
+    companyName: z.string().min(1, '회사명은 필수입니다'),
+    taxId: z.string().regex(/^\d{3}-\d{2}-\d{5}$/, '사업자등록번호 형식'),
+  }),
+]);
+
+type AccountInput = z.input<typeof accountSchema>;
+type AccountOutput = z.output<typeof accountSchema>;
+```
+
+```tsx
+// ✅ GOOD: 조건부 필드 렌더링
+function AccountForm() {
+  const { register, watch, control, formState: { errors } } =
+    useForm<AccountInput, unknown, AccountOutput>({
+      resolver: zodResolver(accountSchema),
+      defaultValues: { accountType: 'personal', name: '', email: '' },
+    });
+
+  // ✅ 특정 필드만 구독 — accountType 변경 시에만 리렌더
+  const accountType = watch('accountType');
+
+  return (
+    <form>
+      <select {...register('accountType')}>
+        <option value="personal">개인</option>
+        <option value="business">사업자</option>
+      </select>
+
+      <input {...register('name')} />
+      <input type="email" {...register('email')} />
+
+      {/* ✅ 조건부 렌더 — accountType에 따라 추가 필드 */}
+      {accountType === 'business' ? (
+        <>
+          <input {...register('companyName')} placeholder="회사명" />
+          {errors.companyName ? <p role="alert">{errors.companyName.message}</p> : null}
+
+          <input {...register('taxId')} placeholder="000-00-00000" />
+          {errors.taxId ? <p role="alert">{errors.taxId.message}</p> : null}
+        </>
+      ) : null}
+    </form>
+  );
+}
+```
+
+---
+
+## 규칙 4: 서버 에러 → setError 매핑
+
+> 서버 검증 에러는 `setError`로 필드에 매핑한다.
+> 필드 특정 에러와 글로벌 에러를 분리한다 (`root` 키 활용).
+
+```tsx
+// ❌ BAD: 서버 에러를 별도 state로 관리 → 폼 에러와 이원화
+const [serverError, setServerError] = useState<string | null>(null);
+
+const onSubmit = async (data: FormOutput) => {
+  try {
+    await createUser(data);
+  } catch (err) {
+    setServerError('서버 오류가 발생했습니다'); // 폼 에러 시스템 밖에서 관리
+  }
+};
+
+// ✅ GOOD: setError로 폼 에러 시스템에 통합
+interface ServerValidationError {
+  field: string;
+  message: string;
+}
+
+const onSubmit = form.handleSubmit(async (data) => {
+  try {
+    await createUser.mutateAsync(data);
+    form.reset();
+  } catch (error) {
+    if (isValidationError(error)) {
+      // ✅ 필드별 에러 매핑
+      error.errors.forEach(({ field, message }) => {
+        if (isFieldName(field)) {
+          form.setError(field, { type: 'server', message });
+        }
+      });
+    } else {
+      // ✅ 글로벌 에러는 root에 설정
+      form.setError('root', {
+        type: 'server',
+        message: '서버 오류가 발생했습니다. 다시 시도해주세요.',
+      });
+    }
+  }
+});
+```
+
+```tsx
+// ✅ GOOD: 글로벌 에러 표시
+function UserForm() {
+  const { formState: { errors } } = form;
+
+  return (
+    <form onSubmit={onSubmit}>
+      {/* ✅ 글로벌 에러 (root) 표시 */}
+      {errors.root ? (
+        <div role="alert">{errors.root.message}</div>
+      ) : null}
+
+      {/* 필드별 에러는 각 필드 옆에 표시 */}
+      <input {...form.register('email')} />
+      {errors.email ? <p role="alert">{errors.email.message}</p> : null}
+    </form>
+  );
+}
+```
+
+---
+
+## 규칙 5: useFieldArray — 동적 필드 배열
+
+> 반복 필드(항목 추가/삭제)는 `useFieldArray`를 사용한다.
+> 배열 항목의 key는 useFieldArray가 제공하는 `field.id`를 사용한다 (인덱스 key 금지 — C-03).
+> 배열 직접 변경(mutate) 금지 — `append`, `remove`, `move` 등 제공 메서드만 사용한다 (S-01).
+
+```tsx
+// 스키마 — 배열 필드 포함
+const orderSchema = z.object({
+  customerName: z.string().min(1),
+  items: z
+    .array(
+      z.object({
+        productName: z.string().min(1, '상품명 필수'),
+        quantity: z.coerce.number().min(1, '1개 이상'),
+        unitPrice: z.coerce.number().min(0),
+      }),
+    )
+    .min(1, '최소 1개 항목이 필요합니다'),
+});
+
+type OrderInput = z.input<typeof orderSchema>;
+type OrderOutput = z.output<typeof orderSchema>;
+```
+
+```tsx
+// ✅ GOOD: useFieldArray 사용
+import { useForm, useFieldArray } from 'react-hook-form';
+
+function OrderForm() {
+  const form = useForm<OrderInput, unknown, OrderOutput>({
+    resolver: zodResolver(orderSchema),
+    defaultValues: {
+      customerName: '',
+      items: [{ productName: '', quantity: '', unitPrice: '' }],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'items',
+  });
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <input {...form.register('customerName')} />
+
+      {fields.map((field, index) => (
+        // ✅ field.id를 key로 사용 (C-03: 인덱스 key 금지)
+        <div key={field.id}>
+          <input {...form.register(`items.${index}.productName`)} />
+          {form.formState.errors.items?.[index]?.productName ? (
+            <p role="alert">
+              {form.formState.errors.items[index].productName.message}
+            </p>
+          ) : null}
+
+          <input type="number" {...form.register(`items.${index}.quantity`)} />
+          <input type="number" {...form.register(`items.${index}.unitPrice`)} />
+
+          {/* ✅ 최소 1개 유지 */}
+          {fields.length > 1 ? (
+            <button type="button" onClick={() => remove(index)}>삭제</button>
+          ) : null}
+        </div>
+      ))}
+
+      {/* ✅ append로 추가 — 직접 push 금지 (S-01) */}
+      <button
+        type="button"
+        onClick={() => append({ productName: '', quantity: '', unitPrice: '' })}
+      >
+        항목 추가
+      </button>
+
+      {/* 배열 레벨 에러 */}
+      {form.formState.errors.items?.root ? (
+        <p role="alert">{form.formState.errors.items.root.message}</p>
+      ) : null}
+    </form>
+  );
+}
+```
+
+```tsx
+// ❌ BAD: 배열 직접 조작 (S-01 위반)
+const addItem = () => {
+  const current = form.getValues('items');
+  current.push({ productName: '', quantity: '', unitPrice: '' }); // 직접 변경
+  form.setValue('items', current);
+};
+
+// ❌ BAD: 인덱스를 key로 사용 (C-03 위반)
+{fields.map((field, index) => (
+  <div key={index}> {/* 삭제/정렬 시 상태 불일치 */}
+    ...
+  </div>
+))}
+
+// ✅ GOOD: useFieldArray 메서드 사용
+append({ productName: '', quantity: '', unitPrice: '' }); // 추가
+remove(index);                                            // 삭제
+move(fromIndex, toIndex);                                 // 순서 변경
+update(index, newValue);                                  // 특정 항목 업데이트
+```
+
+---
+
+## 규칙 6: React Hook Form 사용 시 유의사항
+
+### 6-1. defaultValues 필수 설정
+
+> `defaultValues`를 생략하면 dirty 체크, reset, 조건부 렌더링이 예측 불가능하게 동작한다.
+> **모든 필드의 defaultValues를 명시적으로 설정한다.**
+
+```tsx
+// ❌ BAD: defaultValues 생략 → isDirty, reset 오동작
+const form = useForm<FormInput, unknown, FormOutput>({
+  resolver: zodResolver(schema),
+  // defaultValues 없음 → 필드 값이 undefined → isDirty 항상 false
+});
+
+// ❌ BAD: 일부 필드만 설정 → 누락된 필드는 undefined
+const form = useForm<FormInput, unknown, FormOutput>({
+  resolver: zodResolver(schema),
+  defaultValues: {
+    name: '',
+    // email 누락 → reset() 시 email이 undefined가 됨
+  },
+});
+
+// ✅ GOOD: 모든 필드 명시
+const form = useForm<FormInput, unknown, FormOutput>({
+  resolver: zodResolver(schema),
+  defaultValues: {
+    name: '',
+    email: '',
+    role: 'member',
+    bio: '',
+  },
+});
+```
+
+### 6-2. 언마운트된 필드의 상태 소실
+
+> React Hook Form은 DOM 기반 — 필드가 언마운트되면 상태가 사라진다.
+> 모달/탭 전환 시 필드가 사라지면 값도 사라진다.
+
+```tsx
+// ❌ BAD: 탭 전환 시 언마운트 → 이전 탭 입력값 소실
+function TabbedForm() {
+  const [tab, setTab] = useState('basic');
+  const form = useForm();
+
+  return (
+    <>
+      {tab === 'basic' ? (
+        <input {...form.register('name')} />    // 탭 전환 시 언마운트 → 값 소실
+      ) : null}
+      {tab === 'detail' ? (
+        <input {...form.register('bio')} />
+      ) : null}
+    </>
+  );
+}
+
+// ✅ GOOD: shouldUnregister: false (기본값) 유지 + CSS로 숨김
+function TabbedForm() {
+  const [tab, setTab] = useState('basic');
+  const form = useForm();
+
+  return (
+    <>
+      {/* display:none으로 숨김 — DOM에 유지되어 상태 보존 */}
+      <div style={{ display: tab === 'basic' ? 'block' : 'none' }}>
+        <input {...form.register('name')} />
+      </div>
+      <div style={{ display: tab === 'detail' ? 'block' : 'none' }}>
+        <input {...form.register('bio')} />
+      </div>
+    </>
+  );
+}
+```
+
+### 6-3. mode 설정 — 검증 타이밍 선택
+
+> 기본 mode는 `'onSubmit'` — 제출 시에만 검증한다.
+> 실시간 피드백이 필요하면 `mode`를 명시적으로 설정한다.
+
+```
+mode 옵션:
+  'onSubmit'  — 제출 시에만 검증 (기본값, 가장 가벼움)
+  'onBlur'    — 필드에서 포커스 아웃 시 검증 (권장: 성능과 UX 균형)
+  'onChange'  — 타이핑마다 검증 (리렌더 많음 — 필요한 경우만)
+  'onTouched' — 첫 blur 이후부터 onChange로 검증
+  'all'       — onBlur + onChange 동시 (가장 무거움)
+```
+
+```tsx
+// ✅ GOOD: 대부분의 폼에 권장 — 블러 시 검증
+const form = useForm<FormInput, unknown, FormOutput>({
+  resolver: zodResolver(schema),
+  mode: 'onBlur',
+  defaultValues: { ... },
+});
+```
+
+### 6-4. formState 구독 최적화
+
+> `formState`는 Proxy 기반 — 접근한 프로퍼티만 구독한다.
+> 구조 분해 위치에 따라 리렌더 범위가 달라진다.
+
+```tsx
+// ❌ BAD: formState 전체를 구조 분해 → 모든 상태 변경에 리렌더
+const { formState } = useForm();
+const { errors, isDirty, isValid, isSubmitting, touchedFields, dirtyFields } = formState;
+// errors만 필요해도 isDirty 변경 시에도 리렌더
+
+// ✅ GOOD: 필요한 프로퍼티만 접근
+const { formState: { errors } } = useForm(); // errors 변경 시에만 리렌더
+
+// ✅ GOOD: 제출 버튼에서 isSubmitting만 필요한 경우
+function SubmitButton({ form }: { form: UseFormReturn }) {
+  const { isSubmitting } = form.formState; // isSubmitting만 구독
+  return (
+    <button type="submit" disabled={isSubmitting}>
+      {isSubmitting ? '저장 중...' : '저장'}
+    </button>
+  );
+}
 ```
