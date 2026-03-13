@@ -5,7 +5,8 @@
 import { useMemo, useState } from 'react';
 import { ChannelList, useChannels } from '@/features/channel';
 import { MessageList, MessageInput, useMessages, useSendMessage, type MessageAuthor } from '@/features/message';
-import { UserProfile, useUsers, useCurrentUser } from '@/features/user';
+import { UserProfile, useUsers } from '@/features/user';
+import { useAuthStore } from '@/features/auth';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 
 // ✅ P-03: 모듈 레벨 상수
@@ -15,14 +16,15 @@ export function ChatPage() {
   // ✅ S-09: 사용처 가까이 배치
   const [selectedChannelId, setSelectedChannelId] = useState(DEFAULT_CHANNEL_ID);
 
-  const currentUserId = useCurrentUser((s) => s.currentUserId);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentUserId = currentUser?.id ?? '';
   const { data: channels = [] } = useChannels();
   const { data: users = [] } = useUsers();
   const { data: messages = [] } = useMessages(selectedChannelId);
   const sendMessage = useSendMessage(selectedChannelId);
 
   const selectedChannel = channels.find((c) => c.id === selectedChannelId);
-  const currentUser = users.find((u) => u.id === currentUserId);
+  const currentUserDetail = users.find((u) => u.id === currentUserId);
 
   // ✅ A-01: feature 간 의존 제거 — app 레벨에서 User→MessageAuthor 변환
   // ✅ P-14: 객체 의존성 useMemo
@@ -60,7 +62,7 @@ export function ChatPage() {
             />
           </ErrorBoundary>
         </div>
-        {currentUser ? <UserProfile user={currentUser} /> : null}
+        {currentUserDetail ? <UserProfile user={currentUserDetail} /> : null}
       </aside>
 
       {/* 메인 채팅 영역 */}

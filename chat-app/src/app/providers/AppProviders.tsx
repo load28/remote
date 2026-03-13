@@ -1,9 +1,10 @@
 // 레퍼런스: provider--context--error-boundary.md
-// S-07: 변경 빈도별 Context 분리, T-10: 에러 바운더리
+// S-07: 변경 빈도별 Context 분리, T-10: 앱 레벨 에러 바운더리
 
 import type { PropsWithChildren } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
+import { NotificationProvider } from '@/shared/contexts/NotificationContext';
 
 // ✅ P-03: 모듈 레벨 기본값 상수
 const queryClient = new QueryClient({
@@ -13,7 +14,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// ✅ T-10: 앱 레벨 에러 바운더리
+// ✅ T-10: 앱 레벨 에러 바운더리 (1단계: 최상위)
 export function AppProviders({ children }: PropsWithChildren) {
   return (
     <ErrorBoundary
@@ -32,7 +33,10 @@ export function AppProviders({ children }: PropsWithChildren) {
       )}
     >
       <QueryClientProvider client={queryClient}>
-        {children}
+        {/* ✅ S-07: NotificationProvider 추가 — 읽기/쓰기 분리 Context */}
+        <NotificationProvider>
+          {children}
+        </NotificationProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
