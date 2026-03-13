@@ -123,6 +123,14 @@
 | utility-type | 유틸리티 타입 |
 | interface | 인터페이스 정의 |
 
+## UI 패턴
+
+| 태그 | 설명 |
+|------|------|
+| modal | Modal/Dialog 오버레이 패턴 |
+| emoji-picker | 이모지 선택 UI |
+| custom-emoji | 커스텀 이모지 등록/관리 |
+
 ## DOM & 브라우저
 
 | 태그 | 설명 |

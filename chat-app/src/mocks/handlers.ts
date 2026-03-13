@@ -4,14 +4,19 @@ import { MOCK_RECENT_USERS } from './recentUsers';
 import type { Message } from '@/features/message/types';
 import type { Channel } from '@/features/channel/types';
 import type { LoginCredentials } from '@/features/auth/types';
+import type { User, UpdateProfileInput } from '@/features/user/types';
+import type { CustomEmoji } from '@/features/emoji/types';
 
 // ✅ P-03: 모듈 레벨 상수
 const MOCK_PASSWORD = 'password';
 
+let users = [...MOCK_USERS];
 let channels = [...MOCK_CHANNELS];
 let messages = [...MOCK_MESSAGES];
+let customEmojis: CustomEmoji[] = [];
 let messageIdCounter = messages.length + 1;
 let channelIdCounter = channels.length + 1;
+let customEmojiIdCounter = 1;
 
 export const handlers = [
   // --- Auth ---
@@ -53,15 +58,31 @@ export const handlers = [
 
   // --- Users ---
   http.get('/api/users', () => {
-    return HttpResponse.json(MOCK_USERS);
+    return HttpResponse.json(users);
   }),
 
   http.get('/api/users/:id', ({ params }) => {
-    const user = MOCK_USERS.find((u) => u.id === params['id']);
+    const user = users.find((u) => u.id === params['id']);
     if (!user) {
       return HttpResponse.json({ message: 'User not found' }, { status: 404 });
     }
     return HttpResponse.json(user);
+  }),
+
+  http.put('/api/users/:id', async ({ params, request }) => {
+    const body = (await request.json()) as UpdateProfileInput;
+    const userIndex = users.findIndex((u) => u.id === params['id']);
+    if (userIndex === -1) {
+      return HttpResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+    const updatedUser: User = {
+      ...users[userIndex],
+      displayName: body.displayName,
+      statusMessage: body.statusMessage,
+      avatarUrl: body.avatarUrl,
+    };
+    users = users.map((u, i) => (i === userIndex ? updatedUser : u));
+    return HttpResponse.json(updatedUser);
   }),
 
   // --- Channels ---
@@ -110,5 +131,28 @@ export const handlers = [
     };
     messages = [...messages, newMessage];
     return HttpResponse.json(newMessage, { status: 201 });
+  }),
+
+  // --- Custom Emojis ---
+  http.get('/api/emojis/custom', () => {
+    return HttpResponse.json(customEmojis);
+  }),
+
+  http.post('/api/emojis/custom', async ({ request }) => {
+    const body = (await request.json()) as { name: string; imageUrl: string; createdBy: string };
+    const newEmoji: CustomEmoji = {
+      id: `emoji-${customEmojiIdCounter++}`,
+      name: body.name,
+      imageUrl: body.imageUrl,
+      createdBy: body.createdBy,
+    };
+    customEmojis = [...customEmojis, newEmoji];
+    return HttpResponse.json(newEmoji, { status: 201 });
+  }),
+
+  http.delete('/api/emojis/custom/:id', ({ params }) => {
+    const emojiId = params['id'] as string;
+    customEmojis = customEmojis.filter((e) => e.id !== emojiId);
+    return new HttpResponse(null, { status: 204 });
   }),
 ];

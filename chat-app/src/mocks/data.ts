@@ -8,6 +8,7 @@ export const MOCK_USERS: User[] = [
     username: 'jimin',
     displayName: '박지민',
     avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=jimin',
+    statusMessage: '열심히 코딩 중!',
     isOnline: true,
   },
   {
@@ -15,6 +16,7 @@ export const MOCK_USERS: User[] = [
     username: 'soyeon',
     displayName: '김소연',
     avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=soyeon',
+    statusMessage: '회의 중',
     isOnline: true,
   },
   {
@@ -22,6 +24,7 @@ export const MOCK_USERS: User[] = [
     username: 'minho',
     displayName: '이민호',
     avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=minho',
+    statusMessage: '',
     isOnline: false,
   },
   {
@@ -29,6 +32,7 @@ export const MOCK_USERS: User[] = [
     username: 'yuna',
     displayName: '정유나',
     avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=yuna',
+    statusMessage: '점심 시간',
     isOnline: true,
   },
 ];
