@@ -56,6 +56,15 @@
 | acl | Anti-Corruption Layer |
 | graphql | GraphQL 관련 |
 
+## 폼
+
+| 태그 | 설명 |
+|------|------|
+| form | 폼 관리 일반 |
+| react-hook-form | React Hook Form 라이브러리 |
+| validation | 폼 유효성 검증 |
+| zod | Zod 스키마 검증 |
+
 ## 상태 관리 (외부 라이브러리)
 
 | 태그 | 설명 |
