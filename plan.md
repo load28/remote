@@ -18,6 +18,7 @@ rules/에 규칙을 넣어도 Claude가 잊어버릴 수 있다.
 .claude/skills/
 └── react-standards/
     ├── SKILL.md                # 진입점: 동작 프로토콜 + 검토 체크리스트
+    ├── architecture.md         # 아키텍처 원칙 (의존성 방향, 레이어, 결합도)
     ├── naming-conventions.md   # 네이밍 규칙 상세
     ├── component-patterns.md   # 컴포넌트 설계 패턴 상세
     ├── state-and-data.md       # 상태관리 & 데이터 흐름 상세
@@ -62,7 +63,7 @@ React 코드 작성/수정 요청
 
 ## 파일별 구현 계획
 
-### 1. `SKILL.md` — 스킬 진입점 + 검토 프로토콜 (~150줄)
+### 1. `SKILL.md` — 스킬 진입점 + 검토 프로토콜 (~200줄)
 
 **frontmatter:**
 ```yaml
@@ -72,8 +73,9 @@ description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적
 
 **내용:**
 1. **동작 프로토콜** — Phase 1(참조) → Phase 2(강제 검토) → Phase 3(보고)
-2. **참조 문서 안내** — 5개 파일 + 각 파일의 역할 한줄 설명
+2. **참조 문서 안내** — 6개 파일 + 각 파일의 역할 한줄 설명
 3. **강제 검토 체크리스트** — 전체 규칙의 카테고리별 검증 항목
+   - 아키텍처: 10개 항목
    - 네이밍: 8개 항목
    - 컴포넌트: 14개 항목
    - 상태/데이터: 16개 항목
@@ -81,7 +83,23 @@ description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적
    - 테스트/접근성/타입: 14개 항목
 4. **검토 결과 출력 포맷**
 
-### 2. `naming-conventions.md` — 네이밍 규칙 (~80줄)
+### 2. `architecture.md` — 아키텍처 원칙 (~250줄)
+
+10개 규칙:
+- A-01: 단방향 의존성 (Feature→Shared OK, Shared→Feature NEVER, Feature→Feature NEVER)
+- A-02: Feature 기반 폴더 구조 (기능별 자기 완결 디렉토리)
+- A-03: 느슨한 결합 (컴포넌트 역할을 "그리고" 없이 한 문장으로 설명 가능)
+- A-04: 높은 응집도 (관련 코드는 같은 모듈에)
+- A-05: 레이어 분리 (Presentation / Business Logic / Data Access)
+- A-06: 의존성 역전 (구현이 아닌 추상에 의존, third-party SDK 직접 import 금지)
+- A-07: 모듈 경계 (barrel file로 public API만 노출, 내부 경로 import 금지)
+- A-08: 단방향 데이터 흐름 (props down, events up, 모듈 레벨 mutable 변수 금지)
+- A-09: Anti-Corruption Layer (third-party 라이브러리 래퍼로 격리)
+- A-10: 코로케이션 (관련 파일 같은 디렉토리, 상태는 사용처 가까이)
+
+각 규칙: WHY + BAD → GOOD 코드 + 검증 기준
+
+### 3. `naming-conventions.md` — 네이밍 규칙 (~80줄)
 
 8개 규칙 (변경 없음):
 - PascalCase 컴포넌트/파일
@@ -95,7 +113,7 @@ description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적
 
 각 규칙: BAD → GOOD 코드 예시 포함
 
-### 3. `component-patterns.md` — 컴포넌트 설계 (~250줄)
+### 4. `component-patterns.md` — 컴포넌트 설계 (~250줄)
 
 14개 규칙 (NEVER 6개 + ALWAYS 8개):
 - 컴포넌트 안에서 컴포넌트 정의 금지
@@ -110,7 +128,7 @@ description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적
 
 각 규칙: WHY(React 내부 동작) + BAD → GOOD 코드
 
-### 4. `state-and-data.md` — 상태관리 & 데이터 흐름 (~250줄)
+### 5. `state-and-data.md` — 상태관리 & 데이터 흐름 (~250줄)
 
 16개 규칙 (NEVER 7개 + ALWAYS 9개):
 - state 직접 변경 금지
@@ -127,7 +145,7 @@ description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적
 
 각 규칙: WHY(배칭, 클로저, reconciliation) + BAD → GOOD 코드
 
-### 5. `performance.md` — 성능 최적화 (~200줄)
+### 6. `performance.md` — 성능 최적화 (~200줄)
 
 14개 규칙 (NEVER 6개 + ALWAYS 8개):
 - 프로파일링 없이 최적화 금지
@@ -142,7 +160,7 @@ description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적
 
 각 규칙: WHY + BAD → GOOD 코드
 
-### 6. `testing-a11y.md` — 테스트 & 접근성 & 타입 (~200줄)
+### 7. `testing-a11y.md` — 테스트 & 접근성 & 타입 (~200줄)
 
 14개 규칙 (NEVER 6개 + ALWAYS 8개):
 - 구현 세부사항 테스트 금지
@@ -184,6 +202,18 @@ description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적
 ## SKILL.md 강제 검토 체크리스트 (핵심)
 
 코드 작성 완료 후 반드시 아래 체크리스트를 실행:
+
+### 아키텍처 (A)
+- [ ] A-01: 의존성 방향이 단방향 (shared→feature, feature→feature 참조 없음)
+- [ ] A-02: Feature 기반 폴더 구조 (기능별 자기 완결 디렉토리)
+- [ ] A-03: 느슨한 결합 (컴포넌트 역할 한 문장 설명 가능, "그리고" 없이)
+- [ ] A-04: 높은 응집도 (관련 코드가 같은 모듈에 위치)
+- [ ] A-05: 레이어 분리 (비즈니스 로직이 컴포넌트 밖 순수 함수로 존재)
+- [ ] A-06: 의존성 역전 (third-party SDK 직접 import 없음, 추상에 의존)
+- [ ] A-07: 모듈 경계 (barrel file public API만 사용, 내부 경로 import 없음)
+- [ ] A-08: 단방향 데이터 흐름 (props down, events up)
+- [ ] A-09: Anti-Corruption Layer (third-party 라이브러리 래퍼로 격리)
+- [ ] A-10: 코로케이션 (관련 파일 같은 디렉토리, 상태는 사용처 가까이)
 
 ### 네이밍 (N)
 - [ ] N-01: 컴포넌트/파일 PascalCase
@@ -287,9 +317,10 @@ description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적
 ## 구현 순서
 
 1. `SKILL.md` — 동작 프로토콜 + 강제 검토 체크리스트
-2. `naming-conventions.md`
-3. `component-patterns.md`
-4. `state-and-data.md`
-5. `performance.md`
-6. `testing-a11y.md`
-7. 커밋 & 푸시
+2. `architecture.md` — 아키텍처 원칙
+3. `naming-conventions.md`
+4. `component-patterns.md`
+5. `state-and-data.md`
+6. `performance.md`
+7. `testing-a11y.md`
+8. 커밋 & 푸시
