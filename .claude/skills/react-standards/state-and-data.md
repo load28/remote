@@ -347,3 +347,49 @@ useEffect(() => {
   return () => controller.abort();
 }, [query]);
 ```
+
+---
+
+## S-17: mutation 훅에 onSuccess/onError 내장 금지
+
+**분류:** NEVER
+
+**WHY:** mutation 훅 내부에 `onSuccess`, `onError`, `onSettled` 콜백을 내장하면, 훅의 재사용성이 떨어지고 사용처마다 다른 후속 처리(모달 닫기, 페이지 이동, 토스트 표시 등)를 할 수 없다. 특히 `queryClient.invalidateQueries`를 훅 내부에 넣으면 훅이 쿼리 캐시 전략에 종속되어 단일 책임 원칙을 위반한다. 훅은 mutationFn만 정의하고, 후속 로직은 사용처에서 `mutate(data, { onSuccess, onError })`로 주입한다.
+
+```tsx
+// ❌ BAD: 훅 내부에 onSuccess 내장 → 재사용 불가
+export function useUpdateEntity() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UpdateInput) => entityApi.update(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['entities'] }); // 캐시 전략 종속
+      toast.success('저장 완료');  // UI 로직 종속
+    },
+  });
+}
+
+// ✅ GOOD: 훅은 mutationFn만, 후속 로직은 사용처에서
+export function useUpdateEntity() {
+  return useMutation({
+    mutationFn: (input: UpdateInput) => entityApi.update(input),
+  });
+}
+
+// 사용처 A: 모달 닫기 + invalidation
+const updateEntity = useUpdateEntity();
+const queryClient = useQueryClient();
+updateEntity.mutate(input, {
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['entities'] });
+    closeModal();
+  },
+});
+
+// 사용처 B: 페이지 이동
+updateEntity.mutate(input, {
+  onSuccess: (data) => {
+    navigate(`/entities/${data.id}`);
+  },
+});
+```

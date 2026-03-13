@@ -1,11 +1,13 @@
 // 레퍼런스: interactive--event-naming--a11y.md, provider--context--error-boundary.md
 // C-07: SRP — 페이지 레벨 조합 컴포넌트
 // A-08: 단방향 데이터 흐름 (props down, events up)
+// S-17: mutation 후속 로직은 사용처에서 처리
 
 import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ChannelList, useChannels } from '@/features/channel';
-import { MessageList, MessageInput, useMessages, useSendMessage, type MessageAuthor } from '@/features/message';
-import { UserProfile, ProfileEditModal, useUsers, useUpdateProfile } from '@/features/user';
+import { MessageList, MessageInput, useMessages, useSendMessage, MESSAGE_QUERY_KEY, type MessageAuthor } from '@/features/message';
+import { UserProfile, ProfileEditModal, useUsers, useUpdateProfile, USER_QUERY_KEY } from '@/features/user';
 import type { UpdateProfileInput } from '@/features/user';
 import {
   EmojiPicker,
@@ -13,6 +15,7 @@ import {
   useCustomEmojis,
   useCreateCustomEmoji,
   useDeleteCustomEmoji,
+  CUSTOM_EMOJI_QUERY_KEY,
   EMOJI_CATEGORIES,
 } from '@/features/emoji';
 import type { CustomEmoji, CreateCustomEmojiInput } from '@/features/emoji';
@@ -30,6 +33,7 @@ export function ChatPage() {
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [messageContent, setMessageContent] = useState('');
 
+  const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.currentUser);
   const currentUserId = currentUser?.id ?? '';
   const { data: channels = [] } = useChannels();
@@ -59,8 +63,13 @@ export function ChatPage() {
     setSelectedChannelId(channelId);
   };
 
+  // ✅ S-17: onSuccess를 사용처에서 처리
   const handleSendMessage = (content: string) => {
-    sendMessage.mutate({ content, userId: currentUserId });
+    sendMessage.mutate({ content, userId: currentUserId }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [...MESSAGE_QUERY_KEY, selectedChannelId] });
+      },
+    });
     setMessageContent('');
   };
 
@@ -72,9 +81,13 @@ export function ChatPage() {
     setIsProfileEditOpen(false);
   };
 
+  // ✅ S-17: onSuccess를 사용처에서 처리
   const handleSubmitProfile = (input: UpdateProfileInput) => {
     updateProfile.mutate(input, {
-      onSuccess: () => setIsProfileEditOpen(false),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY });
+        setIsProfileEditOpen(false);
+      },
     });
   };
 
@@ -101,12 +114,22 @@ export function ChatPage() {
     setIsCustomEmojiManagerOpen(false);
   };
 
+  // ✅ S-17: onSuccess를 사용처에서 처리
   const handleCreateCustomEmoji = (input: CreateCustomEmojiInput) => {
-    createCustomEmoji.mutate(input);
+    createCustomEmoji.mutate(input, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: CUSTOM_EMOJI_QUERY_KEY });
+      },
+    });
   };
 
+  // ✅ S-17: onSuccess를 사용처에서 처리
   const handleDeleteCustomEmoji = (id: string) => {
-    deleteCustomEmoji.mutate(id);
+    deleteCustomEmoji.mutate(id, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: CUSTOM_EMOJI_QUERY_KEY });
+      },
+    });
   };
 
   return (

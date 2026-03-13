@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { userApi } from '../api/userApi';
 
-const USER_QUERY_KEY = ['users'] as const;
+export const USER_QUERY_KEY = ['users'] as const;
 
 export function useUsers() {
   return useQuery({

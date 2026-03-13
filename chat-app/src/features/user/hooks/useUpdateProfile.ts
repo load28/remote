@@ -1,20 +1,14 @@
 // 레퍼런스: crud/hook--tanstack-query--abort.md
-// S-04: TanStack Query 사용, N-05: use + 동사
+// S-04: TanStack Query 사용, S-17: mutation 훅 onSuccess 내장 금지
+// N-05: use + 동사
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { userApi } from '../api/userApi';
 import type { UpdateProfileInput } from '../types';
 
-// ✅ P-03: 모듈 레벨 상수
-const USER_QUERY_KEY = ['users'] as const;
-
+// ✅ S-17: mutationFn만 정의, onSuccess는 사용처에서
 export function useUpdateProfile(userId: string) {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (input: UpdateProfileInput) => userApi.updateProfile(userId, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY });
-    },
   });
 }
