@@ -52,7 +52,7 @@ export function CommentItem({ comment, isOwner, onUpdate, onDelete }: CommentIte
           <span className={styles.authorName}>{comment.author.name}</span>
           <span className={styles.date}>
             {formatCommentDate(comment.createdAt)}
-            {comment.isEdited && <span className={styles.edited}> (edited)</span>}
+            {comment.isEdited ? <span className={styles.edited}> (edited)</span> : null}
           </span>
         </div>
 
@@ -77,7 +77,7 @@ export function CommentItem({ comment, isOwner, onUpdate, onDelete }: CommentIte
         ) : (
           <>
             <p className={styles.content}>{comment.content}</p>
-            {isOwner && (
+            {isOwner ? (
               <div className={styles.actions}>
                 <button type="button" onClick={() => setIsEditing(true)}>
                   Edit
@@ -86,7 +86,7 @@ export function CommentItem({ comment, isOwner, onUpdate, onDelete }: CommentIte
                   Delete
                 </button>
               </div>
-            )}
+            ) : null}
           </>
         )}
       </div>

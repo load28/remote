@@ -19,8 +19,8 @@ export function LabelBadge({ label, size = 'sm', showName = true, onClick, onRem
       onClick={onClick}
       title={label.name}
     >
-      {showName && <span className={styles.name}>{label.name}</span>}
-      {onRemove && (
+      {showName ? <span className={styles.name}>{label.name}</span> : null}
+      {onRemove ? (
         <button
           type="button"
           className={styles.removeButton}
@@ -32,7 +32,7 @@ export function LabelBadge({ label, size = 'sm', showName = true, onClick, onRem
         >
           ×
         </button>
-      )}
+      ) : null}
     </span>
   );
 }

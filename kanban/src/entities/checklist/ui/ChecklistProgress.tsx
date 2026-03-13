@@ -15,18 +15,18 @@ export function ChecklistProgress({ checklist, showLabel = true, size = 'md' }: 
 
   return (
     <div className={`${styles.container} ${styles[size]}`}>
-      {showLabel && (
+      {showLabel ? (
         <span className={styles.label}>
           {completed}/{total}
         </span>
-      )}
+      ) : null}
       <div className={styles.progressBar}>
         <div
           className={`${styles.progressFill} ${percentage === 100 ? styles.complete : ''}`}
           style={{ width: `${percentage}%` }}
         />
       </div>
-      {showLabel && <span className={styles.percentage}>{percentage}%</span>}
+      {showLabel ? <span className={styles.percentage}>{percentage}%</span> : null}
     </div>
   );
 }

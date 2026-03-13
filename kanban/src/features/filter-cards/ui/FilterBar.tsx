@@ -51,7 +51,7 @@ export function FilterBar({
           value={filters.search}
           onChange={(e) => onFilterChange('search', e.target.value)}
         />
-        {filters.search && (
+        {filters.search ? (
           <button
             type="button"
             className={styles.clearSearch}
@@ -59,7 +59,7 @@ export function FilterBar({
           >
             ×
           </button>
-        )}
+        ) : null}
       </div>
 
       <div className={styles.filterDropdowns}>
@@ -72,7 +72,7 @@ export function FilterBar({
           >
             Labels {filters.labelIds.length > 0 && `(${filters.labelIds.length})`}
           </button>
-          {openDropdown === 'labels' && (
+          {openDropdown === 'labels' ? (
             <div className={styles.dropdownMenu}>
               {labels.map((label) => (
                 <label key={label.id} className={styles.checkboxItem}>
@@ -85,9 +85,9 @@ export function FilterBar({
                   <span>{label.name}</span>
                 </label>
               ))}
-              {labels.length === 0 && <p className={styles.emptyMessage}>No labels</p>}
+              {labels.length === 0 ? <p className={styles.emptyMessage}>No labels</p> : null}
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Members Filter */}
@@ -99,7 +99,7 @@ export function FilterBar({
           >
             Members {filters.assigneeIds.length > 0 && `(${filters.assigneeIds.length})`}
           </button>
-          {openDropdown === 'members' && (
+          {openDropdown === 'members' ? (
             <div className={styles.dropdownMenu}>
               {members.map((member) => (
                 <label key={member.id} className={styles.checkboxItem}>
@@ -111,9 +111,9 @@ export function FilterBar({
                   <span>{member.name}</span>
                 </label>
               ))}
-              {members.length === 0 && <p className={styles.emptyMessage}>No members</p>}
+              {members.length === 0 ? <p className={styles.emptyMessage}>No members</p> : null}
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Priority Filter */}
@@ -125,7 +125,7 @@ export function FilterBar({
           >
             Priority {filters.priority !== 'all' && `(${CARD_PRIORITY_LABELS[filters.priority]})`}
           </button>
-          {openDropdown === 'priority' && (
+          {openDropdown === 'priority' ? (
             <div className={styles.dropdownMenu}>
               <label className={styles.radioItem}>
                 <input
@@ -148,7 +148,7 @@ export function FilterBar({
                 </label>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Due Date Filter */}
@@ -160,7 +160,7 @@ export function FilterBar({
           >
             Due date {filters.dueDate !== 'all' && `(${DUE_DATE_FILTER_LABELS[filters.dueDate]})`}
           </button>
-          {openDropdown === 'dueDate' && (
+          {openDropdown === 'dueDate' ? (
             <div className={styles.dropdownMenu}>
               {(Object.entries(DUE_DATE_FILTER_LABELS) as [DueDateFilter, string][]).map(([value, label]) => (
                 <label key={value} className={styles.radioItem}>
@@ -174,15 +174,15 @@ export function FilterBar({
                 </label>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
-      {hasActiveFilters && (
+      {hasActiveFilters ? (
         <button type="button" className={styles.resetButton} onClick={onReset}>
           Clear filters
         </button>
-      )}
+      ) : null}
     </div>
   );
 }

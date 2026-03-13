@@ -48,7 +48,7 @@ export function CommentForm({
         onKeyDown={handleKeyDown}
         rows={isFocused ? 3 : 1}
       />
-      {(isFocused || content.trim()) && (
+      {(isFocused || content.trim()) ? (
         <div className={styles.actions}>
           <button
             type="submit"
@@ -59,7 +59,7 @@ export function CommentForm({
           </button>
           <span className={styles.hint}>Ctrl+Enter to submit</span>
         </div>
-      )}
+      ) : null}
     </form>
   );
 }

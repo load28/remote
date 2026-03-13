@@ -33,7 +33,7 @@ export function MemberAvatarGroup({
           />
         </div>
       ))}
-      {remainingCount > 0 && (
+      {remainingCount > 0 ? (
         <button
           type="button"
           className={`${styles.more} ${styles[size]}`}
@@ -42,7 +42,7 @@ export function MemberAvatarGroup({
         >
           +{remainingCount}
         </button>
-      )}
+      ) : null}
     </div>
   );
 }

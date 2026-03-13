@@ -3,6 +3,13 @@
 import { useState } from 'react';
 import styles from './DueDatePicker.module.css';
 
+const presetDates = [
+  { label: 'Today', days: 0 },
+  { label: 'Tomorrow', days: 1 },
+  { label: 'In 3 days', days: 3 },
+  { label: 'In 1 week', days: 7 },
+];
+
 interface DueDatePickerProps {
   currentDate?: string;
   isCompleted?: boolean;
@@ -36,13 +43,6 @@ export function DueDatePicker({
     onSave(null, false);
     onClose();
   };
-
-  const presetDates = [
-    { label: 'Today', days: 0 },
-    { label: 'Tomorrow', days: 1 },
-    { label: 'In 3 days', days: 3 },
-    { label: 'In 1 week', days: 7 },
-  ];
 
   const setPresetDate = (days: number) => {
     const date = new Date();
@@ -94,7 +94,7 @@ export function DueDatePicker({
           </div>
         </div>
 
-        {currentDate && (
+        {currentDate ? (
           <label className={styles.completedCheckbox}>
             <input
               type="checkbox"
@@ -103,18 +103,18 @@ export function DueDatePicker({
             />
             <span>Mark as complete</span>
           </label>
-        )}
+        ) : null}
       </div>
 
       <div className={styles.footer}>
         <button type="button" className={styles.saveButton} onClick={handleSave}>
           Save
         </button>
-        {currentDate && (
+        {currentDate ? (
           <button type="button" className={styles.removeButton} onClick={handleRemove}>
             Remove
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

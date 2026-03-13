@@ -47,7 +47,7 @@ export function ChecklistSection({
           <h4 className={styles.title}>{checklist.title}</h4>
         </div>
         <div className={styles.actions}>
-          {completedItems.length > 0 && (
+          {completedItems.length > 0 ? (
             <button
               type="button"
               className={styles.toggleButton}
@@ -55,7 +55,7 @@ export function ChecklistSection({
             >
               {hideCompleted ? `Show (${completedItems.length})` : 'Hide completed'}
             </button>
-          )}
+          ) : null}
           <button
             type="button"
             className={styles.deleteButton}

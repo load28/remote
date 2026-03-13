@@ -111,11 +111,11 @@ export function CardDetailModal({
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className={styles.modal} onClick={() => setActivePopover(null)}>
         {/* Cover Image */}
-        {card.coverImage && (
+        {card.coverImage ? (
           <div className={styles.coverImage}>
             <img src={card.coverImage} alt="" />
           </div>
-        )}
+        ) : null}
 
         {/* Header */}
         <div className={styles.header}>
@@ -162,7 +162,7 @@ export function CardDetailModal({
             {/* Labels & Members Row */}
             {(card.labels && card.labels.length > 0) || assignedMembers.length > 0 ? (
               <div className={styles.metaRow}>
-                {card.labels && card.labels.length > 0 && (
+                {card.labels && card.labels.length > 0 ? (
                   <div className={styles.metaItem}>
                     <span className={styles.metaLabel}>Labels</span>
                     <div className={styles.labels}>
@@ -171,14 +171,14 @@ export function CardDetailModal({
                       ))}
                     </div>
                   </div>
-                )}
-                {assignedMembers.length > 0 && (
+                ) : null}
+                {assignedMembers.length > 0 ? (
                   <div className={styles.metaItem}>
                     <span className={styles.metaLabel}>Members</span>
                     <MemberAvatarGroup members={assignedMembers} max={5} size="md" />
                   </div>
-                )}
-                {card.dueDate && (
+                ) : null}
+                {card.dueDate ? (
                   <div className={styles.metaItem}>
                     <span className={styles.metaLabel}>Due date</span>
                     <DueDateBadge
@@ -186,8 +186,8 @@ export function CardDetailModal({
                       isCompleted={card.dueDateCompleted}
                     />
                   </div>
-                )}
-                {card.priority && card.priority !== 'none' && (
+                ) : null}
+                {card.priority && card.priority !== 'none' ? (
                   <div className={styles.metaItem}>
                     <span className={styles.metaLabel}>Priority</span>
                     <span
@@ -197,7 +197,7 @@ export function CardDetailModal({
                       {CARD_PRIORITY_LABELS[card.priority]}
                     </span>
                   </div>
-                )}
+                ) : null}
               </div>
             ) : null}
 
@@ -245,7 +245,7 @@ export function CardDetailModal({
             </div>
 
             {/* Checklists */}
-            {checklists.length > 0 && (
+            {checklists.length > 0 ? (
               <div className={styles.section}>
                 {checklists.map((checklist) => (
                   <ChecklistSection
@@ -263,7 +263,7 @@ export function CardDetailModal({
                   />
                 ))}
               </div>
-            )}
+            ) : null}
 
             {/* Comments & Activity Tabs */}
             <div className={styles.section}>
@@ -317,7 +317,7 @@ export function CardDetailModal({
                   >
                     👤 Members
                   </button>
-                  {activePopover === 'members' && (
+                  {activePopover === 'members' ? (
                     <div className={styles.popover} onClick={(e) => e.stopPropagation()}>
                       <MemberPicker
                         members={boardMembers}
@@ -326,7 +326,7 @@ export function CardDetailModal({
                         onClose={() => setActivePopover(null)}
                       />
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className={styles.popoverWrapper}>
@@ -340,7 +340,7 @@ export function CardDetailModal({
                   >
                     🏷️ Labels
                   </button>
-                  {activePopover === 'labels' && (
+                  {activePopover === 'labels' ? (
                     <div className={styles.popover} onClick={(e) => e.stopPropagation()}>
                       <LabelPicker
                         labels={boardLabels}
@@ -350,7 +350,7 @@ export function CardDetailModal({
                         onClose={() => setActivePopover(null)}
                       />
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className={styles.popoverWrapper}>
@@ -364,7 +364,7 @@ export function CardDetailModal({
                   >
                     ☑️ Checklist
                   </button>
-                  {activePopover === 'checklist' && (
+                  {activePopover === 'checklist' ? (
                     <div className={styles.popover} onClick={(e) => e.stopPropagation()}>
                       <AddChecklistForm
                         onAdd={(title) => {
@@ -374,7 +374,7 @@ export function CardDetailModal({
                         onCancel={() => setActivePopover(null)}
                       />
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className={styles.popoverWrapper}>
@@ -388,7 +388,7 @@ export function CardDetailModal({
                   >
                     📅 Due date
                   </button>
-                  {activePopover === 'dueDate' && (
+                  {activePopover === 'dueDate' ? (
                     <div className={styles.popover} onClick={(e) => e.stopPropagation()}>
                       <DueDatePicker
                         currentDate={card.dueDate}
@@ -397,7 +397,7 @@ export function CardDetailModal({
                         onClose={() => setActivePopover(null)}
                       />
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className={styles.popoverWrapper}>
@@ -411,7 +411,7 @@ export function CardDetailModal({
                   >
                     🚩 Priority
                   </button>
-                  {activePopover === 'priority' && (
+                  {activePopover === 'priority' ? (
                     <div className={styles.popover} onClick={(e) => e.stopPropagation()}>
                       <div className={styles.priorityPicker}>
                         <div className={styles.priorityPickerHeader}>
@@ -446,7 +446,7 @@ export function CardDetailModal({
                         </div>
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>

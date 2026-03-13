@@ -19,7 +19,7 @@ export const CardItem = forwardRef<HTMLDivElement, CardItemProps>(
         className={cn(styles.card, isDragging && styles.dragging, className)}
         {...props}
       >
-        {card.labels && card.labels.length > 0 && (
+        {card.labels && card.labels.length > 0 ? (
           <div className={styles.labels}>
             {card.labels.map((label) => (
               <span
@@ -29,12 +29,12 @@ export const CardItem = forwardRef<HTMLDivElement, CardItemProps>(
               />
             ))}
           </div>
-        )}
+        ) : null}
         <p className={styles.title}>{card.title}</p>
-        {card.description && (
+        {card.description ? (
           <p className={styles.description}>{card.description}</p>
-        )}
-        {actions && <div className={styles.actions}>{actions}</div>}
+        ) : null}
+        {actions ? <div className={styles.actions}>{actions}</div> : null}
       </div>
     );
   }

@@ -20,6 +20,18 @@ import { useMoveCard } from '@/features/move-card';
 import { KanbanColumn } from './KanbanColumn';
 import styles from './KanbanBoard.module.css';
 
+const POINTER_SENSOR_CONFIG = {
+  activationConstraint: {
+    distance: 8,
+  },
+};
+
+const MOUSE_SENSOR_CONFIG = {
+  activationConstraint: {
+    distance: 5,
+  },
+};
+
 interface KanbanBoardProps {
   board: Board;
 }
@@ -30,16 +42,8 @@ export function KanbanBoard({ board }: KanbanBoardProps) {
   const { moveCard } = useMoveCard();
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(MouseSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    })
+    useSensor(PointerSensor, POINTER_SENSOR_CONFIG),
+    useSensor(MouseSensor, MOUSE_SENSOR_CONFIG)
   );
 
   const findCard = useCallback(
