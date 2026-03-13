@@ -4,12 +4,16 @@ rules: [S-13, T-14, T-04, A-05, A-09, S-01]
 description: React Hook Form 폼 패턴 — Zod input/output 타입 분리, register vs Controller 사용 기준, watch 조건부 필드, useFieldArray, 서버 에러 핸들링
 ---
 
-## 규칙 1: Zod input/output 타입 분리
+## 규칙 1: Zod 양방향 타입 분리 (input ↔ output)
 
-> HTML 폼 입력은 항상 `string`이다. 그러나 서버에 보내는 값은 `number`, `Date`, `boolean` 등
-> 다양한 타입이다. `z.infer`(= `z.output`)만 사용하면 폼 입력 타입과 제출 타입이 불일치한다.
-> **주의**: `z.coerce.number()`의 `z.input` 타입은 Zod v3에서 `number`이다 (string 아님).
-> `string → number` 변환이 필요하면 `z.string().pipe(z.coerce.number())`를 사용한다.
+> 폼 스키마는 반드시 **양방향 타입이 분리**되도록 작성한다.
+> — `z.input`: 외부(폼 필드)에서 들어오는 타입 (항상 `string` 기반)
+> — `z.output`: 내부(비즈니스 로직)에서 사용하는 타입 (`number`, `Date`, `boolean` 등)
+> 이는 Effect Schema의 Encoding/Decoding 개념과 동일한 원칙이다:
+> 스키마 하나로 **외부 표현(Encoded)과 내부 표현(Type)을 동시에 정의**한다.
+>
+> **필수**: `z.coerce`를 단독으로 사용하지 않는다 (Zod v3에서 input 타입이 output과 동일).
+> 반드시 `z.string().pipe()`로 감싸서 input 타입이 `string`임을 명시한다.
 
 ```tsx
 // ❌ BAD: z.coerce만 사용 → z.input 타입이 string이 아님
@@ -391,8 +395,8 @@ const orderSchema = z.object({
     .array(
       z.object({
         productName: z.string().min(1, '상품명 필수'),
-        quantity: z.coerce.number().min(1, '1개 이상'),
-        unitPrice: z.coerce.number().min(0),
+        quantity: z.string().min(1).pipe(z.coerce.number().min(1, '1개 이상')),
+        unitPrice: z.string().pipe(z.coerce.number().min(0)),
       }),
     )
     .min(1, '최소 1개 항목이 필요합니다'),
