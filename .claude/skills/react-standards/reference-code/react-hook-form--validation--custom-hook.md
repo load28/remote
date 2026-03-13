@@ -459,9 +459,7 @@ update(index, newValue);                                  // 특정 항목 업�
 
 ---
 
-## 규칙 6: React Hook Form 사용 시 유의사항
-
-### 6-1. defaultValues 필수 설정
+## 규칙 6: defaultValues 필수 설정
 
 > `defaultValues`를 생략하면 dirty 체크, reset, 조건부 렌더링이 예측 불가능하게 동작한다.
 > **모든 필드의 defaultValues를 명시적으로 설정한다.**
@@ -494,7 +492,9 @@ const form = useForm<FormInput, unknown, FormOutput>({
 });
 ```
 
-### 6-2. 언마운트된 필드의 상태 소실
+---
+
+## 규칙 7: 언마운트된 필드의 상태 소실
 
 > React Hook Form은 DOM 기반 — 필드가 언마운트되면 상태가 사라진다.
 > 모달/탭 전환 시 필드가 사라지면 값도 사라진다.
@@ -536,7 +536,9 @@ function TabbedForm() {
 }
 ```
 
-### 6-3. mode 설정 — 검증 타이밍 선택
+---
+
+## 규칙 8: mode 설정 — 검증 타이밍 선택
 
 > 기본 mode는 `'onSubmit'` — 제출 시에만 검증한다.
 > 실시간 피드백이 필요하면 `mode`를 명시적으로 설정한다.
@@ -559,7 +561,9 @@ const form = useForm<FormInput, unknown, FormOutput>({
 });
 ```
 
-### 6-4. formState 구독 최적화
+---
+
+## 규칙 9: formState 구독 최적화
 
 > `formState`는 Proxy 기반 — 접근한 프로퍼티만 구독한다.
 > 구조 분해 위치에 따라 리렌더 범위가 달라진다.
