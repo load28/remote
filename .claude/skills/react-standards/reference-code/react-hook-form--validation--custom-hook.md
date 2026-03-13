@@ -6,17 +6,17 @@ description: React Hook Form 폼 패턴 — Zod input/output 타입 분리, regi
 
 ## 규칙 1: Zod 양방향 타입 분리 (input ↔ output)
 
-> 폼 스키마는 반드시 **양방향 타입이 분리**되도록 작성한다.
-> — `z.input`: 외부(폼 필드)에서 들어오는 타입 (항상 `string` 기반)
-> — `z.output`: 내부(비즈니스 로직)에서 사용하는 타입 (`number`, `Date`, `boolean` 등)
-> 이는 Effect Schema의 Encoding/Decoding 개념과 동일한 원칙이다:
-> 스키마 하나로 **외부 표현(Encoded)과 내부 표현(Type)을 동시에 정의**한다.
+> Zod는 `z.input`(외부 입력 타입)과 `z.output`(내부 변환 타입)으로 양방향 타입을 지원한다.
+> Effect Schema의 Encoding/Decoding과 동일한 원칙 — 스키마 하나로 **외부 표현과 내부 표현을 동시에 정의**한다.
+> 폼 스키마는 반드시 `z.input ≠ z.output`이 되도록 작성하여, 폼 필드 타입(string)과 제출 타입을 분리한다.
 >
-> **필수**: `z.coerce`를 단독으로 사용하지 않는다 (Zod v3에서 input 타입이 output과 동일).
-> 반드시 `z.string().pipe()`로 감싸서 input 타입이 `string`임을 명시한다.
+> **필수**: `z.coerce`를 단독으로 사용하지 않는다.
+> — Zod v3: `z.coerce.number()`의 input 타입이 `number` (output과 동일 → 분리 안 됨)
+> — Zod v4: `z.coerce.number()`의 input 타입이 `unknown` (string보다 넓어 부정확)
+> 반드시 `z.string().pipe()`로 감싸서 input 타입이 정확히 `string`임을 명시한다.
 
 ```tsx
-// ❌ BAD: z.coerce만 사용 → z.input 타입이 string이 아님
+// ❌ BAD: z.coerce만 사용 → z.input 타입이 정확한 string이 아님
 const badSchema = z.object({
   age: z.coerce.number().min(1).max(120),
   //   z.input → number (Zod v3), unknown (Zod v4)
@@ -27,7 +27,7 @@ const badSchema = z.object({
 type FormValues = z.infer<typeof badSchema>;
 // → { age: number } — 폼 필드도 number, 제출도 number → 구분 없음
 
-// ✅ GOOD: z.string().pipe()로 명시적 string → number 변환
+// ✅ GOOD: z.string().pipe()로 명시적 string → number 양방향 타입 분리
 const schema = z.object({
   age: z.string().min(1, '필수').pipe(z.coerce.number().min(1).max(120)),
   birthDate: z.string().min(1, '필수').pipe(z.coerce.date()),
