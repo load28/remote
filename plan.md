@@ -1,84 +1,89 @@
 # React 코딩 표준 스킬 구현 계획
 
 ## 목표
-React 코드를 작성할 때 **자동으로** 코딩 표준이 적용되도록 스킬 구성
+React 코드 작성 후 **강제 검토 단계**를 통해 모든 코딩 표준 준수를 보장
+
+## 핵심 철학
+
+> "기억에 의존하지 않는다. 검증을 강제한다."
+
+rules/에 규칙을 넣어도 Claude가 잊어버릴 수 있다.
+→ 코드 작성 후 **모든 규칙을 체크리스트로 검토하는 단계를 강제**한다.
 
 ## 아키텍처
 
-### 2-레이어 구조
+### 단일 스킬 구조 (rules/ 없음)
 
 ```
-.claude/
-├── rules/
-│   └── react.md                    # 트리거 지시문 (짧음, 항상 로드)
-│       → "React/TSX 코드 작성 시 react-standards 스킬의 모든 규칙을 준수하라"
-│       → 가장 치명적인 NEVER 규칙 요약 (빠른 참조용)
-│
-└── skills/
-    └── react-standards/
-        ├── SKILL.md                # 진입점: 철학 + 전체 규칙 요약 + 참조 링크
-        ├── naming-conventions.md   # 네이밍 규칙 상세
-        ├── component-patterns.md   # 컴포넌트 설계 패턴 상세
-        ├── state-and-data.md       # 상태관리 & 데이터 흐름 상세
-        ├── performance.md          # 성능 최적화 상세
-        └── testing-a11y.md         # 테스트 & 접근성 & 타입 상세
+.claude/skills/
+└── react-standards/
+    ├── SKILL.md                # 진입점: 동작 프로토콜 + 검토 체크리스트
+    ├── naming-conventions.md   # 네이밍 규칙 상세
+    ├── component-patterns.md   # 컴포넌트 설계 패턴 상세
+    ├── state-and-data.md       # 상태관리 & 데이터 흐름 상세
+    ├── performance.md          # 성능 최적화 상세
+    └── testing-a11y.md         # 테스트 & 접근성 & 타입 상세
 ```
 
-### 왜 이 구조인가?
-
-1. **rules/react.md** (항상 로드됨)
-   - React 코드 감지 시 스킬 참조를 강제하는 지시문
-   - 핵심 NEVER 체크리스트 포함 (즉각 참조 가능)
-   - 짧게 유지 (50줄 이내) → 컨텍스트 낭비 최소
-
-2. **skills/react-standards/** (description 매칭 시 자동 로드)
-   - `user-invocable: true` → `/react-standards`로 수동 호출도 가능
-   - description이 컨텍스트에 항상 있어 자동 트리거
-   - 참조 파일은 필요 시에만 로드 → 컨텍스트 효율적
-   - **모든 규칙이 여기에 있으므로 누락 없음**
-
-### 동작 흐름
+### 동작 프로토콜 (SKILL.md 핵심)
 
 ```
-세션 시작
-  → rules/react.md 로드 (항상)
-  → "React 코드 작성 시 react-standards 참조" 지시 인식
-
-React 코드 작성 요청
-  → rules/react.md의 지시 + skill description 매칭
-  → SKILL.md 자동 로드 (전체 규칙 요약)
-  → 필요 시 상세 참조 파일 로드 (component-patterns.md 등)
-  → 모든 규칙이 적용된 코드 생성
+React 코드 작성/수정 요청
+  │
+  ▼
+[Phase 1: 참조] 관련 규칙 파일 로드 → 규칙에 맞게 코드 작성
+  │
+  ▼
+[Phase 2: 강제 검토] 작성한 코드를 전체 체크리스트로 검증
+  │  - 각 카테고리별 NEVER 규칙 위반 여부 확인
+  │  - 각 카테고리별 ALWAYS 규칙 적용 여부 확인
+  │  - 위반 발견 시 즉시 수정
+  │
+  ▼
+[Phase 3: 검토 결과 보고] 사용자에게 검토 결과 출력
+  │  - ✅ 통과한 규칙
+  │  - 🔧 수정한 항목 (있으면)
+  │  - 검토 완료 확인
+  │
+  ▼
+코드 제출
 ```
+
+### 왜 이 방식인가?
+
+| 기존 접근 (rules/) | 새 접근 (강제 검토) |
+|---|---|
+| 규칙을 "기억"에 의존 | 체크리스트로 "검증"을 강제 |
+| 잊어버리면 그대로 통과 | 검토 단계 없이는 완료 불가 |
+| 수동적 (읽기만) | 능동적 (각 규칙 대조 확인) |
+| 부분 적용 가능 | 전체 적용 강제 |
 
 ---
 
 ## 파일별 구현 계획
 
-### 1. `.claude/rules/react.md` (~50줄)
-
-**내용:**
-- React/TSX/JSX 파일 작성 시 react-standards 스킬 참조 지시
-- Quick NEVER 체크리스트 (전 카테고리 통합, 가장 치명적인 것들)
-- "상세 규칙과 올바른 패턴은 react-standards 스킬 참조" 명시
-
-### 2. `SKILL.md` — 스킬 진입점 (~200줄)
+### 1. `SKILL.md` — 스킬 진입점 + 검토 프로토콜 (~150줄)
 
 **frontmatter:**
 ```yaml
 name: react-standards
-description: React/TypeScript 코드 작성 시 자동 적용. 컴포넌트, 상태관리, 성능, 네이밍, 테스트 전반의 코딩 표준을 제공합니다. React, TSX, JSX 파일을 생성하거나 수정할 때 이 스킬을 참조하세요.
+description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적용. 코드 작성 후 강제 검토 단계를 통해 컴포넌트, 상태관리, 성능, 네이밍, 테스트 전반의 코딩 표준 준수를 보장합니다.
 ```
 
 **내용:**
-- 철학: "React 내부 동작 원리에 기반한 정확한 코드"
-- 5개 참조 문서 링크 + 각 문서의 핵심 내용 한줄 설명
-- 전체 규칙 Quick Reference (카테고리별 한줄 요약 테이블)
-- 각 카테고리별 NEVER / ALWAYS 규칙 번호와 한줄 설명
+1. **동작 프로토콜** — Phase 1(참조) → Phase 2(강제 검토) → Phase 3(보고)
+2. **참조 문서 안내** — 5개 파일 + 각 파일의 역할 한줄 설명
+3. **강제 검토 체크리스트** — 전체 규칙의 카테고리별 검증 항목
+   - 네이밍: 8개 항목
+   - 컴포넌트: 14개 항목
+   - 상태/데이터: 16개 항목
+   - 성능: 14개 항목
+   - 테스트/접근성/타입: 14개 항목
+4. **검토 결과 출력 포맷**
 
-### 3. `naming-conventions.md` — 네이밍 규칙 (~80줄)
+### 2. `naming-conventions.md` — 네이밍 규칙 (~80줄)
 
-8개 규칙:
+8개 규칙 (변경 없음):
 - PascalCase 컴포넌트/파일
 - camelCase props
 - on*/handle* 이벤트 네이밍
@@ -90,26 +95,27 @@ description: React/TypeScript 코드 작성 시 자동 적용. 컴포넌트, 상
 
 각 규칙: BAD → GOOD 코드 예시 포함
 
-### 4. `component-patterns.md` — 컴포넌트 설계 (~250줄)
+### 3. `component-patterns.md` — 컴포넌트 설계 (~250줄)
 
 14개 규칙 (NEVER 6개 + ALWAYS 8개):
-- 컴포넌트 안에서 컴포넌트 정의 금지 (React reconciler가 매 렌더 새 타입으로 인식)
+- 컴포넌트 안에서 컴포넌트 정의 금지
 - 조건부 훅 호출 금지
 - 배열 인덱스 key 금지
-- props 7개 초과 금지 / 250줄 초과 금지
+- props 7개 초과 / 250줄 초과 금지
 - 불필요한 wrapper div 금지
 - SRP, 합성 우선, Compound Component
 - key로 상태 리셋
-- 클로저 트랩 설명
+- 클로저 트랩
 - Feature 기반 구조
 
 각 규칙: WHY(React 내부 동작) + BAD → GOOD 코드
 
-### 5. `state-and-data.md` — 상태관리 & 데이터 흐름 (~250줄)
+### 4. `state-and-data.md` — 상태관리 & 데이터 흐름 (~250줄)
 
 16개 규칙 (NEVER 7개 + ALWAYS 9개):
 - state 직접 변경 금지
-- useEffect 파생 상태 금지 / 파생 가능한 값 state 저장 금지
+- useEffect 파생 상태 금지
+- 파생 가능한 값 state 저장 금지
 - 수동 fetch 패턴 금지
 - props→state 복사 금지
 - setState(count+1) 금지 → functional update
@@ -121,7 +127,7 @@ description: React/TypeScript 코드 작성 시 자동 적용. 컴포넌트, 상
 
 각 규칙: WHY(배칭, 클로저, reconciliation) + BAD → GOOD 코드
 
-### 6. `performance.md` — 성능 최적화 (~200줄)
+### 5. `performance.md` — 성능 최적화 (~200줄)
 
 14개 규칙 (NEVER 6개 + ALWAYS 8개):
 - 프로파일링 없이 최적화 금지
@@ -131,12 +137,12 @@ description: React/TypeScript 코드 작성 시 자동 적용. 컴포넌트, 상
 - barrel file 남용 금지
 - 워터폴 제거 / dynamic import
 - startTransition
-- AbortController (레이스 컨디션)
+- AbortController
 - 객체 의존성 → primitive 추출
 
 각 규칙: WHY + BAD → GOOD 코드
 
-### 7. `testing-a11y.md` — 테스트 & 접근성 & 타입 (~200줄)
+### 6. `testing-a11y.md` — 테스트 & 접근성 & 타입 (~200줄)
 
 14개 규칙 (NEVER 6개 + ALWAYS 8개):
 - 구현 세부사항 테스트 금지
@@ -164,26 +170,126 @@ description: React/TypeScript 코드 작성 시 자동 적용. 컴포넌트, 상
 
 **WHY:** React 내부에서 왜 이것이 문제/중요한지 (1-2문장)
 
-```tsx
+\```tsx
 // ❌ BAD
 [잘못된 코드]
 
 // ✅ GOOD
 [올바른 코드]
+\```
 ```
 
 ---
+
+## SKILL.md 강제 검토 체크리스트 (핵심)
+
+코드 작성 완료 후 반드시 아래 체크리스트를 실행:
+
+### 네이밍 (N)
+- [ ] N-01: 컴포넌트/파일 PascalCase
+- [ ] N-02: props camelCase
+- [ ] N-03: on*/handle* 이벤트 네이밍
+- [ ] N-04: Boolean is*/has*/can*/should*
+- [ ] N-05: 커스텀 훅 use + 동사
+- [ ] N-06: 상수 UPPER_SNAKE_CASE
+- [ ] N-07: 유틸 파일 camelCase
+- [ ] N-08: 의미없는 이름 미사용
+
+### 컴포넌트 (C)
+- [ ] C-01: 컴포넌트 내부 컴포넌트 정의 없음
+- [ ] C-02: 조건부 훅 호출 없음
+- [ ] C-03: 배열 인덱스 key 미사용
+- [ ] C-04: props 7개 이하
+- [ ] C-05: 파일 250줄 이하
+- [ ] C-06: 불필요한 wrapper div 없음
+- [ ] C-07: SRP 준수
+- [ ] C-08: 합성(children) 활용
+- [ ] C-09: Compound Component (해당 시)
+- [ ] C-10: 파일당 1 exported 컴포넌트
+- [ ] C-11: 외부 라이브러리 래퍼 사용
+- [ ] C-12: key로 상태 리셋 (해당 시)
+- [ ] C-13: 클로저 트랩 확인
+- [ ] C-14: Feature 기반 폴더 구조
+
+### 상태 & 데이터 (S)
+- [ ] S-01: state 직접 변경(mutate) 없음
+- [ ] S-02: useEffect 내 파생 상태 계산 없음
+- [ ] S-03: 파생 가능 값 state 미저장
+- [ ] S-04: 수동 fetch 패턴 미사용 (TanStack Query/SWR)
+- [ ] S-05: props→state 복사 패턴 없음
+- [ ] S-06: functional setState 사용
+- [ ] S-07: Context 분리 (단일 Context에 모든 상태 없음)
+- [ ] S-08: 서버/클라이언트 상태 분리
+- [ ] S-09: 상태 코로케이션
+- [ ] S-10: lazy state 초기화
+- [ ] S-11: 렌더에 안 쓰이는 값 ref 사용
+- [ ] S-12: ref/state 동기화 타이밍 확인
+- [ ] S-13: controlled vs uncontrolled 택일
+- [ ] S-14: Context Provider useMemo
+- [ ] S-15: localStorage 스키마 버전관리
+- [ ] S-16: useEffect cleanup 구현
+
+### 성능 (P)
+- [ ] P-01: 프로파일링 기반 최적화
+- [ ] P-02: 50+ 리스트 가상화
+- [ ] P-03: 모듈 레벨 기본값 상수
+- [ ] P-04: 삼항 연산자 조건부 렌더 (&&  미사용)
+- [ ] P-05: inline style 객체 없음
+- [ ] P-06: barrel file 미남용
+- [ ] P-07: 요청 워터폴 제거
+- [ ] P-08: 무거운 컴포넌트 dynamic import
+- [ ] P-09: 서드파티 스크립트 defer
+- [ ] P-10: 정적 JSX 모듈 레벨 추출
+- [ ] P-11: startTransition 비긴급 업데이트
+- [ ] P-12: 빈번 변경값 ref 저장
+- [ ] P-13: AbortController 비동기 취소
+- [ ] P-14: 객체 의존성 primitive 추출
+
+### 테스트 & 타입 (T)
+- [ ] T-01: 구현 세부사항 테스트 없음
+- [ ] T-02: MSW 네트워크 모킹
+- [ ] T-03: 소스 옆 테스트 배치
+- [ ] T-04: any 타입 미사용 (unknown + guard)
+- [ ] T-05: Suspense 올바른 사용
+- [ ] T-06: ErrorBoundary 한계 인식
+- [ ] T-07: 테스트 피라미드 준수
+- [ ] T-08: 사용자 관점 쿼리 (getByRole 등)
+- [ ] T-09: 버그 → 재현 테스트 먼저
+- [ ] T-10: 3단계 에러 바운더리
+- [ ] T-11: 시맨틱 HTML + ARIA
+- [ ] T-12: strict TypeScript
+- [ ] T-13: Props named exported interface
+- [ ] T-14: discriminated union 타입
+
+---
+
+## 검토 결과 출력 포맷
+
+```
+## React Standards Review
+
+### 적용된 규칙
+- ✅ N-01, N-03, C-01, C-02, S-06, P-13 ...
+
+### 해당 없음 (이번 코드에 적용 불가)
+- ⬜ C-09 (Compound Component 해당 없음)
+- ⬜ P-02 (리스트 50개 미만)
+
+### 수정 사항 (검토 중 발견하여 수정)
+- 🔧 S-02: useEffect 내 파생 상태 → useMemo로 변경
+- 🔧 P-04: && 조건부 렌더 → 삼항 연산자로 변경
+
+✅ 검토 완료
 ```
 
 ---
 
 ## 구현 순서
 
-1. `.claude/rules/react.md` — 트리거 지시문
-2. `SKILL.md` — 스킬 진입점
-3. `naming-conventions.md`
-4. `component-patterns.md`
-5. `state-and-data.md`
-6. `performance.md`
-7. `testing-a11y.md`
-8. 커밋 & 푸시
+1. `SKILL.md` — 동작 프로토콜 + 강제 검토 체크리스트
+2. `naming-conventions.md`
+3. `component-patterns.md`
+4. `state-and-data.md`
+5. `performance.md`
+6. `testing-a11y.md`
+7. 커밋 & 푸시
