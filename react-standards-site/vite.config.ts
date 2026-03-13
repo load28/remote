@@ -9,7 +9,12 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     tsconfigPaths(),
-    tanstackStart(),
+    tanstackStart({
+      router: {
+        generatedRouteTree: 'src/routeTree.gen.ts',
+        autoCodeSplitting: true,
+      },
+    }),
     viteReact(),
   ],
 })
