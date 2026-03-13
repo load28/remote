@@ -38,7 +38,20 @@ export const Route = createRootRoute({
   }),
   loader: () => loadRulesForSearch(),
   component: RootComponent,
+  notFoundComponent: NotFoundPage,
 })
+
+function NotFoundPage() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-gray-300">404</h1>
+        <p className="mt-2 text-gray-500">페이지를 찾을 수 없습니다.</p>
+        <a href="/" className="mt-4 inline-block text-sm text-blue-600 hover:underline">홈으로 돌아가기</a>
+      </div>
+    </div>
+  )
+}
 
 function RootComponent() {
   const rules = Route.useLoaderData()
