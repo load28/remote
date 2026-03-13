@@ -3,4 +3,5 @@ dist/
 .output/
 .vinxi/
 .vercel/
+.tanstack/
 *.local
