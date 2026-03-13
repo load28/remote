@@ -13,35 +13,88 @@ description: React Hook Form 폼 패턴 — Zod input/output 타입 분리, regi
 > **필수**: `z.coerce`를 단독으로 사용하지 않는다.
 > — Zod v3: `z.coerce.number()`의 input 타입이 `number` (output과 동일 → 분리 안 됨)
 > — Zod v4: `z.coerce.number()`의 input 타입이 `unknown` (string보다 넓어 부정확)
-> 반드시 `z.string().pipe()`로 감싸서 input 타입이 정확히 `string`임을 명시한다.
+>
+> **버전별 양방향 패턴**:
+> — Zod v3: `z.string().pipe(z.coerce.number())` — 단방향(decode만), 타입은 양방향 분리
+> — Zod v4.1+: `z.codec()` — 완전한 양방향(encode + decode) 지원
+
+### Zod v3: z.string().pipe() 패턴
 
 ```tsx
 // ❌ BAD: z.coerce만 사용 → z.input 타입이 정확한 string이 아님
 const badSchema = z.object({
   age: z.coerce.number().min(1).max(120),
-  //   z.input → number (Zod v3), unknown (Zod v4)
-  //   실제 <input>은 string을 반환 → 타입 불일치
+  //   z.input → number (Zod v3) — 실제 <input>은 string → 타입 불일치
 });
 
 // ❌ BAD: z.infer만 사용 → input/output 구분 불가
 type FormValues = z.infer<typeof badSchema>;
 // → { age: number } — 폼 필드도 number, 제출도 number → 구분 없음
 
-// ✅ GOOD: z.string().pipe()로 명시적 string → number 양방향 타입 분리
+// ✅ GOOD (v3): z.string().pipe()로 양방향 타입 분리
 const schema = z.object({
   age: z.string().min(1, '필수').pipe(z.coerce.number().min(1).max(120)),
   birthDate: z.string().min(1, '필수').pipe(z.coerce.date()),
   isAgree: z.string().pipe(z.coerce.boolean()),
 });
 
-// 폼 필드 타입 — 사용자가 입력하는 값 (string 기반)
 type FormInput = z.input<typeof schema>;
 // → { age: string; birthDate: string; isAgree: string }
 
-// 제출 결과 타입 — Zod가 변환한 후 값
 type FormOutput = z.output<typeof schema>;
 // → { age: number; birthDate: Date; isAgree: boolean }
 ```
+
+### Zod v4.1+: z.codec() 패턴 (권장)
+
+```tsx
+// ✅ GOOD (v4.1+): z.codec()으로 완전한 양방향 — encode/decode 모두 지원
+const stringToNumber = z.codec(
+  z.string().min(1, '필수'),   // input 스키마 (폼 필드 타입)
+  z.number().min(1).max(120),  // output 스키마 (비즈니스 타입)
+  {
+    decode: (s) => Number(s),  // string → number (폼 제출 시)
+    encode: (n) => String(n),  // number → string (폼 초기값 세팅 시)
+  },
+);
+
+const stringToDate = z.codec(
+  z.string().min(1, '필수'),
+  z.date(),
+  {
+    decode: (s) => new Date(s),
+    encode: (d) => d.toISOString().split('T')[0],
+  },
+);
+
+const stringToBoolean = z.codec(
+  z.string(),
+  z.boolean(),
+  {
+    decode: (s) => s === 'true',
+    encode: (b) => String(b),
+  },
+);
+
+const schema = z.object({
+  age: stringToNumber,
+  birthDate: stringToDate,
+  isAgree: stringToBoolean,
+});
+
+type FormInput = z.input<typeof schema>;
+// → { age: string; birthDate: string; isAgree: string }
+
+type FormOutput = z.output<typeof schema>;
+// → { age: number; birthDate: Date; isAgree: boolean }
+
+// ✅ z.codec의 장점: encode로 서버 데이터 → 폼 초기값 변환
+// const serverData = { age: 25, birthDate: new Date(), isAgree: true };
+// const formValues = schema.encode(serverData);
+// → { age: '25', birthDate: '2024-01-15', isAgree: 'true' }
+```
+
+### useForm 연동 (v3/v4 공통)
 
 ```tsx
 // ✅ GOOD: useForm에 input/output 타입 모두 전달
@@ -67,27 +120,44 @@ form.handleSubmit((data) => {
 });
 ```
 
+### 복잡한 변환 체인 (v3 z.pipe / v4 z.codec)
+
 ```tsx
-// ✅ GOOD: z.pipe()로 복잡한 변환 체인
-const priceSchema = z.object({
-  // string → 숫자 추출 → number 검증
+// ✅ v3: z.pipe()로 변환 체인 (단방향 — decode만)
+const priceSchemaV3 = z.object({
   price: z
     .string()
     .transform((val) => val.replace(/[^0-9]/g, ''))
     .pipe(z.coerce.number().min(0).max(1_000_000)),
-
-  // string → Date → 미래 날짜 검증
   scheduledAt: z
     .string()
     .transform((val) => new Date(val))
     .pipe(z.date().min(new Date(), '미래 날짜만 선택 가능합니다')),
 });
 
-type PriceFormInput = z.input<typeof priceSchema>;
-// → { price: string; scheduledAt: string }
+// ✅ v4.1+: z.codec()으로 변환 체인 (양방향 — encode + decode)
+const priceSchemaV4 = z.object({
+  price: z.codec(
+    z.string(),
+    z.number().min(0).max(1_000_000),
+    {
+      decode: (s) => Number(s.replace(/[^0-9]/g, '')),
+      encode: (n) => n.toLocaleString(),
+    },
+  ),
+  scheduledAt: z.codec(
+    z.string(),
+    z.date().min(new Date(), '미래 날짜만 선택 가능합니다'),
+    {
+      decode: (s) => new Date(s),
+      encode: (d) => d.toISOString().split('T')[0],
+    },
+  ),
+});
 
-type PriceFormOutput = z.output<typeof priceSchema>;
-// → { price: number; scheduledAt: Date }
+// 두 버전 모두 동일한 타입 분리:
+// z.input  → { price: string; scheduledAt: string }
+// z.output → { price: number; scheduledAt: Date }
 ```
 
 ---
