@@ -289,3 +289,99 @@ function Alert(props: AlertProps) {
   return <div>{props.message}</div>;
 }
 ```
+
+---
+
+## T-15: optional 프로퍼티 남용 금지 — 조건부 프로퍼티는 타입 분리
+
+**분류:** NEVER (무분별한 optional)
+
+**WHY:** optional(`?`)을 남용하면 모든 사용처에서 불필요한 undefined 체크가 강제되고, 실제로는 반드시 존재하는 값이 타입상으로는 없을 수도 있는 것처럼 표현된다. 특정 프로퍼티 값에 따라 동적으로 달라지는 프로퍼티는 optional이 아니라 별도 타입으로 분리하여 union으로 합친다. (→ T-14 discriminated union 참조)
+
+### 원칙 1: optional 자제 — 실제로 없을 수 있는 값만 optional
+
+```tsx
+// ❌ BAD: 항상 존재하는 값을 optional로 표시
+interface UserProfile {
+  id?: string;        // 항상 존재하는데 optional → 모든 곳에서 user.id! 또는 user.id ?? '' 필요
+  name?: string;
+  email?: string;
+  bio?: string;       // 이것만 진짜 optional
+}
+
+// ✅ GOOD: 실제로 없을 수 있는 값만 optional
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  bio?: string;       // 사용자가 입력하지 않을 수 있음
+}
+```
+
+### 원칙 2: 프로퍼티에 따라 동적으로 달라지는 타입은 분리
+
+```tsx
+// ❌ BAD: mode에 따라 필요한 props가 다른데 전부 optional
+interface EditorProps {
+  mode: 'view' | 'edit' | 'create';
+  content: string;
+  onSave?: () => void;       // edit/create에서는 필수인데 optional
+  initialDraft?: string;     // create에서만 필요한데 optional
+  lastEditedBy?: string;     // view/edit에서만 존재하는데 optional
+  publishedAt?: Date;        // view에서만 존재하는데 optional
+}
+
+// ✅ GOOD: mode별로 타입 분리 후 union
+interface ViewEditorProps {
+  mode: 'view';
+  content: string;
+  lastEditedBy: string;
+  publishedAt: Date;
+}
+
+interface EditEditorProps {
+  mode: 'edit';
+  content: string;
+  onSave: () => void;
+  lastEditedBy: string;
+}
+
+interface CreateEditorProps {
+  mode: 'create';
+  content: string;
+  onSave: () => void;
+  initialDraft: string;
+}
+
+type EditorProps = ViewEditorProps | EditEditorProps | CreateEditorProps;
+```
+
+```tsx
+// ❌ BAD: 응답 상태에 따라 달라지는 데이터를 optional로
+interface ApiResponse {
+  status: 'loading' | 'success' | 'error';
+  data?: User[];          // success일 때 반드시 존재
+  error?: Error;          // error일 때 반드시 존재
+  retryCount?: number;    // error일 때만 의미 있음
+}
+
+// ✅ GOOD: 상태별 타입 분리
+type ApiResponse =
+  | { status: 'loading' }
+  | { status: 'success'; data: User[] }
+  | { status: 'error'; error: Error; retryCount: number };
+
+// 사용처에서 타입 가드 없이 안전하게 접근
+function renderResponse(response: ApiResponse) {
+  switch (response.status) {
+    case 'loading':
+      return <Spinner />;
+    case 'success':
+      return <UserList users={response.data} />;    // data가 반드시 존재
+    case 'error':
+      return <ErrorView error={response.error} />;  // error가 반드시 존재
+  }
+}
+```
+
+**판단 기준:** "이 프로퍼티가 없을 수 있는 이유가 다른 프로퍼티의 값 때문인가?" → Yes면 타입 분리, No면 optional 허용.

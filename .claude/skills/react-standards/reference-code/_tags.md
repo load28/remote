@@ -56,6 +56,13 @@
 | acl | Anti-Corruption Layer |
 | graphql | GraphQL 관련 |
 
+## 상태 관리 (외부 라이브러리)
+
+| 태그 | 설명 |
+|------|------|
+| zustand | Zustand 전역 상태 관리 |
+| client-state | 클라이언트 전용 상태 (UI 토글, 선택 등) |
+
 ## 아키텍처
 
 | 태그 | 설명 |

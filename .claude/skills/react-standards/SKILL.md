@@ -52,10 +52,10 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 |------|------|---------|
 | [architecture.md](architecture.md) | 의존성 방향, 레이어 분리, 결합도, 모듈 경계 | 10 |
 | [naming-conventions.md](naming-conventions.md) | PascalCase, camelCase, on/handle, Boolean 접두사 | 8 |
-| [component-patterns.md](component-patterns.md) | SRP, 합성, 훅 규칙, key 활용, 클로저 트랩 | 14 |
+| [component-patterns.md](component-patterns.md) | SRP, 합성, 훅 규칙, key 활용, 클로저 트랩, 제거 예정 API 금지 | 15 |
 | [state-and-data.md](state-and-data.md) | 함수형 setState, 파생 상태, Context, 비동기 | 16 |
 | [performance.md](performance.md) | 가상화, dynamic import, 워터폴, 의존성 배열 | 14 |
-| [testing-a11y.md](testing-a11y.md) | Testing Library, MSW, strict TS, 에러 바운더리 | 14 |
+| [testing-a11y.md](testing-a11y.md) | Testing Library, MSW, strict TS, 에러 바운더리, optional 남용 금지 | 15 |
 
 #### Step 4: 레퍼런스 기반 코드 작성
 
@@ -71,7 +71,7 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 
 #### Step 2: 규칙 검증 (강제)
 
-76개 규칙(A/N/C/S/P/T) 중 해당 규칙을 전수 검증한다. 위반 발견 시 즉시 수정 후 재검증. 검증 통과한 코드만 등록 가능.
+78개 규칙(A/N/C/S/P/T) 중 해당 규칙을 전수 검증한다. 위반 발견 시 즉시 수정 후 재검증. 검증 통과한 코드만 등록 가능.
 
 #### Step 3: 태그 선택 및 생성
 
@@ -131,6 +131,7 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 - [ ] C-12: key로 컴포넌트 상태 리셋 (해당 시)
 - [ ] C-13: 클로저 트랩 확인 (오래된 state 캡처 없음)
 - [ ] C-14: Feature 기반 폴더 구조
+- [ ] C-15: React 19 제거 예정/제거된 기능·타입 미사용 (forwardRef, defaultProps, propTypes, string ref, findDOMNode, UNSAFE_ lifecycle, 레거시 Context, React.SFC/VFC)
 
 #### 상태 & 데이터 (S)
 - [ ] S-01: state 직접 변경(mutate) 없음
@@ -181,6 +182,7 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 - [ ] T-12: tsconfig strict: true 필수
 - [ ] T-13: Props는 named exported interface
 - [ ] T-14: discriminated union으로 variant 타입 모델링
+- [ ] T-15: optional 프로퍼티 남용 금지 (조건부 프로퍼티는 타입 분리 후 union)
 
 ### Phase 3: 보고 (검토 완료 후)
 
@@ -200,7 +202,7 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 - 🔧 S-02: useEffect 내 파생 상태 → useMemo로 변경
 - 🔧 P-04: && 조건부 렌더 → 삼항 연산자로 변경
 
-✅ 전체 검토 완료 — 76개 규칙 중 XX개 적용, XX개 해당없음, XX개 수정
+✅ 전체 검토 완료 — 78개 규칙 중 XX개 적용, XX개 해당없음, XX개 수정
 ```
 
 **Phase 3 보고 없이 코드 제출을 완료하지 않는다.**

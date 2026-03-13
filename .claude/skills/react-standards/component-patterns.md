@@ -281,3 +281,105 @@ const handleClick = useCallback(() => {
 **분류:** ALWAYS
 
 **WHY:** → A-02 참조. Feature 간 직접 import 금지, 공유 필요 시 shared/ 추출.
+
+---
+
+## C-15: React 제거 예정/제거된 기능·타입 사용 금지
+
+**분류:** NEVER
+
+**WHY:** React 19에서 다수의 레거시 API와 타입이 제거되었다. 제거된 API를 사용하면 React 19 마이그레이션이 차단되고, 제거 예정 API는 향후 메이저 버전에서 동일한 문제를 야기한다. 현재 권장 패턴으로 대체한다.
+
+### 제거된 기능
+
+```tsx
+// ❌ BAD: forwardRef (React 19에서 불필요 — ref가 일반 prop)
+const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
+  return <input ref={ref} {...props} />;
+});
+
+// ✅ GOOD: ref를 일반 prop으로 받음
+function Input({ ref, ...props }: InputProps & { ref?: React.Ref<HTMLInputElement> }) {
+  return <input ref={ref} {...props} />;
+}
+```
+
+```tsx
+// ❌ BAD: 함수 컴포넌트 defaultProps (React 19에서 제거)
+function Button({ size }: ButtonProps) { ... }
+Button.defaultProps = { size: 'md' };
+
+// ✅ GOOD: JS 기본 매개변수
+function Button({ size = 'md' }: ButtonProps) { ... }
+```
+
+```tsx
+// ❌ BAD: propTypes (런타임 타입 검사 — TypeScript로 대체)
+import PropTypes from 'prop-types';
+Button.propTypes = { size: PropTypes.oneOf(['sm', 'md', 'lg']) };
+
+// ✅ GOOD: TypeScript interface (→ T-13 참조)
+export interface ButtonProps {
+  size?: 'sm' | 'md' | 'lg';
+}
+```
+
+```tsx
+// ❌ BAD: string ref (React 19에서 제거)
+<input ref="myInput" />
+
+// ✅ GOOD: useRef 또는 callback ref
+const inputRef = useRef<HTMLInputElement>(null);
+<input ref={inputRef} />
+```
+
+```tsx
+// ❌ BAD: findDOMNode (React 19에서 제거)
+import { findDOMNode } from 'react-dom';
+const node = findDOMNode(componentInstance);
+
+// ✅ GOOD: ref 사용
+const nodeRef = useRef<HTMLDivElement>(null);
+<div ref={nodeRef} />
+```
+
+```tsx
+// ❌ BAD: Legacy Context API (React 19에서 제거)
+class Parent extends Component {
+  getChildContext() { return { theme: 'dark' }; }
+  static childContextTypes = { theme: PropTypes.string };
+}
+
+// ✅ GOOD: createContext (→ S-07 참조)
+const ThemeContext = createContext<string>('light');
+```
+
+```tsx
+// ❌ BAD: UNSAFE_ lifecycle 메서드 (React 19에서 제거)
+class MyComponent extends Component {
+  UNSAFE_componentWillMount() { ... }
+  UNSAFE_componentWillReceiveProps(nextProps) { ... }
+  UNSAFE_componentWillUpdate(nextProps, nextState) { ... }
+}
+
+// ✅ GOOD: 함수 컴포넌트 + Hook으로 대체
+function MyComponent(props: Props) {
+  useEffect(() => { /* componentDidMount 대체 */ }, []);
+  // props 변화 처리는 렌더 본문에서 직접 계산 (→ S-02 참조)
+}
+```
+
+### 제거된 타입
+
+```tsx
+// ❌ BAD: 제거된 타입
+const App: React.SFC<Props> = () => { ... };                // React.SFC 제거됨
+const App: React.StatelessComponent<Props> = () => { ... }; // 동일, 제거됨
+const App: React.VFC<Props> = () => { ... };                // React.VFC 제거됨
+const App: React.VoidFunctionComponent<Props> = () => { ... }; // 동일, 제거됨
+
+// ✅ GOOD: 일반 함수 선언
+function App(props: Props) { ... }
+```
+
+**참고:** `React.FC`는 제거되지 않았으나, children을 더 이상 암묵적으로 포함하지 않는다. 일반 함수 선언을 권장한다.
