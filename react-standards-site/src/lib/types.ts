@@ -23,3 +23,9 @@ export interface Reference {
   rules: string[]
   contentHtml: string
 }
+
+export interface ReferenceGroup {
+  tag: string
+  label: string
+  references: Reference[]
+}

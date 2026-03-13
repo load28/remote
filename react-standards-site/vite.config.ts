@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     port: 3000,
     watch: {
-      ignored: ['**/content/**'],
+      ignored: ['**/content/**', '**/routeTree.gen.ts'],
     },
   },
   plugins: [

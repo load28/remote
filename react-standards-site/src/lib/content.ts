@@ -7,7 +7,7 @@ import remarkRehype from 'remark-rehype'
 import rehypeStringify from 'rehype-stringify'
 import { createHighlighter, type Highlighter } from 'shiki'
 import matter from 'gray-matter'
-import type { Rule, RuleCategory, Reference } from './types'
+import type { Rule, RuleCategory, Reference, ReferenceGroup } from './types'
 
 const CONTENT_DIR = path.resolve(process.cwd(), 'content')
 
@@ -94,6 +94,43 @@ export async function renderMarkdown(md: string): Promise<string> {
       themes: { light: 'github-light', dark: 'github-dark' },
     })
   })
+
+  // Post-process: mark BAD/GOOD code blocks
+  html = html.replace(/<pre class="shiki([^"]*)"([^>]*)>([\s\S]*?)<\/pre>/g,
+    (_match, classes, attrs, content) => {
+      let extraClass = ''
+      if (content.includes('❌') || content.includes('BAD')) {
+        extraClass = ' code-bad'
+      } else if (content.includes('✅') || content.includes('GOOD')) {
+        extraClass = ' code-good'
+      }
+      return `<pre class="shiki${classes}${extraClass}"${attrs}>${content}</pre>`
+    }
+  )
+
+  // Post-process: wrap WHY paragraphs
+  html = html.replace(
+    /<p><strong>WHY:<\/strong>\s*([\s\S]*?)<\/p>/g,
+    '<div class="why-block"><strong>WHY:</strong> $1</div>'
+  )
+
+  // Post-process: wrap 검증 paragraphs
+  html = html.replace(
+    /<p><strong>검증:<\/strong>\s*([\s\S]*?)<\/p>/g,
+    '<div class="verify-block"><strong>검증:</strong> $1</div>'
+  )
+
+  // Post-process: replace classification text with badges
+  html = html.replace(
+    /<p><strong>분류:<\/strong>\s*(.*?)<\/p>/g,
+    (_match, classification) => {
+      const text = classification.trim()
+      const isNever = text.startsWith('NEVER')
+      const isAlways = text.startsWith('ALWAYS')
+      const badgeClass = isNever ? 'badge-never' : isAlways ? 'badge-always' : 'badge-never'
+      return `<p><strong>분류:</strong> <span class="${badgeClass}">${text}</span></p>`
+    }
+  )
 
   return html
 }
@@ -262,6 +299,68 @@ export async function getAllReferences(): Promise<Reference[]> {
   }
 
   return results
+}
+
+export async function getReferenceGroups(): Promise<ReferenceGroup[]> {
+  const refsDir = path.join(CONTENT_DIR, 'references')
+  if (!fs.existsSync(refsDir)) return []
+
+  const groups: Map<string, { fullPaths: Array<{ slug: string; fullPath: string }> }> = new Map()
+
+  function walk(dir: string) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true })
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        walk(fullPath)
+      } else if (entry.name.endsWith('.md') && entry.name !== '_tags.md') {
+        const relPath = path.relative(refsDir, fullPath)
+        const parts = relPath.split('/')
+        const groupTag = parts.length > 1 ? parts[0] : 'general'
+        const slug = relPath.replace(/\.md$/, '').replace(/\//g, '___')
+
+        if (!groups.has(groupTag)) {
+          groups.set(groupTag, { fullPaths: [] })
+        }
+        groups.get(groupTag)!.fullPaths.push({ slug, fullPath })
+      }
+    }
+  }
+
+  walk(refsDir)
+
+  const result: ReferenceGroup[] = []
+
+  // Sort: named groups first, then general
+  const sortedKeys = [...groups.keys()].sort((a, b) => {
+    if (a === 'general') return 1
+    if (b === 'general') return -1
+    return a.localeCompare(b)
+  })
+
+  for (const tag of sortedKeys) {
+    const group = groups.get(tag)!
+    const refs: Reference[] = []
+    for (const { slug, fullPath } of group.fullPaths) {
+      const raw = fs.readFileSync(fullPath, 'utf-8')
+      const { data } = matter(raw)
+      refs.push({
+        slug,
+        title: (data.description as string) || slug,
+        description: (data.description as string) || '',
+        tags: (data.tags as string[]) || [],
+        rules: (data.rules as string[]) || [],
+        contentHtml: '',
+      })
+    }
+    result.push({
+      tag,
+      label: tag === 'general' ? '일반' : tag,
+      references: refs,
+    })
+  }
+
+  return result
 }
 
 export async function getProtocolHtml(): Promise<string> {

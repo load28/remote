@@ -1,64 +1,43 @@
-import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { getAllReferences } from '~/lib/content'
+import { getReferenceGroups } from '~/lib/content'
 
-const loadRefs = createServerFn({ method: 'GET' }).handler(async () => {
-  return getAllReferences()
+const loadGroups = createServerFn({ method: 'GET' }).handler(async () => {
+  return getReferenceGroups()
 })
 
 export const Route = createFileRoute('/references/')({
-  component: ReferencesPage,
-  loader: () => loadRefs(),
+  component: ReferencesIndexPage,
+  loader: () => loadGroups(),
 })
 
-function ReferencesPage() {
-  const references = Route.useLoaderData()
-  const [selectedTag, setSelectedTag] = useState<string | null>(null)
-
-  const allTags = [...new Set(references.flatMap((r) => r.tags))].sort()
-
-  const filtered = selectedTag
-    ? references.filter((r) => r.tags.includes(selectedTag))
-    : references
+function ReferencesIndexPage() {
+  const groups = Route.useLoaderData()
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">레퍼런스 코드</h1>
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setSelectedTag(null)}
-          className={`text-xs px-2 py-1 rounded ${selectedTag === null ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-        >
-          전체
-        </button>
-        {allTags.map((tag) => (
-          <button
-            key={tag}
-            onClick={() => setSelectedTag(tag)}
-            className={`text-xs px-2 py-1 rounded ${selectedTag === tag ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-          >
-            {tag}
-          </button>
-        ))}
+    <div>
+      <div className="page-hero">
+        <h1>레퍼런스 코드</h1>
+        <p className="subtitle">카테고리별 레퍼런스 코드 모음입니다. 각 레퍼런스는 규칙 검증을 통과한 패턴 코드입니다.</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filtered.map((ref) => (
-          <Link
-            key={ref.slug}
-            to={`/references/${ref.slug}`}
-            className="block p-4 border border-gray-200 rounded-lg hover:border-blue-300"
-          >
-            <h3 className="font-medium text-sm">{ref.title}</h3>
-            <div className="mt-2 flex flex-wrap gap-1">
-              {ref.tags.map((tag) => (
-                <span key={tag} className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{tag}</span>
+
+      <div className="space-y-8">
+        {groups.map((group) => (
+          <section key={group.tag} id={group.tag}>
+            <h2 className="ref-group-title">{group.label}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {group.references.map((ref) => (
+                <Link key={ref.slug} to={`/references/${ref.slug}`} className="ref-card">
+                  <div className="title">{ref.title}</div>
+                  <div className="tags">
+                    {ref.tags.slice(0, 4).map((tag) => (
+                      <span key={tag} className="ref-tag">{tag}</span>
+                    ))}
+                  </div>
+                </Link>
               ))}
             </div>
-            {ref.rules.length > 0 ? (
-              <div className="mt-2 text-xs text-gray-500">규칙: {ref.rules.join(', ')}</div>
-            ) : null}
-          </Link>
+          </section>
         ))}
       </div>
     </div>

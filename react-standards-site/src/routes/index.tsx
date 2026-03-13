@@ -15,27 +15,36 @@ export const Route = createFileRoute('/')({
 
 function HomePage() {
   return (
-    <div className="space-y-8">
-      <section>
-        <h1 className="text-3xl font-bold">React Coding Standards</h1>
-        <p className="mt-2 text-gray-600">
-          78개 규칙 · 6개 카테고리 · 28개 레퍼런스 코드
+    <div>
+      <div className="page-hero">
+        <h1>React Coding Standards</h1>
+        <p className="subtitle">
+          React/TypeScript 프로젝트를 위한 코딩 표준 문서입니다.
+          기억에 의존하지 않고, 검증을 강제합니다.
         </p>
-      </section>
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="stats">
+          <div className="stat">
+            <strong>78</strong> 규칙
+          </div>
+          <div className="stat">
+            <strong>6</strong> 카테고리
+          </div>
+          <div className="stat">
+            <strong>28</strong> 레퍼런스
+          </div>
+        </div>
+      </div>
+
+      <div className="category-grid">
         {CATEGORIES.map((cat) => (
-          <Link
-            key={cat.slug}
-            to={`/rules/${cat.slug}`}
-            className="block p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition"
-          >
-            <div className="text-xs font-mono text-blue-600">{cat.prefix}</div>
-            <h3 className="font-semibold mt-1">{cat.label}</h3>
-            <p className="text-sm text-gray-500 mt-1">{cat.desc}</p>
-            <p className="text-xs text-gray-400 mt-2">{cat.count}개 규칙</p>
+          <Link key={cat.slug} to={`/rules/${cat.slug}`} className="category-card">
+            <div className="prefix">{cat.prefix}</div>
+            <div className="title">{cat.label}</div>
+            <div className="desc">{cat.desc}</div>
+            <div className="count">{cat.count}개 규칙</div>
           </Link>
         ))}
-      </section>
+      </div>
     </div>
   )
 }

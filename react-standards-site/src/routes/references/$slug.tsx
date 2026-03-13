@@ -18,29 +18,32 @@ function ReferenceDetailPage() {
   if (!ref) return <div>레퍼런스를 찾을 수 없습니다.</div>
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link to="/references" className="text-sm text-blue-600 hover:underline">← 레퍼런스 목록</Link>
-        <h1 className="text-2xl font-bold mt-2">{ref.title}</h1>
+    <div>
+      <Link to="/references" className="back-link">
+        ← 레퍼런스 목록
+      </Link>
+
+      <div className="page-hero">
+        <h1>{ref.title}</h1>
+        {ref.tags.length > 0 ? (
+          <div className="detail-tags">
+            {ref.tags.map((tag) => (
+              <span key={tag} className="detail-tag">{tag}</span>
+            ))}
+          </div>
+        ) : null}
+        {ref.rules.length > 0 ? (
+          <div className="detail-rules" style={{ marginTop: '0.75rem' }}>
+            <span className="text-xs text-[var(--color-text-muted)]" style={{ marginRight: '0.375rem' }}>적용 규칙</span>
+            {ref.rules.map((ruleId) => (
+              <span key={ruleId} className="detail-rule-badge">{ruleId}</span>
+            ))}
+          </div>
+        ) : null}
       </div>
-      <div className="flex flex-wrap gap-2">
-        {ref.tags.map((tag) => (
-          <span key={tag} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">{tag}</span>
-        ))}
-      </div>
-      {ref.rules.length > 0 ? (
-        <div className="text-sm">
-          <span className="font-medium">적용 규칙: </span>
-          {ref.rules.map((ruleId, i) => (
-            <span key={ruleId}>
-              {i > 0 ? ', ' : ''}
-              <span className="font-mono text-blue-600">{ruleId}</span>
-            </span>
-          ))}
-        </div>
-      ) : null}
+
       <div
-        className="prose prose-sm max-w-none [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:text-sm [&_pre]:overflow-x-auto [&_code]:text-sm [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded"
+        className="prose prose-sm max-w-none"
         dangerouslySetInnerHTML={{ __html: ref.contentHtml }}
       />
     </div>

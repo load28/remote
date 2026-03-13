@@ -15,10 +15,15 @@ function ProtocolPage() {
   const html = Route.useLoaderData()
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">3-Phase 프로토콜</h1>
+    <div>
+      <div className="page-hero">
+        <h1>3-Phase 프로토콜</h1>
+        <p className="subtitle">
+          레퍼런스 참조 → 최종 검증 → 보고. 기억에 의존하지 않는 코드 작성 프로세스입니다.
+        </p>
+      </div>
       <div
-        className="prose prose-sm max-w-none [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:text-sm [&_pre]:overflow-x-auto [&_code]:text-sm [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_table]:text-sm"
+        className="prose prose-sm max-w-none"
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </div>

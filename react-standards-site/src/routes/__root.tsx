@@ -78,9 +78,9 @@ function RootComponent() {
     <RootDocument>
       <div className="flex min-h-screen">
         <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="content-area">
           <Header onSearchClick={() => setIsSearchOpen(true)} />
-          <main className="flex-1 px-4 md:px-8 py-6 max-w-4xl mx-auto w-full">
+          <main className="content-main">
             <Outlet />
           </main>
         </div>
