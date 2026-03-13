@@ -38,10 +38,17 @@ function getHighlighter(): Promise<Highlighter> {
 
 function htmlDecode(str: string): string {
   return str
+    .replace(/&#x3C;/g, '<')
+    .replace(/&#x3E;/g, '>')
+    .replace(/&#x26;/g, '&')
+    .replace(/&#x22;/g, '"')
+    .replace(/&#x27;/g, "'")
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
+    .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(Number(num)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
 }
 
 export async function renderMarkdown(md: string): Promise<string> {
@@ -56,6 +63,8 @@ export async function renderMarkdown(md: string): Promise<string> {
 
   // Post-process code blocks with Shiki
   const highlighter = await getHighlighter()
+
+  // Code blocks with language specified
   const codeBlockRegex =
     /<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>/g
 
@@ -67,12 +76,23 @@ export async function renderMarkdown(md: string): Promise<string> {
         themes: { light: 'github-light', dark: 'github-dark' },
       })
     } catch {
-      // If the language is not supported, fall back to text
       return highlighter.codeToHtml(decoded, {
         lang: 'text',
         themes: { light: 'github-light', dark: 'github-dark' },
       })
     }
+  })
+
+  // Code blocks without language (plain <pre><code>)
+  const plainCodeBlockRegex =
+    /<pre><code>([\s\S]*?)<\/code><\/pre>/g
+
+  html = html.replace(plainCodeBlockRegex, (_match, code: string) => {
+    const decoded = htmlDecode(code)
+    return highlighter.codeToHtml(decoded, {
+      lang: 'text',
+      themes: { light: 'github-light', dark: 'github-dark' },
+    })
   })
 
   return html
