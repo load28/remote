@@ -208,7 +208,7 @@ export function getAllCategorySlugs(): string[] {
 }
 
 export async function getReference(slug: string): Promise<Reference | null> {
-  const filePath = path.join(CONTENT_DIR, 'references', slug.replace(/--/g, '/') + '.md')
+  const filePath = path.join(CONTENT_DIR, 'references', slug.replace(/___/g, '/') + '.md')
   if (!fs.existsSync(filePath)) return null
 
   const raw = fs.readFileSync(filePath, 'utf-8')
@@ -238,7 +238,7 @@ export async function getAllReferences(): Promise<Reference[]> {
         walk(fullPath)
       } else if (entry.name.endsWith('.md') && entry.name !== '_tags.md') {
         const relPath = path.relative(refsDir, fullPath)
-        const slug = relPath.replace(/\//g, '--').replace(/\.md$/, '')
+        const slug = relPath.replace(/\.md$/, '').replace(/\//g, '___')
         references.push({ slug, fullPath } as any)
       }
     }
