@@ -1,7 +1,7 @@
 // 레퍼런스: cleanup--useEffect--event-listener--abort--web-socket.md
 // S-11: 렌더에 안 쓰이는 값 ref, S-16: useEffect cleanup
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { MessageItem } from './MessageItem';
 import type { Message } from '../types';
 
@@ -16,14 +16,21 @@ export interface MessageListProps {
   messages: Message[];
   authorMap: Record<string, MessageAuthor>;
   currentUserId: string;
+  threadIndicatorRenderer: (message: Message) => ReactNode;
+  onStartThread: (messageId: string) => void;
 }
 
 // ✅ C-10: 파일당 1 exported 컴포넌트
-export function MessageList({ messages, authorMap, currentUserId }: MessageListProps) {
+export function MessageList({
+  messages,
+  authorMap,
+  currentUserId,
+  threadIndicatorRenderer,
+  onStartThread,
+}: MessageListProps) {
   // ✅ S-11: 스크롤 위치는 UI에 표시 안 됨 → ref
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // ✅ S-16: cleanup은 여기서 불필요 (scrollIntoView는 구독 아님)
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
@@ -33,6 +40,7 @@ export function MessageList({ messages, authorMap, currentUserId }: MessageListP
       <div className="py-4">
         {messages.map((message) => {
           const author = authorMap[message.userId];
+          const hasThread = message.threadId !== '';
           return (
             <MessageItem
               key={message.id}
@@ -41,6 +49,9 @@ export function MessageList({ messages, authorMap, currentUserId }: MessageListP
               avatarUrl={author?.avatarUrl ?? ''}
               timestamp={message.createdAt}
               isOwnMessage={message.userId === currentUserId}
+              hasThread={hasThread}
+              onStartThread={() => onStartThread(message.id)}
+              threadIndicator={threadIndicatorRenderer(message)}
             />
           );
         })}

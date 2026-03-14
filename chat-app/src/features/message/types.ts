@@ -6,6 +6,7 @@ export interface Message {
   userId: string;
   content: string;
   createdAt: string;
+  threadId: string;
 }
 
 export interface SendMessageInput {

@@ -1,5 +1,7 @@
-// 레퍼런스: presentational--discriminated-union--semantic-html.md
+// 레퍼런스: presentational--discriminated-union--semantic-html.md, interactive--event-naming--a11y.md
 // C-07: SRP, C-10: 파일당 1 exported, T-11: 시맨틱 HTML
+
+import type { ReactNode } from 'react';
 
 // ✅ T-13: named exported interface
 export interface MessageItemProps {
@@ -7,7 +9,10 @@ export interface MessageItemProps {
   authorName: string;
   avatarUrl: string;
   timestamp: string;
-  isOwnMessage: boolean; // N-04: is 접두사
+  isOwnMessage: boolean;
+  hasThread: boolean;
+  onStartThread: () => void;
+  threadIndicator: ReactNode;
 }
 
 // ✅ N-01: PascalCase, C-07: 단일 책임 (메시지 1건 표시)
@@ -17,6 +22,9 @@ export function MessageItem({
   avatarUrl,
   timestamp,
   isOwnMessage,
+  hasThread,
+  onStartThread,
+  threadIndicator,
 }: MessageItemProps) {
   const formattedTime = new Date(timestamp).toLocaleTimeString('ko-KR', {
     hour: '2-digit',
@@ -26,7 +34,7 @@ export function MessageItem({
   return (
     // ✅ T-11: 시맨틱 HTML
     <article
-      className={`flex gap-3 px-4 py-2 hover:bg-gray-50 ${
+      className={`group flex gap-3 px-4 py-2 hover:bg-gray-50 ${
         isOwnMessage ? 'bg-indigo-50/30' : ''
       }`}
     >
@@ -41,8 +49,21 @@ export function MessageItem({
           <time className="text-xs text-gray-500" dateTime={timestamp}>
             {formattedTime}
           </time>
+          {/* 스레드 시작 버튼 — hover 시에만 표시 */}
+          {hasThread ? null : (
+            <button
+              type="button"
+              onClick={onStartThread}
+              className="opacity-0 group-hover:opacity-100 text-xs text-gray-400 hover:text-indigo-600 transition-opacity"
+              aria-label="스레드 시작"
+            >
+              답장
+            </button>
+          )}
         </div>
         <p className="text-sm text-gray-800 break-words">{content}</p>
+        {/* 스레드 인디케이터 — 합성 패턴 (C-08) */}
+        {threadIndicator}
       </div>
     </article>
   );
