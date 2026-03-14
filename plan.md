@@ -1,4 +1,4 @@
-# React 코딩 표준 스킬 구현 계획
+# load28 React 코딩 스킬 구현 계획
 
 ## 목표
 React 코드 작성 후 **강제 검토 단계**를 통해 모든 코딩 표준 준수를 보장
@@ -16,7 +16,7 @@ rules/에 규칙을 넣어도 Claude가 잊어버릴 수 있다.
 
 ```
 .claude/skills/
-└── react-standards/
+└── load28-react/
     ├── SKILL.md                # 진입점: 동작 프로토콜 + 검토 체크리스트
     ├── architecture.md         # 아키텍처 원칙 (의존성 방향, 레이어, 결합도)
     ├── naming-conventions.md   # 네이밍 규칙 상세
@@ -67,7 +67,7 @@ React 코드 작성/수정 요청
 
 **frontmatter:**
 ```yaml
-name: react-standards
+name: load28-react
 description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적용. 코드 작성 후 강제 검토 단계를 통해 컴포넌트, 상태관리, 성능, 네이밍, 테스트 전반의 코딩 표준 준수를 보장합니다.
 ```
 
@@ -296,7 +296,7 @@ description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적
 ## 검토 결과 출력 포맷
 
 ```
-## React Standards Review
+## load28 React Review
 
 ### 적용된 규칙
 - ✅ N-01, N-03, C-01, C-02, S-06, P-13 ...

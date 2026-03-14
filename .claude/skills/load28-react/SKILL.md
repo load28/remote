@@ -1,9 +1,9 @@
 ---
-name: react-standards
-description: React/TypeScript 코드를 작성하거나 수정할 때 자동 적용. 코드 작성 후 강제 검토 단계를 통해 아키텍처, 컴포넌트, 상태관리, 성능, 네이밍, 테스트 전반의 코딩 표준 준수를 보장합니다. React, TSX, JSX 파일을 생성하거나 수정할 때 반드시 이 스킬을 참조하세요.
+name: load28-react
+description: load28의 React/TypeScript 코딩 스킬. 코드 작성 후 강제 검토 단계를 통해 아키텍처, 컴포넌트, 상태관리, 성능, 네이밍, 테스트 전반의 코딩 규칙 준수를 보장합니다. React, TSX, JSX 파일을 생성하거나 수정할 때 반드시 이 스킬을 참조하세요.
 ---
 
-# React Coding Standards
+# load28 React Coding Rules
 
 > "기억에 의존하지 않는다. 검증을 강제한다."
 
@@ -190,7 +190,7 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 검토 결과를 사용자에게 다음 포맷으로 출력한다:
 
 ```
-## React Standards Review
+## load28 React Review
 
 ### 적용된 규칙
 - ✅ A-01, A-08, N-01, N-03, C-01, C-02, S-06, P-13 ...

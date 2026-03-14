@@ -31,8 +31,8 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'React Standards' },
-      { name: 'description', content: 'React/TypeScript 코딩 표준 78개 규칙 문서' },
+      { title: 'load28 React' },
+      { name: 'description', content: 'load28의 React/TypeScript 코딩 규칙 78개 문서' },
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),
