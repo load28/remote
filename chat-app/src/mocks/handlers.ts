@@ -1,8 +1,8 @@
 import { http, HttpResponse } from 'msw';
-import { MOCK_CHANNELS, MOCK_MESSAGES, MOCK_USERS, MOCK_WORKSPACES } from './data';
+import { MOCK_CHANNELS, MOCK_CHANNEL_MEMBERS, MOCK_MESSAGES, MOCK_USERS, MOCK_WORKSPACES } from './data';
 import { MOCK_RECENT_USERS } from './recentUsers';
 import type { Message } from '@/features/message/types';
-import type { Channel } from '@/features/channel/types';
+import type { Channel, ChannelMember, ChannelMemberRole, AddChannelMemberInput, UpdateMemberRoleInput } from '@/features/channel/types';
 import type { LoginCredentials } from '@/features/auth/types';
 import type { User, UpdateProfileInput } from '@/features/user/types';
 import type { CustomEmoji } from '@/features/emoji/types';
@@ -19,6 +19,7 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 let users = [...MOCK_USERS];
 let channels = [...MOCK_CHANNELS];
+let channelMembers = [...MOCK_CHANNEL_MEMBERS];
 let messages = [...MOCK_MESSAGES];
 let customEmojis: CustomEmoji[] = [];
 let inviteLinks: InviteLink[] = [];
@@ -134,6 +135,98 @@ export const handlers = [
     };
     channels = [...channels, newChannel];
     return HttpResponse.json(newChannel, { status: 201 });
+  }),
+
+  // --- Channel Members ---
+  http.get('/api/channels/:channelId/members', ({ params }) => {
+    const filtered = channelMembers.filter((m) => m.channelId === params['channelId']);
+    return HttpResponse.json(filtered);
+  }),
+
+  http.post('/api/channels/:channelId/members', async ({ params, request }) => {
+    const channelId = params['channelId'] as string;
+    const body = (await request.json()) as AddChannelMemberInput;
+    const channel = channels.find((c) => c.id === channelId);
+    if (!channel) {
+      return HttpResponse.json({ message: 'Channel not found' }, { status: 404 });
+    }
+
+    const existingMember = channelMembers.find(
+      (m) => m.channelId === channelId && m.userId === body.userId,
+    );
+    if (existingMember) {
+      return HttpResponse.json({ message: 'User already a member' }, { status: 409 });
+    }
+
+    const user = users.find((u) => u.id === body.userId);
+    if (!user) {
+      return HttpResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
+    const newMember: ChannelMember = {
+      channelId,
+      userId: body.userId,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+      isOnline: user.isOnline,
+      role: body.role,
+      joinedAt: new Date().toISOString(),
+    };
+    channelMembers = [...channelMembers, newMember];
+
+    // memberCount 업데이트
+    channels = channels.map((c) =>
+      c.id === channelId ? { ...c, memberCount: c.memberCount + 1 } : c,
+    );
+
+    return HttpResponse.json(newMember, { status: 201 });
+  }),
+
+  http.delete('/api/channels/:channelId/members/:userId', ({ params }) => {
+    const channelId = params['channelId'] as string;
+    const userId = params['userId'] as string;
+
+    const member = channelMembers.find(
+      (m) => m.channelId === channelId && m.userId === userId,
+    );
+    if (!member) {
+      return HttpResponse.json({ message: 'Member not found' }, { status: 404 });
+    }
+    if (member.role === 'owner') {
+      return HttpResponse.json({ message: 'Cannot remove channel owner' }, { status: 403 });
+    }
+
+    channelMembers = channelMembers.filter(
+      (m) => !(m.channelId === channelId && m.userId === userId),
+    );
+    channels = channels.map((c) =>
+      c.id === channelId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
+    );
+
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.put('/api/channels/:channelId/members/:userId/role', async ({ params, request }) => {
+    const channelId = params['channelId'] as string;
+    const userId = params['userId'] as string;
+    const body = (await request.json()) as UpdateMemberRoleInput;
+
+    const memberIndex = channelMembers.findIndex(
+      (m) => m.channelId === channelId && m.userId === userId,
+    );
+    if (memberIndex === -1) {
+      return HttpResponse.json({ message: 'Member not found' }, { status: 404 });
+    }
+
+    const member = channelMembers[memberIndex];
+    if (member.role === 'owner') {
+      return HttpResponse.json({ message: 'Cannot change owner role' }, { status: 403 });
+    }
+
+    const updatedMember: ChannelMember = { ...member, role: body.role };
+    channelMembers = channelMembers.map((m, i) => (i === memberIndex ? updatedMember : m));
+
+    return HttpResponse.json(updatedMember);
   }),
 
   // --- Messages ---

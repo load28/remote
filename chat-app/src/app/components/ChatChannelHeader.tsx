@@ -12,10 +12,11 @@ import type { Channel } from '@/features/channel';
 export interface ChatChannelHeaderProps {
   selectedChannel: Channel | undefined;
   isGuest: boolean; // N-04
+  onToggleMemberPanel: () => void; // N-03
 }
 
 // ✅ C-10: 파일당 1 exported 컴포넌트
-export function ChatChannelHeader({ selectedChannel, isGuest }: ChatChannelHeaderProps) {
+export function ChatChannelHeader({ selectedChannel, isGuest, onToggleMemberPanel }: ChatChannelHeaderProps) {
   // ✅ S-09: 사용처 가까이 배치
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [currentInviteLink, setCurrentInviteLink] = useState<InviteLink | null>(null);
@@ -53,16 +54,26 @@ export function ChatChannelHeader({ selectedChannel, isGuest }: ChatChannelHeade
             <p className="text-sm text-gray-500">{selectedChannel.description}</p>
           ) : null}
         </div>
-        {/* 게스트가 아닐 때만 초대 버튼 표시 */}
+        {/* 게스트가 아닐 때만 초대/멤버 버튼 표시 */}
         {selectedChannel && !isGuest ? (
-          <button
-            type="button"
-            onClick={handleOpenInviteModal}
-            className="px-3 py-1.5 text-sm font-medium text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50"
-            aria-label={`${selectedChannel.name} 채널에 초대`}
-          >
-            초대하기
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onToggleMemberPanel}
+              className="px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              aria-label={`${selectedChannel.name} 채널 멤버 관리`}
+            >
+              멤버 {selectedChannel.memberCount}
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenInviteModal}
+              className="px-3 py-1.5 text-sm font-medium text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50"
+              aria-label={`${selectedChannel.name} 채널에 초대`}
+            >
+              초대하기
+            </button>
+          </div>
         ) : null}
       </header>
 

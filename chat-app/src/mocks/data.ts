@@ -1,5 +1,5 @@
 import type { User } from '@/features/user/types';
-import type { Channel } from '@/features/channel/types';
+import type { Channel, ChannelMember } from '@/features/channel/types';
 import type { Message } from '@/features/message/types';
 import type { Workspace } from '@/features/workspace/types';
 
@@ -101,6 +101,24 @@ export const MOCK_CHANNELS: Channel[] = [
     memberCount: 3,
     createdAt: '2024-01-04T00:00:00Z',
   },
+];
+
+export const MOCK_CHANNEL_MEMBERS: ChannelMember[] = [
+  // channel-1 (general) — 모든 유저
+  { channelId: 'channel-1', userId: 'user-1', displayName: '박지민', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=jimin', isOnline: true, role: 'owner', joinedAt: '2024-01-01T00:00:00Z' },
+  { channelId: 'channel-1', userId: 'user-2', displayName: '김소연', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=soyeon', isOnline: true, role: 'admin', joinedAt: '2024-01-01T00:00:00Z' },
+  { channelId: 'channel-1', userId: 'user-3', displayName: '이민호', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=minho', isOnline: false, role: 'member', joinedAt: '2024-01-02T00:00:00Z' },
+  { channelId: 'channel-1', userId: 'user-4', displayName: '정유나', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=yuna', isOnline: true, role: 'member', joinedAt: '2024-01-03T00:00:00Z' },
+  // channel-2 (random)
+  { channelId: 'channel-2', userId: 'user-1', displayName: '박지민', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=jimin', isOnline: true, role: 'owner', joinedAt: '2024-01-01T00:00:00Z' },
+  { channelId: 'channel-2', userId: 'user-2', displayName: '김소연', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=soyeon', isOnline: true, role: 'member', joinedAt: '2024-01-01T00:00:00Z' },
+  { channelId: 'channel-2', userId: 'user-4', displayName: '정유나', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=yuna', isOnline: true, role: 'member', joinedAt: '2024-01-02T00:00:00Z' },
+  // channel-3 (dev)
+  { channelId: 'channel-3', userId: 'user-1', displayName: '박지민', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=jimin', isOnline: true, role: 'owner', joinedAt: '2024-01-02T00:00:00Z' },
+  { channelId: 'channel-3', userId: 'user-3', displayName: '이민호', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=minho', isOnline: false, role: 'member', joinedAt: '2024-01-02T00:00:00Z' },
+  // channel-4 (design)
+  { channelId: 'channel-4', userId: 'user-2', displayName: '김소연', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=soyeon', isOnline: true, role: 'owner', joinedAt: '2024-01-03T00:00:00Z' },
+  { channelId: 'channel-4', userId: 'user-4', displayName: '정유나', avatarUrl: 'https://api.dicebear.com/9.x/avataaars/svg?seed=yuna', isOnline: true, role: 'member', joinedAt: '2024-01-03T00:00:00Z' },
 ];
 
 export const MOCK_MESSAGES: Message[] = [

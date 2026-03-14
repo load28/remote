@@ -4,7 +4,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ChannelList, useChannels } from '@/features/channel';
+import { ChannelList, ChannelMemberPanel, useChannels } from '@/features/channel';
 import { MessageList, MessageInput, useMessages, useSendMessage, MESSAGE_QUERY_KEY, type MessageAuthor, type Message } from '@/features/message';
 import { UserProfile, ProfileEditModal, useUsers, useUpdateProfile, USER_QUERY_KEY, type UpdateProfileInput } from '@/features/user';
 import { EmojiPicker, CustomEmojiManager, useCustomEmojis, useCreateCustomEmoji, useDeleteCustomEmoji, CUSTOM_EMOJI_QUERY_KEY, EMOJI_CATEGORIES, type CustomEmoji, type CreateCustomEmojiInput } from '@/features/emoji';
@@ -39,6 +39,7 @@ export function ChatPage() {
   const [selectedChannelId, setSelectedChannelId] = useState(DEFAULT_CHANNEL_ID);
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
   const [isCustomEmojiManagerOpen, setIsCustomEmojiManagerOpen] = useState(false);
+  const [isMemberPanelOpen, setIsMemberPanelOpen] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [messageContent, setMessageContent] = useState('');
 
@@ -177,7 +178,7 @@ export function ChatPage() {
       </aside>
 
       <main className="flex-1 flex flex-col">
-        <ChatChannelHeader selectedChannel={selectedChannel} isGuest={isGuest} />
+        <ChatChannelHeader selectedChannel={selectedChannel} isGuest={isGuest} onToggleMemberPanel={() => setIsMemberPanelOpen((prev) => !prev)} />
         <ErrorBoundary
           fallback={(error, reset) => (
             <div className="flex-1 flex items-center justify-center" role="alert">
@@ -197,6 +198,16 @@ export function ChatPage() {
           emojiPicker={<EmojiPicker categories={EMOJI_CATEGORIES} customEmojis={customEmojis} onSelectEmoji={handleSelectEmoji} onSelectCustomEmoji={handleSelectCustomEmoji} onOpenCustomEmojiManager={() => { setIsEmojiPickerOpen(false); setIsCustomEmojiManagerOpen(true); }} />}
         />
       </main>
+
+      {isMemberPanelOpen && selectedChannel ? (
+        <ChannelMemberPanel
+          channelId={effectiveChannelId}
+          channelName={selectedChannel.name}
+          currentUserId={currentUserId}
+          allUsers={users}
+          onClose={() => setIsMemberPanelOpen(false)}
+        />
+      ) : null}
 
       {thread.isThreadPanelOpen && thread.activeThread ? (
         <ThreadPanel
