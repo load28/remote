@@ -19,6 +19,8 @@ import {
   EMOJI_CATEGORIES,
 } from '@/features/emoji';
 import type { CustomEmoji, CreateCustomEmojiInput } from '@/features/emoji';
+import { InviteLinkModal, useCreateInvite } from '@/features/invite';
+import type { InviteLink } from '@/features/invite';
 import { useAuthStore } from '@/features/auth';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 
@@ -31,22 +33,36 @@ export function ChatPage() {
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
   const [isCustomEmojiManagerOpen, setIsCustomEmojiManagerOpen] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [currentInviteLink, setCurrentInviteLink] = useState<InviteLink | null>(null);
   const [messageContent, setMessageContent] = useState('');
 
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.currentUser);
+  const isGuest = useAuthStore((s) => s.isGuest);
+  const guestChannelId = useAuthStore((s) => s.guestChannelId);
   const currentUserId = currentUser?.id ?? '';
   const { data: channels = [] } = useChannels();
   const { data: users = [] } = useUsers();
-  const { data: messages = [] } = useMessages(selectedChannelId);
+
+  // 게스트는 초대된 채널만 사용
+  const effectiveChannelId = isGuest && guestChannelId ? guestChannelId : selectedChannelId;
+
+  const { data: messages = [] } = useMessages(effectiveChannelId);
   const { data: customEmojis = [] } = useCustomEmojis();
-  const sendMessage = useSendMessage(selectedChannelId);
+  const sendMessage = useSendMessage(effectiveChannelId);
   const updateProfile = useUpdateProfile(currentUserId);
   const createCustomEmoji = useCreateCustomEmoji(currentUserId);
   const deleteCustomEmoji = useDeleteCustomEmoji();
+  const createInvite = useCreateInvite();
 
-  const selectedChannel = channels.find((c) => c.id === selectedChannelId);
+  const selectedChannel = channels.find((c) => c.id === effectiveChannelId);
   const currentUserDetail = users.find((u) => u.id === currentUserId);
+
+  // 게스트는 초대된 채널만 표시
+  const visibleChannels = isGuest
+    ? channels.filter((c) => c.id === guestChannelId)
+    : channels;
 
   // ✅ A-01: feature 간 의존 제거 — app 레벨에서 User→MessageAuthor 변환
   // ✅ P-14: 객체 의존성 useMemo
@@ -67,7 +83,7 @@ export function ChatPage() {
   const handleSendMessage = (content: string) => {
     sendMessage.mutate({ content, userId: currentUserId }, {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [...MESSAGE_QUERY_KEY, selectedChannelId] });
+        queryClient.invalidateQueries({ queryKey: [...MESSAGE_QUERY_KEY, effectiveChannelId] });
       },
     });
     setMessageContent('');
@@ -132,6 +148,25 @@ export function ChatPage() {
     });
   };
 
+  const handleOpenInviteModal = () => {
+    setCurrentInviteLink(null);
+    setIsInviteModalOpen(true);
+  };
+
+  const handleCloseInviteModal = () => {
+    setIsInviteModalOpen(false);
+    setCurrentInviteLink(null);
+  };
+
+  // ✅ S-17: onSuccess를 사용처에서 처리
+  const handleCreateInvite = () => {
+    createInvite.mutate({ channelId: effectiveChannelId }, {
+      onSuccess: (invite) => {
+        setCurrentInviteLink(invite);
+      },
+    });
+  };
+
   return (
     <div className="flex h-screen bg-white">
       {/* 사이드바 */}
@@ -143,8 +178,8 @@ export function ChatPage() {
           {/* ✅ T-10: 위젯 레벨 에러 바운더리 */}
           <ErrorBoundary fallback={<p className="text-sm text-red-400 px-2">채널을 불러올 수 없습니다</p>}>
             <ChannelList
-              channels={channels}
-              selectedChannelId={selectedChannelId}
+              channels={visibleChannels}
+              selectedChannelId={effectiveChannelId}
               onSelectChannel={handleSelectChannel}
             />
           </ErrorBoundary>
@@ -156,12 +191,25 @@ export function ChatPage() {
 
       {/* 메인 채팅 영역 */}
       <main className="flex-1 flex flex-col">
-        <header className="px-6 py-3 border-b border-gray-200 bg-white">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {selectedChannel ? `# ${selectedChannel.name}` : '채널을 선택하세요'}
-          </h2>
-          {selectedChannel ? (
-            <p className="text-sm text-gray-500">{selectedChannel.description}</p>
+        <header className="px-6 py-3 border-b border-gray-200 bg-white flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {selectedChannel ? `# ${selectedChannel.name}` : '채널을 선택하세요'}
+            </h2>
+            {selectedChannel ? (
+              <p className="text-sm text-gray-500">{selectedChannel.description}</p>
+            ) : null}
+          </div>
+          {/* 게스트가 아닐 때만 초대 버튼 표시 */}
+          {selectedChannel && !isGuest ? (
+            <button
+              type="button"
+              onClick={handleOpenInviteModal}
+              className="px-3 py-1.5 text-sm font-medium text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50"
+              aria-label={`${selectedChannel.name} 채널에 초대`}
+            >
+              초대하기
+            </button>
           ) : null}
         </header>
 
@@ -228,6 +276,17 @@ export function ChatPage() {
         onCreateEmoji={handleCreateCustomEmoji}
         onDeleteEmoji={handleDeleteCustomEmoji}
       />
+
+      {selectedChannel ? (
+        <InviteLinkModal
+          isOpen={isInviteModalOpen}
+          channelName={selectedChannel.name}
+          inviteLink={currentInviteLink}
+          isCreating={createInvite.isPending}
+          onClose={handleCloseInviteModal}
+          onCreateInvite={handleCreateInvite}
+        />
+      ) : null}
     </div>
   );
 }
