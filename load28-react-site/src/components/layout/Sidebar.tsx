@@ -23,7 +23,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar hidden md:block">
       <div className="sidebar-brand">
-        <h2>React Standards</h2>
+        <h2>load28 React</h2>
         <p>78 Rules · 6 Categories</p>
       </div>
 

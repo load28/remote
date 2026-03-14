@@ -1,10 +1,10 @@
-# React Standards Documentation Site — Implementation Plan
+# load28 React Documentation Site — Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Build an SSR documentation site for 78 React coding standards rules, 28 reference code files, and 3-Phase protocol using TanStack Start + Tailwind CSS v4.
 
-**Architecture:** TanStack Start (Vite plugin) serves SSR pages. Markdown content is parsed at build time via unified/remark/rehype pipeline with Shiki code highlighting. Fuse.js provides client-side fuzzy search. Content lives in `content/` directory, copied from `.claude/skills/react-standards/`.
+**Architecture:** TanStack Start (Vite plugin) serves SSR pages. Markdown content is parsed at build time via unified/remark/rehype pipeline with Shiki code highlighting. Fuse.js provides client-side fuzzy search. Content lives in `content/` directory, copied from `.claude/skills/load28-react/`.
 
 **Tech Stack:** TanStack Start, @tanstack/react-router, Tailwind CSS v4, unified/remark-gfm/rehype, Shiki, Fuse.js, Lucide React, Vercel
 
@@ -13,23 +13,23 @@
 ## Task 1: Project Scaffolding
 
 **Files:**
-- Create: `react-standards-site/package.json`
-- Create: `react-standards-site/vite.config.ts`
-- Create: `react-standards-site/tsconfig.json`
-- Create: `react-standards-site/src/router.tsx`
-- Create: `react-standards-site/src/styles/app.css`
+- Create: `load28-react-site/package.json`
+- Create: `load28-react-site/vite.config.ts`
+- Create: `load28-react-site/tsconfig.json`
+- Create: `load28-react-site/src/router.tsx`
+- Create: `load28-react-site/src/styles/app.css`
 
 **Step 1: Initialize project directory and package.json**
 
 ```bash
-mkdir -p react-standards-site
-cd react-standards-site
+mkdir -p load28-react-site
+cd load28-react-site
 ```
 
 ```json
 // package.json
 {
-  "name": "react-standards-site",
+  "name": "load28-react-site",
   "type": "module",
   "private": true,
   "scripts": {
@@ -60,7 +60,7 @@ cd react-standards-site
 
 **Step 2: Install dependencies**
 
-Run: `cd react-standards-site && npm install`
+Run: `cd load28-react-site && npm install`
 
 **Step 3: Create vite.config.ts**
 
@@ -142,7 +142,7 @@ Expected: Dev server starts at localhost:3000 (may show 404 — no routes yet)
 **Step 8: Commit**
 
 ```bash
-git add react-standards-site/
+git add load28-react-site/
 git commit -m "feat(site): scaffold TanStack Start project with Tailwind v4"
 ```
 
@@ -151,10 +151,10 @@ git commit -m "feat(site): scaffold TanStack Start project with Tailwind v4"
 ## Task 2: Root Layout + Landing Page
 
 **Files:**
-- Create: `react-standards-site/src/routes/__root.tsx`
-- Create: `react-standards-site/src/routes/index.tsx`
-- Create: `react-standards-site/src/components/layout/Sidebar.tsx`
-- Create: `react-standards-site/src/components/layout/Header.tsx`
+- Create: `load28-react-site/src/routes/__root.tsx`
+- Create: `load28-react-site/src/routes/index.tsx`
+- Create: `load28-react-site/src/components/layout/Sidebar.tsx`
+- Create: `load28-react-site/src/components/layout/Header.tsx`
 
 **Step 1: Create __root.tsx with HTML shell + layout**
 
@@ -175,7 +175,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'React Standards' },
+      { title: 'load28 React' },
       { name: 'description', content: 'React/TypeScript 코딩 표준 78개 규칙 문서' },
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
@@ -276,7 +276,7 @@ import { Search } from 'lucide-react'
 export function Header() {
   return (
     <header className="border-b border-gray-200 px-8 py-3 flex items-center justify-between">
-      <h1 className="text-lg font-bold">React Standards</h1>
+      <h1 className="text-lg font-bold">load28 React</h1>
       <div className="flex items-center gap-4">
         <div className="relative">
           <Search size={16} className="absolute left-2.5 top-2.5 text-gray-400" />
@@ -357,7 +357,7 @@ Expected: Landing page with 6 category cards at localhost:3000
 **Step 6: Commit**
 
 ```bash
-git add react-standards-site/src/
+git add load28-react-site/src/
 git commit -m "feat(site): add root layout, sidebar, header, and landing page"
 ```
 
@@ -366,15 +366,15 @@ git commit -m "feat(site): add root layout, sidebar, header, and landing page"
 ## Task 3: Content Pipeline (Markdown + Shiki)
 
 **Files:**
-- Create: `react-standards-site/src/lib/content.ts`
-- Create: `react-standards-site/src/lib/types.ts`
-- Copy content to: `react-standards-site/content/rules/*.md`
-- Copy content to: `react-standards-site/content/references/*.md`
-- Copy content to: `react-standards-site/content/protocol.md`
+- Create: `load28-react-site/src/lib/content.ts`
+- Create: `load28-react-site/src/lib/types.ts`
+- Copy content to: `load28-react-site/content/rules/*.md`
+- Copy content to: `load28-react-site/content/references/*.md`
+- Copy content to: `load28-react-site/content/protocol.md`
 
 **Step 1: Install markdown/shiki dependencies**
 
-Run: `cd react-standards-site && npm install unified remark-parse remark-gfm remark-rehype rehype-stringify shiki gray-matter`
+Run: `cd load28-react-site && npm install unified remark-parse remark-gfm remark-rehype rehype-stringify shiki gray-matter`
 Run: `npm install -D @types/hast`
 
 **Step 2: Create types**
@@ -626,19 +626,19 @@ function toSlug(filePath: string): string {
 
 ```bash
 # From repo root
-mkdir -p react-standards-site/content/rules
-mkdir -p react-standards-site/content/references
+mkdir -p load28-react-site/content/rules
+mkdir -p load28-react-site/content/references
 
 # Copy rule files
-cp .claude/skills/react-standards/architecture.md react-standards-site/content/rules/
-cp .claude/skills/react-standards/naming-conventions.md react-standards-site/content/rules/
-cp .claude/skills/react-standards/component-patterns.md react-standards-site/content/rules/
-cp .claude/skills/react-standards/state-and-data.md react-standards-site/content/rules/
-cp .claude/skills/react-standards/performance.md react-standards-site/content/rules/
-cp .claude/skills/react-standards/testing-a11y.md react-standards-site/content/rules/
+cp .claude/skills/load28-react/architecture.md load28-react-site/content/rules/
+cp .claude/skills/load28-react/naming-conventions.md load28-react-site/content/rules/
+cp .claude/skills/load28-react/component-patterns.md load28-react-site/content/rules/
+cp .claude/skills/load28-react/state-and-data.md load28-react-site/content/rules/
+cp .claude/skills/load28-react/performance.md load28-react-site/content/rules/
+cp .claude/skills/load28-react/testing-a11y.md load28-react-site/content/rules/
 
 # Copy reference code files (flatten directory structure)
-cp -r .claude/skills/react-standards/reference-code/* react-standards-site/content/references/
+cp -r .claude/skills/load28-react/reference-code/* load28-react-site/content/references/
 
 # Create protocol.md from SKILL.md Phase section
 # (extract the 3-Phase protocol content from SKILL.md)
@@ -646,7 +646,7 @@ cp -r .claude/skills/react-standards/reference-code/* react-standards-site/conte
 
 **Step 5: Create protocol.md** (extract from SKILL.md)
 
-Create `react-standards-site/content/protocol.md` with the 3-Phase protocol content extracted from SKILL.md (Phase 1 → Phase 2 → Phase 3 sections).
+Create `load28-react-site/content/protocol.md` with the 3-Phase protocol content extracted from SKILL.md (Phase 1 → Phase 2 → Phase 3 sections).
 
 **Step 6: Verify content loads**
 
@@ -655,7 +655,7 @@ Create a quick test — import `getAllRules` in index.tsx loader and log the cou
 **Step 7: Commit**
 
 ```bash
-git add react-standards-site/content/ react-standards-site/src/lib/
+git add load28-react-site/content/ load28-react-site/src/lib/
 git commit -m "feat(site): add content pipeline with markdown parsing and Shiki highlighting"
 ```
 
@@ -664,9 +664,9 @@ git commit -m "feat(site): add content pipeline with markdown parsing and Shiki 
 ## Task 4: Rules Routes
 
 **Files:**
-- Create: `react-standards-site/src/routes/rules/index.tsx`
-- Create: `react-standards-site/src/routes/rules/$category.tsx`
-- Create: `react-standards-site/src/components/rules/RuleCard.tsx`
+- Create: `load28-react-site/src/routes/rules/index.tsx`
+- Create: `load28-react-site/src/routes/rules/$category.tsx`
+- Create: `load28-react-site/src/components/rules/RuleCard.tsx`
 
 **Step 1: Create rules index page (search/filter)**
 
@@ -801,7 +801,7 @@ Navigate to: `localhost:3000/rules/architecture` — should show A-01 through A-
 **Step 4: Commit**
 
 ```bash
-git add react-standards-site/src/routes/rules/
+git add load28-react-site/src/routes/rules/
 git commit -m "feat(site): add rules index and category detail pages"
 ```
 
@@ -810,8 +810,8 @@ git commit -m "feat(site): add rules index and category detail pages"
 ## Task 5: References Routes
 
 **Files:**
-- Create: `react-standards-site/src/routes/references/index.tsx`
-- Create: `react-standards-site/src/routes/references/$slug.tsx`
+- Create: `load28-react-site/src/routes/references/index.tsx`
+- Create: `load28-react-site/src/routes/references/$slug.tsx`
 
 **Step 1: Create references gallery page**
 
@@ -970,7 +970,7 @@ Click a card — should show detail page with highlighted code
 **Step 4: Commit**
 
 ```bash
-git add react-standards-site/src/routes/references/
+git add load28-react-site/src/routes/references/
 git commit -m "feat(site): add references gallery and detail pages"
 ```
 
@@ -979,7 +979,7 @@ git commit -m "feat(site): add references gallery and detail pages"
 ## Task 6: Protocol Page
 
 **Files:**
-- Create: `react-standards-site/src/routes/protocol.tsx`
+- Create: `load28-react-site/src/routes/protocol.tsx`
 
 **Step 1: Create protocol page**
 
@@ -1025,7 +1025,7 @@ Expected: 3-Phase protocol rendered with code blocks
 **Step 3: Commit**
 
 ```bash
-git add react-standards-site/src/routes/protocol.tsx
+git add load28-react-site/src/routes/protocol.tsx
 git commit -m "feat(site): add protocol guide page"
 ```
 
@@ -1034,9 +1034,9 @@ git commit -m "feat(site): add protocol guide page"
 ## Task 7: Search with Fuse.js
 
 **Files:**
-- Create: `react-standards-site/src/lib/search.ts`
-- Modify: `react-standards-site/src/components/layout/Header.tsx`
-- Create: `react-standards-site/src/components/layout/SearchDialog.tsx`
+- Create: `load28-react-site/src/lib/search.ts`
+- Modify: `load28-react-site/src/components/layout/Header.tsx`
+- Create: `load28-react-site/src/components/layout/SearchDialog.tsx`
 
 **Step 1: Create search index builder**
 
@@ -1182,7 +1182,7 @@ Type "useState" → relevant rules appear
 **Step 6: Commit**
 
 ```bash
-git add react-standards-site/src/lib/search.ts react-standards-site/src/components/
+git add load28-react-site/src/lib/search.ts load28-react-site/src/components/
 git commit -m "feat(site): add Fuse.js search with Cmd+K dialog"
 ```
 
@@ -1191,7 +1191,7 @@ git commit -m "feat(site): add Fuse.js search with Cmd+K dialog"
 ## Task 8: Styling Polish
 
 **Files:**
-- Modify: `react-standards-site/src/styles/app.css`
+- Modify: `load28-react-site/src/styles/app.css`
 - Modify: Various component files for responsive design
 
 **Step 1: Add typography and prose styles**
@@ -1224,7 +1224,7 @@ Verify code blocks render with Shiki syntax highlighting.
 **Step 5: Commit**
 
 ```bash
-git add react-standards-site/
+git add load28-react-site/
 git commit -m "feat(site): polish styles, responsive design, and code block theming"
 ```
 
@@ -1233,12 +1233,12 @@ git commit -m "feat(site): polish styles, responsive design, and code block them
 ## Task 9: Vercel Deployment
 
 **Files:**
-- Create: `react-standards-site/vercel.json` (if needed)
-- Modify: `react-standards-site/package.json` (verify build script)
+- Create: `load28-react-site/vercel.json` (if needed)
+- Modify: `load28-react-site/package.json` (verify build script)
 
 **Step 1: Verify production build**
 
-Run: `cd react-standards-site && npm run build`
+Run: `cd load28-react-site && npm run build`
 Expected: Build succeeds, output in `.output/`
 
 Run: `npm run start`
@@ -1259,7 +1259,7 @@ TanStack Start with Vinxi should auto-detect on Vercel. If not:
 **Step 3: Deploy to Vercel**
 
 ```bash
-cd react-standards-site
+cd load28-react-site
 npx vercel --prod
 ```
 
@@ -1277,7 +1277,7 @@ Visit the Vercel URL. Check:
 **Step 5: Commit deployment config**
 
 ```bash
-git add react-standards-site/vercel.json
+git add load28-react-site/vercel.json
 git commit -m "feat(site): add Vercel deployment configuration"
 ```
 

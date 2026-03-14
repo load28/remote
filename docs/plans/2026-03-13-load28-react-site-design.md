@@ -1,14 +1,14 @@
-# React Standards 공식 문서 사이트 설계
+# load28 React 공식 문서 사이트 설계
 
 ## 개요
 
-React 코딩 표준 78개 규칙과 레퍼런스 코드를 탐색할 수 있는 SSR 문서 사이트.
+load28 React 코딩 규칙 78개 규칙과 레퍼런스 코드를 탐색할 수 있는 SSR 문서 사이트.
 TanStack Start + Tailwind CSS로 구현, Vercel 배포.
 
 ## 대상 사용자
 
 - 팀 내부 개발자: 규칙을 빠르게 찾아보는 레퍼런스
-- 외부 개발자: React 코딩 표준을 학습하는 교육 자료
+- 외부 개발자: load28 React 코딩 규칙을 학습하는 교육 자료
 
 ## 기술 스택
 
@@ -25,7 +25,7 @@ TanStack Start + Tailwind CSS로 구현, Vercel 배포.
 ## 디렉토리 구조
 
 ```
-react-standards-site/
+load28-react-site/
 ├── app/
 │   ├── routes/
 │   │   ├── __root.tsx          # 루트 레이아웃 (사이드바 + 콘텐츠)
@@ -62,7 +62,7 @@ react-standards-site/
 ## 콘텐츠 관리
 
 - `content/` 디렉토리에 사이트 전용 마크다운 배치
-- 원본 `.claude/skills/react-standards/`에서 복사 후 사이트에 최적화
+- 원본 `.claude/skills/load28-react/`에서 복사 후 사이트에 최적화
 - 빌드 타임에 unified/remark/rehype로 파싱
 - Shiki로 서버 사이드 코드 하이라이팅
 
@@ -81,7 +81,7 @@ react-standards-site/
 
 ```
 ┌─────────────────────────────────────────────┐
-│  React Standards       [검색]    [GitHub]    │
+│  load28 React       [검색]    [GitHub]    │
 ├──────────┬──────────────────────────────────┤
 │ 사이드바  │  콘텐츠 영역                      │
 │          │                                   │
