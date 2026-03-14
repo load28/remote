@@ -49,9 +49,11 @@ export function MessageList({
               avatarUrl={author?.avatarUrl ?? ''}
               timestamp={message.createdAt}
               isOwnMessage={message.userId === currentUserId}
-              hasThread={hasThread}
-              onStartThread={() => onStartThread(message.id)}
-              threadIndicator={threadIndicatorRenderer(message)}
+              thread={{
+                hasThread,
+                onStartThread: () => onStartThread(message.id),
+                indicator: threadIndicatorRenderer(message),
+              }}
             />
           );
         })}

@@ -3,16 +3,21 @@
 
 import type { ReactNode } from 'react';
 
-// ✅ T-13: named exported interface
+// ✅ C-04: props 7개 이하 — thread 관련 props 그룹화
+export interface MessageThreadInfo {
+  hasThread: boolean;
+  onStartThread: () => void;
+  indicator: ReactNode;
+}
+
+// ✅ T-13: named exported interface — 6개 props
 export interface MessageItemProps {
   content: string;
   authorName: string;
   avatarUrl: string;
   timestamp: string;
   isOwnMessage: boolean;
-  hasThread: boolean;
-  onStartThread: () => void;
-  threadIndicator: ReactNode;
+  thread: MessageThreadInfo;
 }
 
 // ✅ N-01: PascalCase, C-07: 단일 책임 (메시지 1건 표시)
@@ -22,9 +27,7 @@ export function MessageItem({
   avatarUrl,
   timestamp,
   isOwnMessage,
-  hasThread,
-  onStartThread,
-  threadIndicator,
+  thread,
 }: MessageItemProps) {
   const formattedTime = new Date(timestamp).toLocaleTimeString('ko-KR', {
     hour: '2-digit',
@@ -50,10 +53,10 @@ export function MessageItem({
             {formattedTime}
           </time>
           {/* 스레드 시작 버튼 — hover 시에만 표시 */}
-          {hasThread ? null : (
+          {thread.hasThread ? null : (
             <button
               type="button"
-              onClick={onStartThread}
+              onClick={thread.onStartThread}
               className="opacity-0 group-hover:opacity-100 text-xs text-gray-400 hover:text-indigo-600 transition-opacity"
               aria-label="스레드 시작"
             >
@@ -63,7 +66,7 @@ export function MessageItem({
         </div>
         <p className="text-sm text-gray-800 break-words">{content}</p>
         {/* 스레드 인디케이터 — 합성 패턴 (C-08) */}
-        {threadIndicator}
+        {thread.indicator}
       </div>
     </article>
   );

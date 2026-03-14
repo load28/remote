@@ -1,7 +1,7 @@
 // A-07: barrel file public API만 노출, P-06: named export만
 
 // Components
-export { ThreadPanel, type ThreadAuthor } from './components/ThreadPanel';
+export { ThreadPanel, type ThreadAuthor, type ThreadParentInfo, type ThreadPermissions, type ThreadPanelActions } from './components/ThreadPanel';
 export { ThreadIndicator } from './components/ThreadIndicator';
 export { ThreadReplyItem } from './components/ThreadReplyItem';
 export { UnreadBadge } from './components/UnreadBadge';
