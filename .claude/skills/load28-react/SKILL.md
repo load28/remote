@@ -1,170 +1,213 @@
 ---
 name: load28-react
-description: Use when creating or modifying React, TSX, or JSX files - enforces 98 coding rules across architecture, naming, component, state, performance, and testing categories. Rules and references form a design language that code is conceived in, not checked against.
+description: Use when creating or modifying React, TSX, or JSX files - enforces 98 coding rules across architecture, naming, component, state, performance, and testing categories. Rules are embedded as structural slots in schemas — fill slots to design, generate code from filled slots.
 ---
 
 <SUBAGENT-STOP>
 If you were dispatched as a subagent to execute a specific task, skip this skill entirely.
 </SUBAGENT-STOP>
 
-# load28 React Coding Rules
+# load28 React — Slot-Based Design Protocol
 
-> "규칙으로 사고한다. 규칙을 검사하지 않는다."
+> "슬롯을 채우면 코드가 된다. 슬롯이 비면 코드를 쓸 수 없다."
 
 <EXTREMELY-IMPORTANT>
-React/TSX/JSX 코드를 작성하거나 수정할 때, 이 스킬의 3단계 프로토콜을 반드시 따른다.
-Phase 1(언어 습득) 없이 코드를 구상하지 않는다.
-Phase 3 보고 없이 코드 제출을 완료하지 않는다.
+React/TSX/JSX 코드를 작성하거나 수정할 때, 이 스킬의 슬롯 기반 프로토콜을 반드시 따른다.
+스키마를 읽지 않고 코드를 구상하지 않는다.
+슬롯을 채우지 않고 코드를 생성하지 않는다.
+Grammar Scan 없이 코드를 제출하지 않는다.
 이것은 선택이 아니다. 협상 불가능하다.
 
 **리액트 코드를 먼저 생각하고 규칙을 매칭하는 것이 아니다.**
-**규칙과 레퍼런스가 만드는 언어로 처음부터 사고한다.**
+**스키마의 빈 슬롯을 채워서 설계하고, 채워진 슬롯에서 코드를 생성한다.**
 </EXTREMELY-IMPORTANT>
 
-## 핵심 원리: 규칙은 필터가 아니라 언어다
+## 핵심 원리: 규칙은 슬롯이다
 
 ```
-❌ 기존 사고방식 (규칙 = 필터):
-   리액트 코드 구상 → 규칙 매칭 → 위반 발견 → 수정
+❌ 기존 (규칙 = 지식):
+   98개 규칙 암기 → 리액트 코드 구상 → 규칙 매칭 → 누락 발견 → 수정
 
-✅ 올바른 사고방식 (규칙 = 언어):
-   규칙 + 레퍼런스 + 패턴 = 설계 언어
-   → 그 언어의 어휘로 사고
-   → 실제 코드로 변환
+✅ 현재 (규칙 = 슬롯):
+   스키마 로드 → 빈 슬롯 채우기 = 설계 완료
+   → 채워진 슬롯 → 코드 생성 (기계적 변환)
+   → Grammar Scan → 제출
 ```
 
-경험 많은 개발자가 "props가 7개 넘으니까 줄여야지"라고 생각하지 않는 것처럼,
-처음부터 "이 컴포넌트의 인터페이스는 C-04/T-14 패턴이다"라고 사고한다.
+TypeScript 컴파일러가 타입 오류를 "검사"하는 게 아니라 **컴파일 자체가 안 되는 것**처럼,
+규칙을 "확인"하는 게 아니라 **슬롯이 비어있으면 코드 생성 자체가 불가능한 구조**다.
+
+- props 슬롯이 7칸뿐이므로 8개 props를 가질 수 없다
+- cleanup 슬롯이 필수이므로 useEffect cleanup을 잊을 수 없다
+- 이벤트 슬롯이 on___/handle___ 형식이므로 네이밍 규칙을 어길 수 없다
+- type_strategy 슬롯을 선택해야 하므로 discriminated union 판단을 건너뛸 수 없다
+
+---
 
 ## 동작 프로토콜
 
 ```
-Phase 1: 언어 습득 → Phase 2: 언어로 설계 + 코드 작성 → Phase 3: 변환 검증 + 보고
+Phase 1: 스키마 선택 → Phase 2: 슬롯 채우기 → Phase 3: 코드 생성 + Grammar Scan → 보고
 ```
 
 ---
 
-## Phase 1: 언어 습득 (모든 것에 앞서)
+## Phase 1: 스키마 선택
 
-### The First Law
+### Step 1: 만들 것 식별
 
-```
-언어를 모르면 말할 수 없다.
-규칙을 읽지 않으면 코드를 구상하지 않는다.
-```
+작성할 각 파일이 무엇인지 식별하고, 대응하는 스키마를 선택한다:
 
-### Step 1: 규칙 파일 전수 읽기
+| 만들 것 | 스키마 | 읽기 |
+|---------|--------|------|
+| 컴포넌트 TSX | [schemas/component.md](schemas/component.md) | 필수 |
+| 커스텀 훅 | [schemas/hook.md](schemas/hook.md) | 필수 |
+| Context + Provider | [schemas/context.md](schemas/context.md) | 필수 |
+| Zustand 스토어 | [schemas/store.md](schemas/store.md) | 필수 |
+| API/데이터 레이어 | [schemas/api-layer.md](schemas/api-layer.md) | 필수 |
+| 테스트 파일 | [schemas/test.md](schemas/test.md) | 필수 |
+| 타입 정의 | [schemas/type.md](schemas/type.md) | 필수 |
+| barrel file (index.ts) | [schemas/barrel.md](schemas/barrel.md) | 필수 |
+| 피처 모듈 전체 | [schemas/module.md](schemas/module.md) | 필수 (다른 스키마의 상위) |
 
-**반드시** 아래 6개 규칙 파일을 **전부** 읽는다. 선택적 읽기가 아니다.
-이 파일들이 곧 코드를 구상할 때 사용할 **어휘와 문법**이다.
+**여러 파일을 작성하는 경우:**
+1. 먼저 [schemas/module.md](schemas/module.md)로 모듈 전체 구조를 설계
+2. 그 안의 각 파일에 대해 개별 스키마를 채움
 
-| 파일 | 어휘 | 읽기 |
-|------|------|------|
-| [architecture.md](architecture.md) | A-01~10: 모듈 구조, 의존성 방향, 레이어 분리 | **필수** |
-| [naming-conventions.md](naming-conventions.md) | N-01~08: 이름 규칙 | **필수** |
-| [component-patterns.md](component-patterns.md) | C-01~15: 컴포넌트 구조 제약 | **필수** |
-| [state-and-data.md](state-and-data.md) | S-01~17: 상태 관리 패턴 | **필수** |
-| [performance.md](performance.md) | P-01~14: 성능 패턴 | **필수** |
-| [testing-a11y.md](testing-a11y.md) | T-01~15: 타입, 테스트, 접근성 | **필수** |
+### Step 2: 스키마 + Grammar 읽기
 
-### Step 2: 레퍼런스 검색
+선택한 스키마 파일을 **반드시 읽는다**. 추가로 [schemas/_grammar.md](schemas/_grammar.md)를 읽는다.
+이 두 가지가 코드를 생성하기 위한 전부다.
 
-[reference-code/](reference-code/) 디렉토리에서 작성할 코드에 관련된 **기술 패턴 태그**로 검색한다.
-파일명은 `태그1--태그2--태그3.md` 형식이다.
+### Step 3: 레퍼런스 검색
+
+[reference-code/](reference-code/) 디렉토리에서 관련 패턴을 검색한다:
 
 ```
 Glob("reference-code/**/*{태그}*")
 ```
 
-- 매칭됨 → 해당 파일을 읽어 **어휘에 추가**
+- 매칭됨 → 해당 파일을 읽어 구현 참고
 - 매칭 안 됨 → Phase 1-A(레퍼런스 추가) 실행
-
-### Step 3: 어휘 확인
-
-Phase 1 완료 시, 다음을 알고 있어야 한다:
-- 98개 규칙의 제약과 패턴
-- 작성할 코드에 관련된 레퍼런스의 구조
-
-이것이 코드를 구상할 때 사용할 **전체 어휘**다.
 
 ---
 
-## Phase 2: 언어로 설계 + 코드 작성
+## Phase 2: 슬롯 채우기
 
-### Step 1: 규칙 언어로 설계
-
-리액트 코드를 먼저 떠올리지 않는다. **규칙 ID와 레퍼런스 패턴을 원시 단위로** 설계한다.
-
-설계 산출물은 다음 형식이다:
+### The Iron Law
 
 ```
-## 설계 명세
-
-### 파일: features/thread/types.ts
-- 패턴: T-13(named exported interface), T-14(discriminated union), T-15(no optional abuse)
-- 레퍼런스: discriminated-union--type-safety.md
-
-### 파일: features/thread/domain/threadRules.ts (~200줄, C-05 준수)
-- 패턴: A-05(순수 함수 비즈니스 로직), N-06(상수 UPPER_SNAKE_CASE)
-- React import 없음 (A-05 검증: React 없이 테스트 가능)
-
-### 파일: features/thread/components/ThreadPanel.tsx (~180줄, C-05 준수)
-- Props: 7개 (C-04 준수) — thread, replies, authorMap, currentUserId, parentInfo, permissions, onAction
-- Props 그룹화: ThreadPermissions(4필드), ThreadPanelActions(5필드) → C-04 패턴
-- 조건부 렌더: P-04(삼항), N-04(isLocked, hasPermission)
-- 이벤트: N-03(props=onReply/onClose, 내부=handleSubmit)
-
-### 의존성 방향 (A-01 준수)
-  app/ChatPage → features/thread (barrel import, A-07)
-  app/ChatPage → features/message (barrel import, A-07)
-  features/thread ✗→ features/message (금지)
+빈 슬롯이 하나라도 있으면 코드를 생성하지 않는다.
 ```
 
-**핵심:** 각 파일·인터페이스·함수가 어떤 규칙의 어떤 패턴으로 구성되는지 명시한다.
-이 단계에서 규칙 위반은 발생할 수 없다 — 규칙이 곧 설계의 언어이기 때문이다.
+### 실행
 
-### Step 2: 코드 변환
+스키마의 모든 슬롯을 채운다. 출력 형식:
 
-설계 명세를 실제 TypeScript/React 코드로 변환한다.
+```
+## Filled Schema: component
+
+### Identity
+- name: ThreadPanel
+- file_path: features/thread/components/ThreadPanel.tsx
+- responsibility: 스레드 패널의 메시지 목록과 입력을 렌더링한다
+- line_budget: 180/250
+- exports: 1
+
+### Props Interface
+- interface_name: ThreadPanelProps
+- type_strategy: grouped
+- slots:
+  1. thread: Thread
+  2. replies: Reply[]
+  3. permissions: ThreadPermissions (그룹)
+  4. actions: ThreadPanelActions (그룹)
+  5. currentUserId: string
+  6. —
+  7. —
+
+### Events
+| prop        | handler       | 설명         |
+|-------------|---------------|-------------|
+| onReply     | handleReply   | 답글 제출     |
+| onClose     | handleClose   | 패널 닫기     |
+
+### State
+| name       | type    | source       | 근거         |
+|------------|---------|-------------|-------------|
+| isExpanded | boolean | local       | 이 컴포넌트만 사용 |
+
+### Derived
+| name         | 계산 원본  | 방식     |
+|-------------|----------|---------|
+| replyCount  | replies  | 직접 계산 |
+
+### Effects
+없음
+
+### Conditionals
+| condition           | expression                          |
+|--------------------|-------------------------------------|
+| replies.length > 0 | replies.length > 0 ? <List /> : null |
+
+### Dependencies
+- imports_from: [features/thread (barrel), shared/components]
+- forbidden: [features/message, features/chat]
+- import_style: barrel import
+
+### Composition
+- slot_props_count: 0
+- composition_needed: no
+- children_usage: none
+
+### 슬롯 완료: 전부 채움 ✓
+```
+
+**채워진 슬롯이 곧 설계다.** 별도의 "설계 문서"가 필요 없다.
+
+---
+
+## Phase 3: 코드 생성 + Grammar Scan
+
+### Step 1: 슬롯 → 코드 변환
+
+채워진 슬롯을 TypeScript/React 코드로 기계적으로 변환한다.
 레퍼런스의 구조를 따르되, 도메인 용어만 프로젝트에 맞게 교체한다.
 
-#### 문법 규칙 — 코드 변환 시 항상 적용
+**변환 규칙:**
+- Identity → 파일 생성, 컴포넌트 함수 선언
+- Props Interface → interface 정의 + export
+- Events → on/handle 함수 쌍
+- State → useState/useQuery 등 선언
+- Derived → useMemo 또는 렌더 중 계산
+- Effects → useEffect + cleanup
+- Conditionals → 삼항 연산자 JSX
+- Dependencies → import 문
 
-설계 명세에는 **어휘** (구조적 결정)만 적는다.
-아래 **문법** 규칙은 설계 명세에 적지 않아도 **코드의 모든 줄에 자동 적용**된다.
+### Step 2: Grammar Scan
 
-설계 명세의 어휘가 "무엇을 만들 것인가"를 결정한다면,
-문법은 "어떻게 쓸 것인가"를 결정한다. 문법은 의식적으로 선택하는 것이 아니라 체화된 것이다.
+[schemas/_grammar.md](schemas/_grammar.md)의 테이블을 위에서 아래로 기계적으로 스캔한다.
+위반 발견 시 즉시 수정. **이 스캔은 생략할 수 없다.**
 
-| 카테고리 | 문법 규칙 | 적용 |
-|----------|-----------|------|
-| **네이밍** | N-01: 컴포넌트 PascalCase | 모든 컴포넌트/파일 |
-| | N-02: props camelCase | 모든 props |
-| | N-03: props `on*`, 내부 `handle*` | 모든 이벤트 핸들러 |
-| | N-04: Boolean `is*/has*/can*/should*` | 모든 boolean 변수 |
-| | N-05: 훅 `use` + 동사 | 모든 커스텀 훅 |
-| | N-06: 상수 UPPER_SNAKE_CASE | 모든 모듈 레벨 상수 |
-| **상태** | S-01: state 직접 변경 금지 | 모든 state 업데이트 |
-| | S-02: useEffect 내 파생 상태 금지 → useMemo | 모든 파생 계산 |
-| | S-03: 파생 가능한 값 state 금지 | 모든 state 선언 |
-| | S-05: props→state 복사 금지 | 모든 state 초기화 |
-| | S-06: 이전 값 기반 → 함수형 setState | 모든 prev 기반 업데이트 |
-| | S-16: useEffect cleanup 필수 | 모든 useEffect |
-| | S-17: mutation 훅 onSuccess 내장 금지 | 모든 useMutation |
-| **성능** | P-03: 기본값 모듈 레벨 상수 | 모든 기본 파라미터 |
-| | P-04: 조건부 렌더 삼항. 중첩 삼항 금지 | 모든 조건부 렌더링 |
-| | P-05: inline style 객체 금지 | 모든 style prop |
-| | P-06: `export *` 금지 | 모든 barrel file |
-| | P-14: 객체/배열 의존성 → primitive 추출 | 모든 deps 배열 |
-| **컴포넌트** | C-01: 내부 컴포넌트 정의 금지 | 모든 컴포넌트 |
-| | C-02: 조건부 훅 호출 금지 | 모든 Hook 호출 |
-| | C-03: 동적 리스트 인덱스 key 금지 | 모든 .map() 렌더 |
-| | C-06: 불필요한 wrapper div 금지 | 모든 JSX 반환 |
-| | C-13: 클로저 트랩 확인 | 모든 useCallback |
-| | C-15: forwardRef/defaultProps 금지 (React 19+) | 모든 컴포넌트 |
-| **타입** | T-04: any 금지 → unknown + type guard | 모든 타입 선언 |
-| | T-13: Props named exported interface | 모든 props 타입 |
-| **접근성** | T-11: 시맨틱 HTML + ARIA | 모든 JSX 요소 |
+### Step 3: 보고
+
+```
+## load28 React Review
+
+### 채워진 스키마
+- 📋 component: ThreadPanel (슬롯 10/10 완료)
+- 📋 hook: useThreadReplies (슬롯 8/8 완료)
+- 📋 type: ThreadTypes (슬롯 5/5 완료)
+
+### Grammar Scan 결과
+- ✅ N-01~04, N-06, N-08: 통과
+- ✅ S-01~03, S-05~06, S-16~17: 통과
+- 🔧 P-04: && → 삼항으로 수정 (1건)
+- ✅ C-01~03, C-06, C-13, C-15: 통과
+- ✅ T-04, T-11, T-13: 통과
+
+✅ 전체 완료 — 스키마 X개 완성, Grammar Scan 통과
+```
 
 ---
 
@@ -175,80 +218,50 @@ Phase 1 완료 시, 다음을 알고 있어야 한다:
 ### 핵심 원칙: 도메인 비종속
 
 레퍼런스 코드는 **특정 도메인에 종속되지 않는 순수 기술 패턴**이어야 한다.
-레퍼런스는 "이 패턴을 어떻게 구현하는가"를 보여주는 것이지, "워크스페이스를 어떻게 만드는가"를 보여주는 것이 아니다.
 
 ```
-❌ BAD: 도메인 종속적 — 특정 비즈니스 개념이 코드에 박혀 있음
+❌ BAD: 도메인 종속적
 - 파일명: zustand--workspace--client-state.md
-- 코드: useWorkspaceStore, selectedWorkspaceId, Workspace 타입
-- 이유: "workspace"는 특정 앱의 비즈니스 도메인 용어
+- 코드: useWorkspaceStore, selectedWorkspaceId
 
-✅ GOOD: 도메인 비종속 — 범용 기술 패턴
+✅ GOOD: 도메인 비종속
 - 파일명: zustand--state--client-state.md
-- 코드: useEntityStore, selectedEntityId, Entity 타입
-- 이유: "Entity"는 어떤 도메인에든 대입 가능한 범용 플레이스홀더
+- 코드: useEntityStore, selectedEntityId
 ```
 
-**범용 플레이스홀더 용어:** `Entity`, `Resource`, `Item` 등 도메인 무관한 이름을 사용한다.
-경로 표기도 `{Feature}/hooks/use{Feature}Store.ts`처럼 플레이스홀더로 작성한다.
+**범용 플레이스홀더:** `Entity`, `Resource`, `Item` 등 도메인 무관한 이름 사용.
 
-**판별 기준:** "이 레퍼런스의 변수명/타입명에서 도메인 용어를 제거하고 다른 프로젝트에 그대로 복사해서 쓸 수 있는가?" → No면 도메인 종속적이다.
+### 작성 절차 — 스키마 기반
 
-### 작성 절차
+레퍼런스 코드도 **동일한 슬롯 기반 프로토콜**로 작성한다:
 
-1. 도메인 비종속 일반화된 패턴으로 레퍼런스 코드 작성 (위 원칙 준수)
-2. **도메인 용어 검증:** 작성한 레퍼런스에 프로젝트 특정 도메인 용어(workspace, chat, order, product 등)가 포함되어 있으면 범용 플레이스홀더로 교체
-3. 관련 규칙 파일을 읽어 해당 규칙 전수 검증 → 위반 시 수정 후 재검증
-4. [reference-code/_tags.md](reference-code/_tags.md)에서 태그 선택 (없으면 새 태그 등록)
-5. frontmatter(`tags`, `rules`, `description`) 작성, `태그1--태그2.md` 형식으로 저장
-6. **파일명에 도메인 용어가 포함되면 안 된다.** 태그 기반 기술 패턴명만 사용
+1. 레퍼런스에 포함될 코드 구성물 식별 (컴포넌트, 훅, 타입 등)
+2. 각 구성물의 스키마를 읽고 슬롯 채우기 (도메인 비종속 플레이스홀더 사용)
+3. 슬롯 → 코드 변환 + Grammar Scan
+4. 도메인 용어 검증 → 범용 플레이스홀더로 교체
+5. [reference-code/_tags.md](reference-code/_tags.md)에서 태그 선택 (없으면 새 태그 등록)
+6. frontmatter(`tags`, `rules`, `description`) 작성, `태그1--태그2.md` 형식으로 저장
+7. **파일명에 도메인 용어가 포함되면 안 된다.** 태그 기반 기술 패턴명만 사용
+
+**핵심:** 레퍼런스는 "스키마를 채워서 만든 모범 코드"다.
+스키마 없이 자유롭게 작성된 레퍼런스는 규칙을 누락할 수 있다.
 
 ---
 
-## Phase 3: 변환 검증 + 보고
+## 기존 코드 수정 시
 
-### The Iron Law
+새 파일이 아니라 기존 파일을 수정하는 경우에도 프로토콜은 동일하다:
 
-```
-검증 없이 완료를 주장하지 않는다.
-```
-
-Phase 2의 설계 명세와 실제 코드를 대조하여, **변환이 충실했는지** 검증한다.
-
-### 검증 방법
-
-설계 명세에 적힌 각 규칙 ID를 실제 코드에서 확인한다:
-
-1. **설계 명세의 모든 규칙 ID**가 실제 코드에 반영되었는가?
-2. **정량적 제약 재측정:**
-   - C-04: 각 컴포넌트의 props 수를 센다. 7개 초과 시 즉시 수정.
-   - C-05: 각 파일의 줄 수를 확인한다. 250줄 초과 시 즉시 분리.
-   - C-10: 파일당 exported 컴포넌트가 1개인지 확인한다.
-3. **설계 시 고려하지 않은 규칙**이 코드에서 위반되었는가?
-   - 6개 규칙 파일을 다시 참조하여 누락된 규칙이 없는지 확인한다.
-
-위반 발견 시 **즉시 수정**한 뒤 다음 항목으로 넘어간다.
-
-### 보고
-
-**Phase 3 보고 없이 코드 제출을 완료하지 않는다.**
+1. 수정 대상 파일을 읽는다
+2. 해당 파일 유형의 스키마를 읽는다
+3. **수정할 부분에 해당하는 슬롯만 채운다** (전체 스키마를 다시 채울 필요 없음)
+4. 슬롯 → 코드 변환
+5. Grammar Scan
 
 ```
-## load28 React Review
-
-### 설계 언어 (Phase 2에서 사용한 규칙 어휘)
-- 📐 ThreadPanel: C-04(props 그룹화), T-14(discriminated union), N-03(on/handle)
-- 📐 threadRules.ts: A-05(순수 비즈니스 로직), T-04(no any)
-- 📐 의존성 방향: A-01(단방향), A-07(barrel import)
-
-### 변환 검증 결과
-- ✅ A-01, A-05, A-07, N-01, N-03, N-04, C-01, C-02, C-04, C-05, S-06, S-16, P-03, P-04, T-04, T-13, T-14 ...
-
-### 수정 사항 (검증 중 발견하여 수정)
-- 🔧 S-02: useEffect 내 파생 상태 → useMemo로 변경
-- 🔧 P-04: && 조건부 렌더 → 삼항 연산자로 변경
-
-✅ 전체 검토 완료 — 설계 어휘 XX개, 규칙 XX개 적용, XX개 수정
+예: 컴포넌트에 새 이벤트 핸들러 추가
+→ component.md의 Events 슬롯과 Props 슬롯만 채움
+→ 코드 변환 → Grammar Scan
 ```
 
 ---
@@ -259,10 +272,9 @@ Phase 2의 설계 명세와 실제 코드를 대조하여, **변환이 충실했
 
 | 생각 | 현실 |
 |------|------|
-| "리액트 코드부터 생각하고 규칙을 맞추자" | 순서가 틀렸다. 규칙이 언어, 코드는 번역이다. |
-| "이미 규칙을 알고 있다" | 기억 ≠ 읽기. 6개 파일을 읽는다. |
-| "몇 개 규칙만 관련있다" | 98개 전부가 어휘다. 선택적 읽기는 불완전한 언어다. |
-| "규칙 파일 읽기가 과하다" | 읽지 않으면 불완전한 언어로 사고한다. |
-| "간단한 수정이라 Phase 1 불필요" | 한 줄도 언어의 일부다. 규칙을 읽는다. |
-| "Phase 3 보고는 형식적" | 보고는 변환의 증거다. 생략 불가. |
+| "스키마 읽기 없이 바로 코드 쓰자" | 스키마 없이는 슬롯이 없고, 슬롯 없이는 코드 없다. |
+| "슬롯 채우기가 과하다" | 슬롯이 곧 설계다. 설계 없이 코드를 쓰는 것이 과한 것이다. |
+| "간단한 수정이라 스키마 불필요" | 수정할 부분의 슬롯만 채우면 된다. 전체를 채울 필요 없다. |
+| "이미 규칙을 알고 있다" | 기억이 아니라 슬롯이다. 슬롯을 채워라. |
 | "이번만 예외" | 예외는 없다. |
+| "Grammar Scan은 형식적" | Scan은 변환의 증거다. 생략 불가. |
