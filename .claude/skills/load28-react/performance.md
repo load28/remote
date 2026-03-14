@@ -69,9 +69,9 @@ function Select({ options = EMPTY_OPTIONS }: { options?: string[] }) {
 
 ---
 
-## P-04: 삼항 연산자 조건부 렌더
+## P-04: 삼항 연산자 조건부 렌더 + 중첩 삼항 금지
 
-**분류:** NEVER (number/string 조건에서 `&&` 사용)
+**분류:** NEVER (number/string 조건에서 `&&` 사용, 중첩 삼항)
 
 **WHY:** `count && <Component />`에서 count가 `0`이면 React가 falsy 값 `0`을 그대로 렌더한다. `""` 빈 문자열도 마찬가지. 삼항 연산자는 항상 명시적으로 null을 반환하여 이 함정을 방지한다.
 
@@ -91,6 +91,41 @@ function Select({ options = EMPTY_OPTIONS }: { options?: string[] }) {
 // ✅ OK: boolean은 안전하지만 삼항 권장
 {isLoggedIn ? <Dashboard /> : null}
 ```
+
+### 중첩 삼항 연산자 금지
+
+**분류:** NEVER
+
+**WHY:** 삼항 연산자가 중첩되면 가독성이 급격히 떨어진다. 조건 분기가 2단계 이상 중첩되면 어떤 조건에서 어떤 값이 반환되는지 한눈에 파악할 수 없다. 변수 추출, early return, 또는 헬퍼 함수로 대체한다.
+
+```tsx
+// ❌ BAD: 중첩 삼항 — 읽기 어려움
+const items = isGuest
+  ? allItems.filter((i) => i.id === guestId)
+  : selectedGroupId
+    ? allItems.filter((i) => i.groupId === selectedGroupId)
+    : allItems;
+
+// ✅ GOOD: 조건을 변수로 분리하여 선형으로 표현
+function getVisibleItems() {
+  if (isGuest) {
+    return allItems.filter((i) => i.id === guestId);
+  }
+  if (selectedGroupId) {
+    return allItems.filter((i) => i.groupId === selectedGroupId);
+  }
+  return allItems;
+}
+const items = getVisibleItems();
+
+// ✅ GOOD: 간단한 경우 early return 없이 변수 분리
+const isFiltered = !isGuest && selectedGroupId !== null;
+const items = isGuest
+  ? allItems.filter((i) => i.id === guestId)
+  : allItems.filter((i) => !isFiltered || i.groupId === selectedGroupId);
+```
+
+**검증:** 삼항 연산자 안에 또 다른 삼항 연산자가 있으면 REJECT. 변수 추출 또는 함수로 분리한다.
 
 ---
 

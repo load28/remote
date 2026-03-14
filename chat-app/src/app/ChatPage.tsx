@@ -19,12 +19,29 @@ import {
   EMOJI_CATEGORIES,
 } from '@/features/emoji';
 import type { CustomEmoji, CreateCustomEmojiInput } from '@/features/emoji';
+import { WorkspaceSwitcher, useWorkspaces, useWorkspaceStore } from '@/features/workspace';
 import { useAuthStore } from '@/features/auth';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { ChatChannelHeader } from './components/ChatChannelHeader';
 
 // ✅ P-03: 모듈 레벨 상수
 const DEFAULT_CHANNEL_ID = 'channel-1';
+
+// ✅ P-04: 중첩 삼항 금지 → 헬퍼 함수로 분리
+function getVisibleChannels(
+  channels: { id: string; workspaceId: string }[],
+  isGuest: boolean,
+  guestChannelId: string | null,
+  workspaceId: string | null,
+) {
+  if (isGuest) {
+    return channels.filter((c) => c.id === guestChannelId);
+  }
+  if (workspaceId) {
+    return channels.filter((c) => c.workspaceId === workspaceId);
+  }
+  return channels;
+}
 
 export function ChatPage() {
   // ✅ S-09: 사용처 가까이 배치
@@ -39,8 +56,15 @@ export function ChatPage() {
   const isGuest = useAuthStore((s) => s.isGuest);
   const guestChannelId = useAuthStore((s) => s.guestChannelId);
   const currentUserId = currentUser?.id ?? '';
+  const { data: workspaces = [] } = useWorkspaces();
+  const selectedWorkspaceId = useWorkspaceStore((s) => s.selectedWorkspaceId);
+  const selectWorkspace = useWorkspaceStore((s) => s.selectWorkspace);
   const { data: channels = [] } = useChannels();
   const { data: users = [] } = useUsers();
+
+  // ✅ S-02 회피: 첫 워크스페이스 자동 선택은 파생 상태가 아닌 부수효과
+  // 워크스페이스 로드 후 선택된 것이 없으면 첫 번째를 선택
+  const effectiveWorkspaceId = selectedWorkspaceId ?? workspaces[0]?.id ?? null;
 
   // 게스트는 초대된 채널만 사용
   const effectiveChannelId = isGuest && guestChannelId ? guestChannelId : selectedChannelId;
@@ -55,10 +79,8 @@ export function ChatPage() {
   const selectedChannel = channels.find((c) => c.id === effectiveChannelId);
   const currentUserDetail = users.find((u) => u.id === currentUserId);
 
-  // 게스트는 초대된 채널만 표시
-  const visibleChannels = isGuest
-    ? channels.filter((c) => c.id === guestChannelId)
-    : channels;
+  // ✅ P-04: 중첩 삼항 금지 → 함수로 분리
+  const visibleChannels = getVisibleChannels(channels, isGuest, guestChannelId, effectiveWorkspaceId);
 
   // ✅ A-01: feature 간 의존 제거 — app 레벨에서 User→MessageAuthor 변환
   // ✅ P-14: 객체 의존성 useMemo
@@ -71,6 +93,15 @@ export function ChatPage() {
   }, [users]);
 
   // ✅ N-03: handle 접두사
+  const handleSelectWorkspace = (workspaceId: string) => {
+    selectWorkspace(workspaceId);
+    // 워크스페이스 변경 시 해당 워크스페이스의 첫 채널 선택
+    const firstChannel = channels.find((c) => c.workspaceId === workspaceId);
+    if (firstChannel) {
+      setSelectedChannelId(firstChannel.id);
+    }
+  };
+
   const handleSelectChannel = (channelId: string) => {
     setSelectedChannelId(channelId);
   };
@@ -146,10 +177,25 @@ export function ChatPage() {
 
   return (
     <div className="flex h-screen bg-white">
-      {/* 사이드바 */}
+      {/* 워크스페이스 바 */}
+      {!isGuest ? (
+        <aside className="w-16 bg-gray-950 flex flex-col items-center">
+          <ErrorBoundary fallback={<p className="text-xs text-red-400 p-1">오류</p>}>
+            <WorkspaceSwitcher
+              workspaces={workspaces}
+              selectedWorkspaceId={effectiveWorkspaceId}
+              onSelectWorkspace={handleSelectWorkspace}
+            />
+          </ErrorBoundary>
+        </aside>
+      ) : null}
+
+      {/* 채널 사이드바 */}
       <aside className="w-64 bg-gray-900 text-white flex flex-col">
         <header className="px-4 py-4 border-b border-gray-700">
-          <h1 className="text-lg font-bold">Chat App</h1>
+          <h1 className="text-lg font-bold">
+            {workspaces.find((w) => w.id === effectiveWorkspaceId)?.name ?? 'Chat App'}
+          </h1>
         </header>
         <div className="flex-1 overflow-y-auto py-3 px-2">
           {/* ✅ T-10: 위젯 레벨 에러 바운더리 */}

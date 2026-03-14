@@ -2,6 +2,7 @@
 
 export interface Channel {
   id: string;
+  workspaceId: string;
   name: string;
   description: string;
   isPrivate: boolean; // N-04

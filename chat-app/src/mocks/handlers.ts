@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { MOCK_CHANNELS, MOCK_MESSAGES, MOCK_USERS } from './data';
+import { MOCK_CHANNELS, MOCK_MESSAGES, MOCK_USERS, MOCK_WORKSPACES } from './data';
 import { MOCK_RECENT_USERS } from './recentUsers';
 import type { Message } from '@/features/message/types';
 import type { Channel } from '@/features/channel/types';
@@ -24,6 +24,11 @@ let inviteIdCounter = 1;
 let guestIdCounter = 1;
 
 export const handlers = [
+  // --- Workspaces ---
+  http.get('/api/workspaces', () => {
+    return HttpResponse.json(MOCK_WORKSPACES);
+  }),
+
   // --- Auth ---
   http.post('/api/auth/login', async ({ request }) => {
     const body = (await request.json()) as LoginCredentials;
@@ -107,6 +112,7 @@ export const handlers = [
     const body = (await request.json()) as Omit<Channel, 'id' | 'memberCount' | 'createdAt'>;
     const newChannel: Channel = {
       id: `channel-${channelIdCounter++}`,
+      workspaceId: body.workspaceId,
       name: body.name,
       description: body.description,
       isPrivate: body.isPrivate,

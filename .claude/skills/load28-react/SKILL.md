@@ -51,10 +51,46 @@ Glob("reference-code/**/*{태그}*")
 
 매칭되는 레퍼런스가 없을 때 실행한다. **레퍼런스 없이 코드를 작성하지 않는다.**
 
-1. 도메인 비종속 일반화된 패턴으로 레퍼런스 코드 작성
-2. 관련 규칙 파일을 읽어 해당 규칙 전수 검증 → 위반 시 수정 후 재검증
-3. [reference-code/_tags.md](reference-code/_tags.md)에서 태그 선택 (없으면 새 태그 등록)
-4. frontmatter(`tags`, `rules`, `description`) 작성, `태그1--태그2.md` 형식으로 저장
+### 핵심 원칙: 도메인 비종속
+
+레퍼런스 코드는 **특정 도메인에 종속되지 않는 순수 기술 패턴**이어야 한다.
+레퍼런스는 "이 패턴을 어떻게 구현하는가"를 보여주는 것이지, "워크스페이스를 어떻게 만드는가"를 보여주는 것이 아니다.
+
+```
+❌ BAD: 도메인 종속적 — 특정 비즈니스 개념이 코드에 박혀 있음
+- 파일명: zustand--workspace--client-state.md
+- 코드: useWorkspaceStore, selectedWorkspaceId, Workspace 타입
+- 이유: "workspace"는 특정 앱의 비즈니스 도메인 용어
+
+❌ BAD: 도메인 종속적
+- 파일명: pdf-upload--form--mutation.md
+- 코드: usePdfUpload, PdfFile 타입, validatePdfSize
+- 이유: "PDF"는 특정 파일 형식에 종속
+
+✅ GOOD: 도메인 비종속 — 범용 기술 패턴
+- 파일명: zustand--state--client-state.md
+- 코드: useEntityStore, selectedEntityId, Entity 타입
+- 이유: "Entity"는 어떤 도메인에든 대입 가능한 범용 플레이스홀더
+
+✅ GOOD: 도메인 비종속
+- 파일명: file-upload--form--mutation.md
+- 코드: useFileUpload, UploadedFile 타입, validateFileSize
+- 이유: "파일 업로드"는 도메인이 아니라 기술 패턴 자체
+```
+
+**범용 플레이스홀더 용어:** `Entity`, `Resource`, `Item` 등 도메인 무관한 이름을 사용한다.
+경로 표기도 `{Feature}/hooks/use{Feature}Store.ts`처럼 플레이스홀더로 작성한다.
+
+**판별 기준:** "이 레퍼런스의 변수명/타입명에서 도메인 용어를 제거하고 다른 프로젝트에 그대로 복사해서 쓸 수 있는가?" → No면 도메인 종속적이다.
+
+### 작성 절차
+
+1. 도메인 비종속 일반화된 패턴으로 레퍼런스 코드 작성 (위 원칙 준수)
+2. **도메인 용어 검증:** 작성한 레퍼런스에 프로젝트 특정 도메인 용어(workspace, chat, order, product 등)가 포함되어 있으면 범용 플레이스홀더로 교체
+3. 관련 규칙 파일을 읽어 해당 규칙 전수 검증 → 위반 시 수정 후 재검증
+4. [reference-code/_tags.md](reference-code/_tags.md)에서 태그 선택 (없으면 새 태그 등록)
+5. frontmatter(`tags`, `rules`, `description`) 작성, `태그1--태그2.md` 형식으로 저장
+6. **파일명에 도메인 용어가 포함되면 안 된다.** 태그 기반 기술 패턴명만 사용
 
 ## Phase 2: 최종 검증 (코드 작성 완료 후)
 
@@ -93,7 +129,7 @@ Glob("reference-code/**/*{태그}*")
 - **S-06**: 함수형 setState (prev => prev + 1)
 - **S-16**: useEffect cleanup 구현
 - **P-03**: 모듈 레벨 기본값 상수 (inline 기본값 금지)
-- **P-04**: 삼항 연산자 조건부 렌더 (number/string 조건에서 && 미사용)
+- **P-04**: 삼항 연산자 조건부 렌더 (number/string 조건에서 && 미사용, 중첩 삼항 금지)
 - **P-05**: inline style 객체 없음
 - **T-04**: any 타입 미사용 (unknown + type guard)
 - **N-03**: on*/handle* 이벤트 네이밍
