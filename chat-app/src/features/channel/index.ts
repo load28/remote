@@ -4,4 +4,4 @@ export { ChannelMemberList } from './components/ChannelMemberList';
 export { ChannelMemberPanel } from './components/ChannelMemberPanel';
 export { useChannels, useCreateChannel, CHANNEL_QUERY_KEY } from './hooks/useChannels';
 export { useChannelMembers, useAddChannelMember, useRemoveChannelMember, useUpdateMemberRole, CHANNEL_MEMBER_QUERY_KEY } from './hooks/useChannelMembers';
-export type { Channel, CreateChannelInput, ChannelMember, ChannelMemberRole, AddChannelMemberInput, UpdateMemberRoleInput } from './types';
+export type { Channel, CreateChannelInput, ChannelMember, ChannelMemberRole, ChannelAddableUser, AddChannelMemberInput, UpdateMemberRoleInput } from './types';

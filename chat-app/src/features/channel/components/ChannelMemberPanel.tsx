@@ -1,18 +1,19 @@
 // N-01: PascalCase, N-03: on/handle, C-10: 파일당 1 exported, T-11: 시맨틱 HTML
 // A-08: 단방향 데이터 흐름
+// A-01: features → features 직접 참조 없음 — allUsers를 props로 주입
 
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useChannelMembers, useAddChannelMember, useRemoveChannelMember, useUpdateMemberRole, CHANNEL_MEMBER_QUERY_KEY } from '../hooks/useChannelMembers';
-import { useUsers, USER_QUERY_KEY } from '@/features/user';
 import { ChannelMemberList } from './ChannelMemberList';
-import type { ChannelMemberRole } from '../types';
+import type { ChannelAddableUser, ChannelMemberRole } from '../types';
 
 // T-13: named exported interface
 export interface ChannelMemberPanelProps {
   channelId: string;
   channelName: string;
   currentUserId: string;
+  allUsers: ChannelAddableUser[]; // A-01: features/user 직접 참조 대신 props 주입
   onClose: () => void; // N-03
 }
 
@@ -21,13 +22,13 @@ export function ChannelMemberPanel({
   channelId,
   channelName,
   currentUserId,
+  allUsers,
   onClose,
 }: ChannelMemberPanelProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
 
   const { data: members = [] } = useChannelMembers(channelId);
-  const { data: allUsers = [] } = useUsers();
   const addMember = useAddChannelMember(channelId);
   const removeMember = useRemoveChannelMember(channelId);
   const updateRole = useUpdateMemberRole(channelId);

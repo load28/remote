@@ -204,6 +204,7 @@ export function ChatPage() {
           channelId={effectiveChannelId}
           channelName={selectedChannel.name}
           currentUserId={currentUserId}
+          allUsers={users}
           onClose={() => setIsMemberPanelOpen(false)}
         />
       ) : null}

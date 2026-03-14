@@ -39,3 +39,10 @@ export interface AddChannelMemberInput {
 export interface UpdateMemberRoleInput {
   role: ChannelMemberRole;
 }
+
+// 채널 멤버 추가 시 보여줄 유저 정보 (features/user 의존 제거용)
+export interface ChannelAddableUser {
+  id: string;
+  displayName: string;
+  avatarUrl: string;
+}
