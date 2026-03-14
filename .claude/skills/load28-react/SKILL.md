@@ -1,6 +1,6 @@
 ---
 name: load28-react
-description: Use when creating or modifying React, TSX, or JSX files - enforces 78 coding rules across architecture, naming, component, state, performance, and testing categories through mandatory reference lookup and post-write verification
+description: Use when creating or modifying React, TSX, or JSX files - enforces 98 coding rules across architecture, naming, component, state, performance, and testing categories through mandatory rule internalization, reference lookup, and post-write verification
 ---
 
 <SUBAGENT-STOP>
@@ -9,10 +9,11 @@ If you were dispatched as a subagent to execute a specific task, skip this skill
 
 # load28 React Coding Rules
 
-> "기억에 의존하지 않는다. 검증을 강제한다."
+> "기억에 의존하지 않는다. 규칙을 먼저 읽고, 설계하고, 검증한다."
 
 <EXTREMELY-IMPORTANT>
-React/TSX/JSX 코드를 작성하거나 수정할 때, 이 스킬의 3단계 프로토콜을 반드시 따른다.
+React/TSX/JSX 코드를 작성하거나 수정할 때, 이 스킬의 4단계 프로토콜을 반드시 따른다.
+Phase 0 없이 코드를 계획하지 않는다.
 Phase 2 검증과 Phase 3 보고 없이 코드 제출을 완료하지 않는다.
 이것은 선택이 아니다. 협상 불가능하다.
 
@@ -22,14 +23,61 @@ Phase 2 검증과 Phase 3 보고 없이 코드 제출을 완료하지 않는다.
 ## 동작 프로토콜
 
 ```
-Phase 1: 레퍼런스 참조 → 코드 작성 → Phase 2: 최종 검증 → Phase 3: 보고
+Phase 0: 규칙 내재화 → Phase 1: 레퍼런스 참조 + 설계 → 코드 작성 → Phase 2: 최종 검증 → Phase 3: 보고
 ```
 
-## Phase 1: 레퍼런스 참조 (코드 작성 전)
+---
+
+## Phase 0: 규칙 내재화 (모든 것에 앞서)
+
+### The First Law
+
+```
+규칙을 읽지 않으면 설계하지 않는다.
+설계하지 않으면 코드를 작성하지 않는다.
+```
+
+코드를 계획하기 **전에**, 반드시 [design-constraints.md](design-constraints.md)를 읽는다.
+이 파일에 98개 규칙의 정량적·구조적 제약이 요약되어 있다.
+
+### 필수 확인 항목
+
+design-constraints.md를 읽은 뒤, 작성할 코드에 대해 다음을 **명시적으로** 자문한다:
+
+| 질문 | 관련 규칙 | 위반 시 조치 |
+|------|-----------|-------------|
+| 이 파일이 250줄을 넘을까? | C-05 | 훅/하위 컴포넌트 분리 **계획** |
+| Props가 7개를 넘을까? | C-04 | 객체 그룹화 **설계** |
+| feature 간 import가 필요한가? | A-01 | app 레벨 조합으로 **우회** |
+| 상태별로 다른 props가 필요한가? | T-14, T-15 | discriminated union **설계** |
+| 비즈니스 로직이 컴포넌트에 들어가는가? | A-05 | domain/ 순수 함수로 **추출** |
+| 서버 상태와 클라이언트 상태를 구분했는가? | S-08 | TanStack Query vs Zustand **분리** |
+
+### 상세 규칙이 필요할 때
+
+design-constraints.md의 요약만으로 판단이 어려운 경우, 해당 카테고리의 **상세 규칙 파일**을 읽는다:
+
+| 파일 | 카테고리 | 규칙 수 |
+|------|----------|---------|
+| [architecture.md](architecture.md) | A-01~10 | 10 |
+| [naming-conventions.md](naming-conventions.md) | N-01~08 | 8 |
+| [component-patterns.md](component-patterns.md) | C-01~15 | 15 |
+| [state-and-data.md](state-and-data.md) | S-01~17 | 17 |
+| [performance.md](performance.md) | P-01~14 | 14 |
+| [testing-a11y.md](testing-a11y.md) | T-01~15 | 15 |
+
+---
+
+## Phase 1: 레퍼런스 참조 + 설계 (코드 작성 전)
 
 ### Step 1: 구현 계획 + 태그 식별
 
-작성할 코드의 목록을 계획하고, 각 코드에 필요한 기술 패턴 태그를 식별한다.
+Phase 0의 제약을 반영하여 코드 구조를 설계한다:
+- 파일 목록과 각 파일의 **예상 줄 수** (C-05 준수 확인)
+- 컴포넌트별 **props 인터페이스 초안** (C-04 준수 확인)
+- **의존성 방향** 다이어그램 (A-01 준수 확인)
+
+각 코드에 필요한 기술 패턴 태그를 식별한다.
 
 ### Step 2: 파일명 기반 레퍼런스 검색
 
@@ -92,6 +140,8 @@ Glob("reference-code/**/*{태그}*")
 5. frontmatter(`tags`, `rules`, `description`) 작성, `태그1--태그2.md` 형식으로 저장
 6. **파일명에 도메인 용어가 포함되면 안 된다.** 태그 기반 기술 패턴명만 사용
 
+---
+
 ## Phase 2: 최종 검증 (코드 작성 완료 후)
 
 ### The Iron Law
@@ -117,6 +167,14 @@ Glob("reference-code/**/*{태그}*")
 | [performance.md](performance.md) | P-01~14 | 가상화, dynamic import, 워터폴, 의존성 배열 |
 | [testing-a11y.md](testing-a11y.md) | T-01~15 | Testing Library, MSW, strict TS, 에러 바운더리 |
 
+### 정량적 제약 재확인 (반드시)
+
+Phase 0에서 확인한 정량적 제약을 **실제 코드에서 재확인**한다:
+
+- **C-04**: 각 컴포넌트의 props 수를 센다. 7개 초과 시 즉시 수정.
+- **C-05**: 각 파일의 줄 수를 확인한다. 250줄 초과 시 즉시 분리.
+- **C-10**: 파일당 exported 컴포넌트가 1개인지 확인한다.
+
 ### 자주 위반되는 규칙 (반드시 확인)
 
 이 규칙들은 위반 빈도가 높아 **모든 검증에서 반드시 확인**한다:
@@ -136,6 +194,8 @@ Glob("reference-code/**/*{태그}*")
 - **N-04**: Boolean is*/has*/can*/should*
 - **C-15**: React 제거 예정 API 미사용 (forwardRef, defaultProps 등)
 
+---
+
 ## Phase 3: 보고
 
 **Phase 3 보고 없이 코드 제출을 완료하지 않는다.**
@@ -145,6 +205,10 @@ Glob("reference-code/**/*{태그}*")
 ```
 ## load28 React Review
 
+### Phase 0 설계 결정
+- 📐 C-05: 예상 줄 수 → 파일 분리 계획 (예: ChatPage 250줄 이하로 훅 추출)
+- 📐 C-04: Props 그룹화 설계 (예: ThreadPermissions 객체로 묶음)
+
 ### 적용된 규칙
 - ✅ A-01, A-08, N-01, N-03, C-01, C-02, S-06, P-13 ...
 
@@ -152,8 +216,10 @@ Glob("reference-code/**/*{태그}*")
 - 🔧 S-02: useEffect 내 파생 상태 → useMemo로 변경
 - 🔧 P-04: && 조건부 렌더 → 삼항 연산자로 변경
 
-✅ 전체 검토 완료 — XX개 적용, XX개 수정
+✅ 전체 검토 완료 — Phase 0 설계 XX건, 규칙 XX개 적용, XX개 수정
 ```
+
+---
 
 ## Red Flags — STOP
 
@@ -161,9 +227,10 @@ Glob("reference-code/**/*{태그}*")
 
 | 생각 | 현실 |
 |------|------|
-| "간단한 수정이라 검증 불필요" | 간단한 코드도 규칙을 위반한다. 검증한다. |
+| "간단한 수정이라 Phase 0 불필요" | 간단한 코드도 C-04, C-05를 위반한다. 제약을 읽는다. |
 | "이미 패턴을 알고 있다" | 기억 ≠ 검증. 레퍼런스를 읽는다. |
 | "규칙 파일 읽기가 과하다" | 읽지 않으면 위반을 놓친다. |
+| "design-constraints.md는 이미 봤다" | 매 작업마다 다시 읽는다. 컨텍스트가 다르다. |
 | "한 줄 변경이라 Phase 2 생략" | 한 줄도 S-06, P-04를 위반할 수 있다. |
 | "Phase 3 보고는 형식적" | 보고는 검증의 증거다. 생략 불가. |
 | "시간이 부족하다" | 검증 없는 코드는 더 많은 시간을 낭비한다. |
