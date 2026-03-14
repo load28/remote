@@ -110,6 +110,7 @@ export const MOCK_MESSAGES: Message[] = [
     userId: 'user-1',
     content: '안녕하세요! 오늘 미팅 몇 시에 시작하나요?',
     createdAt: '2024-03-10T09:00:00Z',
+    threadId: '',
   },
   {
     id: 'msg-2',
@@ -117,6 +118,7 @@ export const MOCK_MESSAGES: Message[] = [
     userId: 'user-2',
     content: '오후 2시에 시작합니다!',
     createdAt: '2024-03-10T09:01:00Z',
+    threadId: '',
   },
   {
     id: 'msg-3',
@@ -124,6 +126,7 @@ export const MOCK_MESSAGES: Message[] = [
     userId: 'user-3',
     content: '저도 참석하겠습니다.',
     createdAt: '2024-03-10T09:02:00Z',
+    threadId: '',
   },
   {
     id: 'msg-4',
@@ -131,6 +134,7 @@ export const MOCK_MESSAGES: Message[] = [
     userId: 'user-4',
     content: '회의실은 3층 대회의실 맞나요?',
     createdAt: '2024-03-10T09:05:00Z',
+    threadId: '',
   },
   {
     id: 'msg-5',
@@ -138,6 +142,7 @@ export const MOCK_MESSAGES: Message[] = [
     userId: 'user-1',
     content: '네 맞습니다! 자료는 미리 공유 드리겠습니다.',
     createdAt: '2024-03-10T09:06:00Z',
+    threadId: '',
   },
   {
     id: 'msg-6',
@@ -145,6 +150,7 @@ export const MOCK_MESSAGES: Message[] = [
     userId: 'user-2',
     content: '오늘 점심 뭐 드실 건가요?',
     createdAt: '2024-03-10T11:30:00Z',
+    threadId: '',
   },
   {
     id: 'msg-7',
@@ -152,6 +158,7 @@ export const MOCK_MESSAGES: Message[] = [
     userId: 'user-4',
     content: '김치찌개 어때요?',
     createdAt: '2024-03-10T11:31:00Z',
+    threadId: '',
   },
   {
     id: 'msg-8',
@@ -159,6 +166,7 @@ export const MOCK_MESSAGES: Message[] = [
     userId: 'user-1',
     content: 'React 19 마이그레이션 관련해서 논의할 게 있습니다.',
     createdAt: '2024-03-10T10:00:00Z',
+    threadId: '',
   },
   {
     id: 'msg-9',
@@ -166,6 +174,7 @@ export const MOCK_MESSAGES: Message[] = [
     userId: 'user-3',
     content: '어떤 부분이 이슈인가요?',
     createdAt: '2024-03-10T10:05:00Z',
+    threadId: '',
   },
   {
     id: 'msg-10',
@@ -173,5 +182,6 @@ export const MOCK_MESSAGES: Message[] = [
     userId: 'user-2',
     content: '새 디자인 시안 피그마에 올려두었습니다.',
     createdAt: '2024-03-10T14:00:00Z',
+    threadId: '',
   },
 ];

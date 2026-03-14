@@ -7,21 +7,30 @@ import type { LoginCredentials } from '@/features/auth/types';
 import type { User, UpdateProfileInput } from '@/features/user/types';
 import type { CustomEmoji } from '@/features/emoji/types';
 import type { InviteLink, GuestJoinInput } from '@/features/invite/types';
+import type { ThreadInfo, ThreadReply, ReadPosition, UnreadCount } from '@/features/thread/types';
 
 // ✅ P-03: 모듈 레벨 상수
 const MOCK_PASSWORD = 'password';
 const INVITE_EXPIRY_HOURS = 24;
+const MAX_REPLIES_PER_THREAD = 100;
+const THREAD_AUTO_LOCK_DAYS = 7;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 let users = [...MOCK_USERS];
 let channels = [...MOCK_CHANNELS];
 let messages = [...MOCK_MESSAGES];
 let customEmojis: CustomEmoji[] = [];
 let inviteLinks: InviteLink[] = [];
+let threads: ThreadInfo[] = [];
+let threadReplies: ThreadReply[] = [];
+let readPositions: ReadPosition[] = [];
 let messageIdCounter = messages.length + 1;
 let channelIdCounter = channels.length + 1;
 let customEmojiIdCounter = 1;
 let inviteIdCounter = 1;
 let guestIdCounter = 1;
+let threadIdCounter = 1;
+let threadReplyIdCounter = 1;
 
 export const handlers = [
   // --- Workspaces ---
@@ -139,6 +148,7 @@ export const handlers = [
       userId: body.userId,
       content: body.content,
       createdAt: new Date().toISOString(),
+      threadId: '',
     };
     messages = [...messages, newMessage];
     return HttpResponse.json(newMessage, { status: 201 });
@@ -240,5 +250,310 @@ export const handlers = [
       token: `mock-token-${guestId}`,
       channelId: invite.channelId,
     });
+  }),
+
+  // --- Threads ---
+  http.get('/api/channels/:channelId/threads', ({ params }) => {
+    const channelThreads = threads
+      .filter((t) => t.channelId === params['channelId'])
+      .sort((a, b) => new Date(b.lastReplyAt).getTime() - new Date(a.lastReplyAt).getTime());
+    return HttpResponse.json(channelThreads);
+  }),
+
+  http.get('/api/threads/:threadId', ({ params }) => {
+    const thread = threads.find((t) => t.id === params['threadId']);
+    if (!thread) {
+      return HttpResponse.json({ message: 'Thread not found' }, { status: 404 });
+    }
+    return HttpResponse.json(thread);
+  }),
+
+  http.get('/api/threads/:threadId/replies', ({ params }) => {
+    const replies = threadReplies
+      .filter((r) => r.threadId === params['threadId'])
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    return HttpResponse.json(replies);
+  }),
+
+  http.post('/api/threads', async ({ request }) => {
+    const body = (await request.json()) as {
+      parentMessageId: string;
+      channelId: string;
+      content: string;
+      userId: string;
+    };
+
+    // 동일 메시지에 이미 스레드가 있는지 확인
+    const existingThread = threads.find((t) => t.parentMessageId === body.parentMessageId);
+    if (existingThread) {
+      return HttpResponse.json({ message: 'Thread already exists for this message' }, { status: 409 });
+    }
+
+    const now = new Date().toISOString();
+    const newThread: ThreadInfo = {
+      id: `thread-${threadIdCounter++}`,
+      parentMessageId: body.parentMessageId,
+      channelId: body.channelId,
+      createdBy: body.userId,
+      createdAt: now,
+      lastReplyAt: now,
+      replyCount: 1,
+      status: { type: 'active', lastActivityAt: now },
+    };
+    threads = [...threads, newThread];
+
+    // 첫 번째 답장 생성
+    const firstReply: ThreadReply = {
+      id: `treply-${threadReplyIdCounter++}`,
+      threadId: newThread.id,
+      userId: body.userId,
+      content: body.content,
+      createdAt: now,
+    };
+    threadReplies = [...threadReplies, firstReply];
+
+    return HttpResponse.json(newThread, { status: 201 });
+  }),
+
+  http.post('/api/threads/:threadId/replies', async ({ params, request }) => {
+    const body = (await request.json()) as { content: string; userId: string };
+    const threadId = params['threadId'] as string;
+    const thread = threads.find((t) => t.id === threadId);
+
+    if (!thread) {
+      return HttpResponse.json({ message: 'Thread not found' }, { status: 404 });
+    }
+
+    // 비즈니스 로직: 잠긴 스레드 답장 불가
+    if (thread.status.type === 'locked') {
+      return HttpResponse.json({ message: 'Thread is locked' }, { status: 403 });
+    }
+
+    // 비즈니스 로직: 보관된 스레드 답장 불가
+    if (thread.status.type === 'archived') {
+      return HttpResponse.json({ message: 'Thread is archived' }, { status: 403 });
+    }
+
+    // 비즈니스 로직: 최대 답장 수 제한
+    if (thread.replyCount >= MAX_REPLIES_PER_THREAD) {
+      return HttpResponse.json({ message: 'Maximum replies reached' }, { status: 422 });
+    }
+
+    // 비즈니스 로직: 자동 잠금 (7일 비활성)
+    const daysSinceLastReply = (Date.now() - new Date(thread.lastReplyAt).getTime()) / MS_PER_DAY;
+    if (daysSinceLastReply > THREAD_AUTO_LOCK_DAYS) {
+      const lockTime = new Date().toISOString();
+      threads = threads.map((t) =>
+        t.id === threadId
+          ? { ...t, status: { type: 'locked' as const, lockedBy: 'system', lockedAt: lockTime, reason: '7일 이상 비활성으로 자동 잠금' } }
+          : t,
+      );
+      return HttpResponse.json({ message: 'Thread auto-locked due to inactivity' }, { status: 403 });
+    }
+
+    const now = new Date().toISOString();
+    const newReply: ThreadReply = {
+      id: `treply-${threadReplyIdCounter++}`,
+      threadId,
+      userId: body.userId,
+      content: body.content,
+      createdAt: now,
+    };
+    threadReplies = [...threadReplies, newReply];
+
+    // 스레드 업데이트
+    threads = threads.map((t) =>
+      t.id === threadId
+        ? { ...t, lastReplyAt: now, replyCount: t.replyCount + 1, status: { type: 'active' as const, lastActivityAt: now } }
+        : t,
+    );
+
+    return HttpResponse.json(newReply, { status: 201 });
+  }),
+
+  http.post('/api/threads/:threadId/lock', async ({ params, request }) => {
+    const body = (await request.json()) as { reason: string; userId: string };
+    const threadId = params['threadId'] as string;
+    const thread = threads.find((t) => t.id === threadId);
+
+    if (!thread) {
+      return HttpResponse.json({ message: 'Thread not found' }, { status: 404 });
+    }
+
+    // 비즈니스 로직: 스레드 생성자만 잠금 가능
+    if (thread.createdBy !== body.userId) {
+      return HttpResponse.json({ message: 'Only thread creator can lock' }, { status: 403 });
+    }
+
+    const now = new Date().toISOString();
+    const updatedThread: ThreadInfo = {
+      ...thread,
+      status: { type: 'locked', lockedBy: body.userId, lockedAt: now, reason: body.reason },
+    };
+    threads = threads.map((t) => (t.id === threadId ? updatedThread : t));
+    return HttpResponse.json(updatedThread);
+  }),
+
+  http.post('/api/threads/:threadId/unlock', async ({ params, request }) => {
+    const body = (await request.json()) as { userId: string };
+    const threadId = params['threadId'] as string;
+    const thread = threads.find((t) => t.id === threadId);
+
+    if (!thread) {
+      return HttpResponse.json({ message: 'Thread not found' }, { status: 404 });
+    }
+
+    if (thread.status.type !== 'locked') {
+      return HttpResponse.json({ message: 'Thread is not locked' }, { status: 422 });
+    }
+
+    // 비즈니스 로직: 생성자 또는 잠근 사람만 해제 가능
+    if (thread.createdBy !== body.userId && thread.status.lockedBy !== body.userId) {
+      return HttpResponse.json({ message: 'Not authorized to unlock' }, { status: 403 });
+    }
+
+    const now = new Date().toISOString();
+    const updatedThread: ThreadInfo = {
+      ...thread,
+      status: { type: 'active', lastActivityAt: now },
+    };
+    threads = threads.map((t) => (t.id === threadId ? updatedThread : t));
+    return HttpResponse.json(updatedThread);
+  }),
+
+  // --- Read Tracking ---
+  http.get('/api/channels/:channelId/read-position', ({ params, request }) => {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get('userId') ?? '';
+    const channelId = params['channelId'] as string;
+
+    const position = readPositions.find(
+      (rp) => rp.channelId === channelId && rp.userId === userId,
+    );
+
+    if (position) {
+      return HttpResponse.json(position);
+    }
+
+    // 기본 읽음 위치 반환
+    const defaultPosition: ReadPosition = {
+      userId,
+      channelId,
+      lastReadMessageId: '',
+      lastReadAt: new Date().toISOString(),
+      threadPositions: {},
+    };
+    return HttpResponse.json(defaultPosition);
+  }),
+
+  http.get('/api/unread-counts', ({ request }) => {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get('userId') ?? '';
+
+    const counts: UnreadCount[] = channels.map((channel) => {
+      const channelMessages = messages.filter((m) => m.channelId === channel.id);
+      const position = readPositions.find(
+        (rp) => rp.channelId === channel.id && rp.userId === userId,
+      );
+
+      let messageCount = 0;
+      if (!position || position.lastReadMessageId === '') {
+        messageCount = channelMessages.length;
+      } else {
+        const lastReadIndex = channelMessages.findIndex(
+          (m) => m.id === position.lastReadMessageId,
+        );
+        if (lastReadIndex === -1) {
+          messageCount = channelMessages.length;
+        } else {
+          messageCount = channelMessages.length - lastReadIndex - 1;
+        }
+      }
+
+      const channelThreads = threads.filter((t) => t.channelId === channel.id);
+      let threadUnreadCount = 0;
+      for (const thread of channelThreads) {
+        const lastReadReplyId = position?.threadPositions[thread.id] ?? '';
+        const replies = threadReplies.filter((r) => r.threadId === thread.id);
+        if (lastReadReplyId === '') {
+          threadUnreadCount += replies.length;
+        } else {
+          const idx = replies.findIndex((r) => r.id === lastReadReplyId);
+          if (idx === -1) {
+            threadUnreadCount += replies.length;
+          } else {
+            threadUnreadCount += replies.length - idx - 1;
+          }
+        }
+      }
+
+      return {
+        channelId: channel.id,
+        messageCount,
+        threadCount: threadUnreadCount,
+        mentionCount: 0,
+      };
+    });
+
+    return HttpResponse.json(counts);
+  }),
+
+  http.post('/api/read-position', async ({ request }) => {
+    const body = (await request.json()) as { channelId: string; messageId: string; userId: string };
+    const now = new Date().toISOString();
+
+    const existingIndex = readPositions.findIndex(
+      (rp) => rp.channelId === body.channelId && rp.userId === body.userId,
+    );
+
+    const updatedPosition: ReadPosition = {
+      userId: body.userId,
+      channelId: body.channelId,
+      lastReadMessageId: body.messageId,
+      lastReadAt: now,
+      threadPositions: existingIndex !== -1 ? readPositions[existingIndex].threadPositions : {},
+    };
+
+    if (existingIndex !== -1) {
+      readPositions = readPositions.map((rp, i) => (i === existingIndex ? updatedPosition : rp));
+    } else {
+      readPositions = [...readPositions, updatedPosition];
+    }
+
+    return HttpResponse.json(updatedPosition);
+  }),
+
+  http.post('/api/thread-read-position', async ({ request }) => {
+    const body = (await request.json()) as { threadId: string; replyId: string; userId: string };
+    const thread = threads.find((t) => t.id === body.threadId);
+    if (!thread) {
+      return HttpResponse.json({ message: 'Thread not found' }, { status: 404 });
+    }
+
+    const now = new Date().toISOString();
+    const existingIndex = readPositions.findIndex(
+      (rp) => rp.channelId === thread.channelId && rp.userId === body.userId,
+    );
+
+    if (existingIndex !== -1) {
+      const existing = readPositions[existingIndex];
+      const updatedPosition: ReadPosition = {
+        ...existing,
+        lastReadAt: now,
+        threadPositions: { ...existing.threadPositions, [body.threadId]: body.replyId },
+      };
+      readPositions = readPositions.map((rp, i) => (i === existingIndex ? updatedPosition : rp));
+      return HttpResponse.json(updatedPosition);
+    }
+
+    const newPosition: ReadPosition = {
+      userId: body.userId,
+      channelId: thread.channelId,
+      lastReadMessageId: '',
+      lastReadAt: now,
+      threadPositions: { [body.threadId]: body.replyId },
+    };
+    readPositions = [...readPositions, newPosition];
+    return HttpResponse.json(newPosition);
   }),
 ];
