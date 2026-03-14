@@ -130,6 +130,8 @@
 | modal | Modal/Dialog 오버레이 패턴 |
 | emoji-picker | 이모지 선택 UI |
 | custom-emoji | 커스텀 이모지 등록/관리 |
+| checklist | 체크리스트/할일 UI |
+| panel | 사이드 패널 UI |
 
 ## DOM & 브라우저
 

@@ -8,6 +8,7 @@ import type { User, UpdateProfileInput } from '@/features/user/types';
 import type { CustomEmoji } from '@/features/emoji/types';
 import type { InviteLink, GuestJoinInput } from '@/features/invite/types';
 import type { ThreadInfo, ThreadReply, ReadPosition, UnreadCount } from '@/features/thread/types';
+import type { Plan, PlanItem } from '@/features/plan/types';
 
 // ✅ P-03: 모듈 레벨 상수
 const MOCK_PASSWORD = 'password';
@@ -31,6 +32,9 @@ let inviteIdCounter = 1;
 let guestIdCounter = 1;
 let threadIdCounter = 1;
 let threadReplyIdCounter = 1;
+let plans: Plan[] = [];
+let planIdCounter = 1;
+let planItemIdCounter = 1;
 
 export const handlers = [
   // --- Workspaces ---
@@ -555,5 +559,104 @@ export const handlers = [
     };
     readPositions = [...readPositions, newPosition];
     return HttpResponse.json(newPosition);
+  }),
+
+  // --- Plans ---
+  http.get('/api/channels/:channelId/plans', ({ params }) => {
+    const channelPlans = plans
+      .filter((p) => p.channelId === params['channelId'])
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return HttpResponse.json(channelPlans);
+  }),
+
+  http.get('/api/plans/:planId', ({ params }) => {
+    const foundPlan = plans.find((p) => p.id === params['planId']);
+    if (!foundPlan) {
+      return HttpResponse.json({ message: 'Plan not found' }, { status: 404 });
+    }
+    return HttpResponse.json(foundPlan);
+  }),
+
+  http.post('/api/plans', async ({ request }) => {
+    const body = (await request.json()) as { channelId: string; title: string; userId: string };
+    const now = new Date().toISOString();
+    const newPlan: Plan = {
+      id: `plan-${planIdCounter++}`,
+      channelId: body.channelId,
+      title: body.title,
+      createdBy: body.userId,
+      createdAt: now,
+      items: [],
+    };
+    plans = [...plans, newPlan];
+    return HttpResponse.json(newPlan, { status: 201 });
+  }),
+
+  http.post('/api/plans/:planId/items', async ({ params, request }) => {
+    const body = (await request.json()) as { content: string; userId: string };
+    const planId = params['planId'] as string;
+    const foundPlan = plans.find((p) => p.id === planId);
+    if (!foundPlan) {
+      return HttpResponse.json({ message: 'Plan not found' }, { status: 404 });
+    }
+
+    const now = new Date().toISOString();
+    const newItem: PlanItem = {
+      id: `plan-item-${planItemIdCounter++}`,
+      planId,
+      content: body.content,
+      isCompleted: false,
+      createdAt: now,
+    };
+    plans = plans.map((p) =>
+      p.id === planId ? { ...p, items: [...p.items, newItem] } : p,
+    );
+    return HttpResponse.json(newItem, { status: 201 });
+  }),
+
+  http.post('/api/plans/:planId/items/:itemId/toggle', ({ params }) => {
+    const planId = params['planId'] as string;
+    const itemId = params['itemId'] as string;
+    const foundPlan = plans.find((p) => p.id === planId);
+    if (!foundPlan) {
+      return HttpResponse.json({ message: 'Plan not found' }, { status: 404 });
+    }
+
+    const targetItem = foundPlan.items.find((i) => i.id === itemId);
+    if (!targetItem) {
+      return HttpResponse.json({ message: 'Item not found' }, { status: 404 });
+    }
+
+    const toggledItem: PlanItem = { ...targetItem, isCompleted: !targetItem.isCompleted };
+    plans = plans.map((p) =>
+      p.id === planId
+        ? { ...p, items: p.items.map((i) => (i.id === itemId ? toggledItem : i)) }
+        : p,
+    );
+    return HttpResponse.json(toggledItem);
+  }),
+
+  http.delete('/api/plans/:planId/items/:itemId', ({ params }) => {
+    const planId = params['planId'] as string;
+    const itemId = params['itemId'] as string;
+    const foundPlan = plans.find((p) => p.id === planId);
+    if (!foundPlan) {
+      return HttpResponse.json({ message: 'Plan not found' }, { status: 404 });
+    }
+
+    plans = plans.map((p) =>
+      p.id === planId ? { ...p, items: p.items.filter((i) => i.id !== itemId) } : p,
+    );
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.delete('/api/plans/:planId', ({ params }) => {
+    const planId = params['planId'] as string;
+    const foundPlan = plans.find((p) => p.id === planId);
+    if (!foundPlan) {
+      return HttpResponse.json({ message: 'Plan not found' }, { status: 404 });
+    }
+    plans = plans.filter((p) => p.id !== planId);
+    return new HttpResponse(null, { status: 204 });
   }),
 ];

@@ -5,23 +5,20 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChannelList, useChannels } from '@/features/channel';
-import { MessageList, MessageInput, useMessages, useSendMessage, MESSAGE_QUERY_KEY, type MessageAuthor } from '@/features/message';
-import { UserProfile, ProfileEditModal, useUsers, useUpdateProfile, USER_QUERY_KEY } from '@/features/user';
-import type { UpdateProfileInput } from '@/features/user';
-import type { CustomEmoji, CreateCustomEmojiInput } from '@/features/emoji';
-import {
-  EmojiPicker, CustomEmojiManager, useCustomEmojis,
-  useCreateCustomEmoji, useDeleteCustomEmoji, CUSTOM_EMOJI_QUERY_KEY, EMOJI_CATEGORIES,
-} from '@/features/emoji';
+import { MessageList, MessageInput, useMessages, useSendMessage, MESSAGE_QUERY_KEY, type MessageAuthor, type Message } from '@/features/message';
+import { UserProfile, ProfileEditModal, useUsers, useUpdateProfile, USER_QUERY_KEY, type UpdateProfileInput } from '@/features/user';
+import { EmojiPicker, CustomEmojiManager, useCustomEmojis, useCreateCustomEmoji, useDeleteCustomEmoji, CUSTOM_EMOJI_QUERY_KEY, EMOJI_CATEGORIES, type CustomEmoji, type CreateCustomEmojiInput } from '@/features/emoji';
 import { WorkspaceSwitcher, useWorkspaces, useWorkspaceStore } from '@/features/workspace';
 import { useAuthStore } from '@/features/auth';
 import { ThreadPanel, ThreadIndicator, UnreadBadge, type ThreadAuthor } from '@/features/thread';
-import type { Message } from '@/features/message';
+import { PlanPanel } from '@/features/plan';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { ChatChannelHeader } from './components/ChatChannelHeader';
 import { PendingThreadPanel } from './components/PendingThreadPanel';
 import { useChatThread } from './hooks/useChatThread';
 import { useChatReadTracking } from './hooks/useChatReadTracking';
+import { useChatPlan } from './hooks/useChatPlan';
+import { ChatPlanSidebar } from './components/ChatPlanSidebar';
 
 // ✅ P-03: 모듈 레벨 상수
 const DEFAULT_CHANNEL_ID = 'channel-1';
@@ -65,9 +62,10 @@ export function ChatPage() {
   const createCustomEmoji = useCreateCustomEmoji(currentUserId);
   const deleteCustomEmoji = useDeleteCustomEmoji();
 
-  // 커스텀 훅으로 분리된 스레드/읽음 추적 로직
+  // 커스텀 훅으로 분리된 스레드/읽음 추적/플랜 로직
   const thread = useChatThread(effectiveChannelId, currentUserId);
   const readTracking = useChatReadTracking(currentUserId);
+  const plan = useChatPlan(effectiveChannelId, currentUserId);
 
   const selectedChannel = channels.find((c) => c.id === effectiveChannelId);
   const currentUserDetail = users.find((u) => u.id === currentUserId);
@@ -174,6 +172,7 @@ export function ChatPage() {
             })}
           </ErrorBoundary>
         </div>
+        <ChatPlanSidebar {...plan.sidebarProps} />
         {currentUserDetail ? <UserProfile user={currentUserDetail} onEditProfile={() => setIsProfileEditOpen(true)} /> : null}
       </aside>
 
@@ -233,6 +232,10 @@ export function ChatPage() {
           onReply={thread.handleReplyToThread}
           onClose={thread.handleCloseThread}
         />
+      ) : null}
+
+      {plan.isPlanPanelOpen && plan.activePlan ? (
+        <PlanPanel plan={plan.activePlan} permissions={plan.permissions} onAction={plan.panelActions} />
       ) : null}
 
       {currentUserDetail ? (
