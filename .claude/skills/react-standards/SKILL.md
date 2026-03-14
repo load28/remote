@@ -150,6 +150,7 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 - [ ] S-14: Context Provider value useMemo 적용
 - [ ] S-15: localStorage 스키마 버전 관리 (해당 시)
 - [ ] S-16: useEffect cleanup 구현 (구독, 타이머, fetch)
+- [ ] S-17: mutation 훅에 onSuccess/onError 내장 금지 (사용처에서 정의)
 
 #### 성능 (P)
 - [ ] P-01: 프로파일링 기반 최적화 (추측 금지)
@@ -194,15 +195,11 @@ Phase 1: 레퍼런스 참조 → Phase 2: 최종 검증 → Phase 3: 보고
 ### 적용된 규칙
 - ✅ A-01, A-08, N-01, N-03, C-01, C-02, S-06, P-13 ...
 
-### 해당 없음
-- ⬜ C-09 (Compound Component 해당 없음)
-- ⬜ P-02 (리스트 50개 미만)
-
 ### 수정 사항 (검토 중 발견하여 수정)
 - 🔧 S-02: useEffect 내 파생 상태 → useMemo로 변경
 - 🔧 P-04: && 조건부 렌더 → 삼항 연산자로 변경
 
-✅ 전체 검토 완료 — 78개 규칙 중 XX개 적용, XX개 해당없음, XX개 수정
+✅ 전체 검토 완료 — XX개 적용, XX개 수정
 ```
 
 **Phase 3 보고 없이 코드 제출을 완료하지 않는다.**

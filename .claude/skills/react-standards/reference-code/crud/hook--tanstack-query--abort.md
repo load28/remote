@@ -1,13 +1,13 @@
 ---
-tags: [hook, custom-hook, tanstack-query, mutation, invalidation, abort, generic]
-rules: [S-04, S-08, N-05, P-13]
-description: CRUD 훅 패턴 — TanStack Query 기반 리소스 목록/상세/뮤테이션
+tags: [hook, custom-hook, tanstack-query, mutation, abort, generic]
+rules: [S-04, S-08, S-17, N-05, P-13]
+description: CRUD 훅 패턴 — TanStack Query 기반 리소스 목록/상세/뮤테이션 (훅은 mutationFn만, 후속 로직은 사용처에서)
 ---
 
 ```tsx
 // {Feature}/hooks/useResource.ts — 범용 CRUD 훅 패턴
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 
 // ✅ 제네릭으로 도메인 비종속
 interface ResourceApi<T, CreateInput, UpdateInput> {
@@ -42,17 +42,24 @@ export function useResourceById<T>(
   });
 }
 
+// ✅ S-17: mutation 훅은 mutationFn만 정의
+// onSuccess/onError는 사용처에서 mutate(data, { onSuccess }) 로 주입
 export function useResourceMutation<T, Input>(
-  queryKey: string[],
   mutationFn: (input: Input) => Promise<T>,
 ) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-    },
-  });
+  return useMutation({ mutationFn });
 }
+```
+
+```tsx
+// 사용처 예시 — onSuccess/onError는 사용처에서 정의
+const createResource = useResourceMutation(resourceApi.create);
+const queryClient = useQueryClient();
+
+createResource.mutate(input, {
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['resources'] });
+    closeModal();
+  },
+});
 ```

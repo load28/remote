@@ -13,6 +13,7 @@ import { AuthForm } from './AuthForm';
 import { PasswordField } from './PasswordField';
 import { RecentUserList } from './RecentUserList';
 import { useLoginMutation } from '../hooks/useLoginMutation';
+import { useAuthStore } from '../hooks/useAuthStore';
 import { usePasswordStrength } from '../hooks/usePasswordStrength';
 import type { AuthFormMode, RecentUser } from '../types';
 
@@ -48,6 +49,7 @@ export function LoginPage({ recentUsers, onLoginSuccess }: LoginPageProps) {
   const [errorMessage, setErrorMessage] = useState('');
 
   const loginMutation = useLoginMutation();
+  const signIn = useAuthStore((s) => s.signIn);
   const { strength, updateStrength } = usePasswordStrength();
   const { addNotification } = useNotificationActions();
 
@@ -93,11 +95,13 @@ export function LoginPage({ recentUsers, onLoginSuccess }: LoginPageProps) {
 
     // ✅ T-06: ErrorBoundary 한계 인식 — 이벤트 핸들러 에러는 ErrorBoundary가 못 잡음
     // → try-catch로 직접 처리
+    // ✅ S-17: mutation 후속 로직(signIn)을 사용처에서 처리
     try {
-      await loginMutation.mutateAsync({
+      const { user, token } = await loginMutation.mutateAsync({
         username: form.username.trim(),
         password: form.password,
       });
+      signIn(user, token);
       addNotification('success', '로그인 성공!');
       onLoginSuccess();
     } catch {

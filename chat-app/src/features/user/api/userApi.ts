@@ -1,7 +1,7 @@
 // A-06: httpClient 래퍼만 import
 
 import { httpClient } from '@/shared/lib/httpClient';
-import type { User } from '../types';
+import type { User, UpdateProfileInput } from '../types';
 
 export const userApi = {
   getAll: (signal?: AbortSignal): Promise<User[]> =>
@@ -9,4 +9,7 @@ export const userApi = {
 
   getById: (id: string, signal?: AbortSignal): Promise<User> =>
     httpClient.get(`/api/users/${id}`, { signal }),
+
+  updateProfile: (id: string, input: UpdateProfileInput): Promise<User> =>
+    httpClient.put(`/api/users/${id}`, input),
 };

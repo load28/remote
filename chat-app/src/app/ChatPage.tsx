@@ -1,11 +1,24 @@
 // 레퍼런스: interactive--event-naming--a11y.md, provider--context--error-boundary.md
 // C-07: SRP — 페이지 레벨 조합 컴포넌트
 // A-08: 단방향 데이터 흐름 (props down, events up)
+// S-17: mutation 후속 로직은 사용처에서 처리
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ChannelList, useChannels } from '@/features/channel';
-import { MessageList, MessageInput, useMessages, useSendMessage, type MessageAuthor } from '@/features/message';
-import { UserProfile, useUsers } from '@/features/user';
+import { MessageList, MessageInput, useMessages, useSendMessage, MESSAGE_QUERY_KEY, type MessageAuthor } from '@/features/message';
+import { UserProfile, ProfileEditModal, useUsers, useUpdateProfile, USER_QUERY_KEY } from '@/features/user';
+import type { UpdateProfileInput } from '@/features/user';
+import {
+  EmojiPicker,
+  CustomEmojiManager,
+  useCustomEmojis,
+  useCreateCustomEmoji,
+  useDeleteCustomEmoji,
+  CUSTOM_EMOJI_QUERY_KEY,
+  EMOJI_CATEGORIES,
+} from '@/features/emoji';
+import type { CustomEmoji, CreateCustomEmojiInput } from '@/features/emoji';
 import { useAuthStore } from '@/features/auth';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 
@@ -15,13 +28,22 @@ const DEFAULT_CHANNEL_ID = 'channel-1';
 export function ChatPage() {
   // ✅ S-09: 사용처 가까이 배치
   const [selectedChannelId, setSelectedChannelId] = useState(DEFAULT_CHANNEL_ID);
+  const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
+  const [isCustomEmojiManagerOpen, setIsCustomEmojiManagerOpen] = useState(false);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [messageContent, setMessageContent] = useState('');
 
+  const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.currentUser);
   const currentUserId = currentUser?.id ?? '';
   const { data: channels = [] } = useChannels();
   const { data: users = [] } = useUsers();
   const { data: messages = [] } = useMessages(selectedChannelId);
+  const { data: customEmojis = [] } = useCustomEmojis();
   const sendMessage = useSendMessage(selectedChannelId);
+  const updateProfile = useUpdateProfile(currentUserId);
+  const createCustomEmoji = useCreateCustomEmoji(currentUserId);
+  const deleteCustomEmoji = useDeleteCustomEmoji();
 
   const selectedChannel = channels.find((c) => c.id === selectedChannelId);
   const currentUserDetail = users.find((u) => u.id === currentUserId);
@@ -41,8 +63,73 @@ export function ChatPage() {
     setSelectedChannelId(channelId);
   };
 
+  // ✅ S-17: onSuccess를 사용처에서 처리
   const handleSendMessage = (content: string) => {
-    sendMessage.mutate({ content, userId: currentUserId });
+    sendMessage.mutate({ content, userId: currentUserId }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [...MESSAGE_QUERY_KEY, selectedChannelId] });
+      },
+    });
+    setMessageContent('');
+  };
+
+  const handleEditProfile = () => {
+    setIsProfileEditOpen(true);
+  };
+
+  const handleCloseProfileEdit = () => {
+    setIsProfileEditOpen(false);
+  };
+
+  // ✅ S-17: onSuccess를 사용처에서 처리
+  const handleSubmitProfile = (input: UpdateProfileInput) => {
+    updateProfile.mutate(input, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY });
+        setIsProfileEditOpen(false);
+      },
+    });
+  };
+
+  const handleSelectEmoji = (emoji: string) => {
+    setMessageContent((prev) => prev + emoji);
+    setIsEmojiPickerOpen(false);
+  };
+
+  const handleSelectCustomEmoji = (emoji: CustomEmoji) => {
+    setMessageContent((prev) => prev + `:${emoji.name}:`);
+    setIsEmojiPickerOpen(false);
+  };
+
+  const handleToggleEmojiPicker = useCallback(() => {
+    setIsEmojiPickerOpen((prev) => !prev);
+  }, []);
+
+  const handleOpenCustomEmojiManager = () => {
+    setIsEmojiPickerOpen(false);
+    setIsCustomEmojiManagerOpen(true);
+  };
+
+  const handleCloseCustomEmojiManager = () => {
+    setIsCustomEmojiManagerOpen(false);
+  };
+
+  // ✅ S-17: onSuccess를 사용처에서 처리
+  const handleCreateCustomEmoji = (input: CreateCustomEmojiInput) => {
+    createCustomEmoji.mutate(input, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: CUSTOM_EMOJI_QUERY_KEY });
+      },
+    });
+  };
+
+  // ✅ S-17: onSuccess를 사용처에서 처리
+  const handleDeleteCustomEmoji = (id: string) => {
+    deleteCustomEmoji.mutate(id, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: CUSTOM_EMOJI_QUERY_KEY });
+      },
+    });
   };
 
   return (
@@ -62,7 +149,9 @@ export function ChatPage() {
             />
           </ErrorBoundary>
         </div>
-        {currentUserDetail ? <UserProfile user={currentUserDetail} /> : null}
+        {currentUserDetail ? (
+          <UserProfile user={currentUserDetail} onEditProfile={handleEditProfile} />
+        ) : null}
       </aside>
 
       {/* 메인 채팅 영역 */}
@@ -102,10 +191,43 @@ export function ChatPage() {
         </ErrorBoundary>
 
         <MessageInput
+          content={messageContent}
+          onChangeContent={setMessageContent}
           onSendMessage={handleSendMessage}
           isSending={sendMessage.isPending}
+          isEmojiPickerOpen={isEmojiPickerOpen}
+          onToggleEmojiPicker={handleToggleEmojiPicker}
+          emojiPicker={
+            <EmojiPicker
+              categories={EMOJI_CATEGORIES}
+              customEmojis={customEmojis}
+              onSelectEmoji={handleSelectEmoji}
+              onSelectCustomEmoji={handleSelectCustomEmoji}
+              onOpenCustomEmojiManager={handleOpenCustomEmojiManager}
+            />
+          }
         />
       </main>
+
+      {/* 모달 */}
+      {currentUserDetail ? (
+        <ProfileEditModal
+          user={currentUserDetail}
+          isOpen={isProfileEditOpen}
+          isSubmitting={updateProfile.isPending}
+          onClose={handleCloseProfileEdit}
+          onSubmitProfile={handleSubmitProfile}
+        />
+      ) : null}
+
+      <CustomEmojiManager
+        isOpen={isCustomEmojiManagerOpen}
+        customEmojis={customEmojis}
+        isCreating={createCustomEmoji.isPending}
+        onClose={handleCloseCustomEmojiManager}
+        onCreateEmoji={handleCreateCustomEmoji}
+        onDeleteEmoji={handleDeleteCustomEmoji}
+      />
     </div>
   );
 }
