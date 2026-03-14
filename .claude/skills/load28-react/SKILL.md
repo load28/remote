@@ -128,6 +128,44 @@ Phase 1 완료 시, 다음을 알고 있어야 한다:
 설계 명세를 실제 TypeScript/React 코드로 변환한다.
 레퍼런스의 구조를 따르되, 도메인 용어만 프로젝트에 맞게 교체한다.
 
+#### 문법 규칙 — 코드 변환 시 항상 적용
+
+설계 명세에는 **어휘** (구조적 결정)만 적는다.
+아래 **문법** 규칙은 설계 명세에 적지 않아도 **코드의 모든 줄에 자동 적용**된다.
+
+설계 명세의 어휘가 "무엇을 만들 것인가"를 결정한다면,
+문법은 "어떻게 쓸 것인가"를 결정한다. 문법은 의식적으로 선택하는 것이 아니라 체화된 것이다.
+
+| 카테고리 | 문법 규칙 | 적용 |
+|----------|-----------|------|
+| **네이밍** | N-01: 컴포넌트 PascalCase | 모든 컴포넌트/파일 |
+| | N-02: props camelCase | 모든 props |
+| | N-03: props `on*`, 내부 `handle*` | 모든 이벤트 핸들러 |
+| | N-04: Boolean `is*/has*/can*/should*` | 모든 boolean 변수 |
+| | N-05: 훅 `use` + 동사 | 모든 커스텀 훅 |
+| | N-06: 상수 UPPER_SNAKE_CASE | 모든 모듈 레벨 상수 |
+| **상태** | S-01: state 직접 변경 금지 | 모든 state 업데이트 |
+| | S-02: useEffect 내 파생 상태 금지 → useMemo | 모든 파생 계산 |
+| | S-03: 파생 가능한 값 state 금지 | 모든 state 선언 |
+| | S-05: props→state 복사 금지 | 모든 state 초기화 |
+| | S-06: 이전 값 기반 → 함수형 setState | 모든 prev 기반 업데이트 |
+| | S-16: useEffect cleanup 필수 | 모든 useEffect |
+| | S-17: mutation 훅 onSuccess 내장 금지 | 모든 useMutation |
+| **성능** | P-03: 기본값 모듈 레벨 상수 | 모든 기본 파라미터 |
+| | P-04: 조건부 렌더 삼항. 중첩 삼항 금지 | 모든 조건부 렌더링 |
+| | P-05: inline style 객체 금지 | 모든 style prop |
+| | P-06: `export *` 금지 | 모든 barrel file |
+| | P-14: 객체/배열 의존성 → primitive 추출 | 모든 deps 배열 |
+| **컴포넌트** | C-01: 내부 컴포넌트 정의 금지 | 모든 컴포넌트 |
+| | C-02: 조건부 훅 호출 금지 | 모든 Hook 호출 |
+| | C-03: 동적 리스트 인덱스 key 금지 | 모든 .map() 렌더 |
+| | C-06: 불필요한 wrapper div 금지 | 모든 JSX 반환 |
+| | C-13: 클로저 트랩 확인 | 모든 useCallback |
+| | C-15: forwardRef/defaultProps 금지 (React 19+) | 모든 컴포넌트 |
+| **타입** | T-04: any 금지 → unknown + type guard | 모든 타입 선언 |
+| | T-13: Props named exported interface | 모든 props 타입 |
+| **접근성** | T-11: 시맨틱 HTML + ARIA | 모든 JSX 요소 |
+
 ---
 
 ## Phase 1-A: 레퍼런스 추가 (매칭 없을 때만)
