@@ -19,10 +19,9 @@ import {
   EMOJI_CATEGORIES,
 } from '@/features/emoji';
 import type { CustomEmoji, CreateCustomEmojiInput } from '@/features/emoji';
-import { InviteLinkModal, useCreateInvite } from '@/features/invite';
-import type { InviteLink } from '@/features/invite';
 import { useAuthStore } from '@/features/auth';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
+import { ChatChannelHeader } from './components/ChatChannelHeader';
 
 // ✅ P-03: 모듈 레벨 상수
 const DEFAULT_CHANNEL_ID = 'channel-1';
@@ -33,8 +32,6 @@ export function ChatPage() {
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
   const [isCustomEmojiManagerOpen, setIsCustomEmojiManagerOpen] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [currentInviteLink, setCurrentInviteLink] = useState<InviteLink | null>(null);
   const [messageContent, setMessageContent] = useState('');
 
   const queryClient = useQueryClient();
@@ -54,7 +51,6 @@ export function ChatPage() {
   const updateProfile = useUpdateProfile(currentUserId);
   const createCustomEmoji = useCreateCustomEmoji(currentUserId);
   const deleteCustomEmoji = useDeleteCustomEmoji();
-  const createInvite = useCreateInvite();
 
   const selectedChannel = channels.find((c) => c.id === effectiveChannelId);
   const currentUserDetail = users.find((u) => u.id === currentUserId);
@@ -148,25 +144,6 @@ export function ChatPage() {
     });
   };
 
-  const handleOpenInviteModal = () => {
-    setCurrentInviteLink(null);
-    setIsInviteModalOpen(true);
-  };
-
-  const handleCloseInviteModal = () => {
-    setIsInviteModalOpen(false);
-    setCurrentInviteLink(null);
-  };
-
-  // ✅ S-17: onSuccess를 사용처에서 처리
-  const handleCreateInvite = () => {
-    createInvite.mutate({ channelId: effectiveChannelId }, {
-      onSuccess: (invite) => {
-        setCurrentInviteLink(invite);
-      },
-    });
-  };
-
   return (
     <div className="flex h-screen bg-white">
       {/* 사이드바 */}
@@ -191,27 +168,7 @@ export function ChatPage() {
 
       {/* 메인 채팅 영역 */}
       <main className="flex-1 flex flex-col">
-        <header className="px-6 py-3 border-b border-gray-200 bg-white flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">
-              {selectedChannel ? `# ${selectedChannel.name}` : '채널을 선택하세요'}
-            </h2>
-            {selectedChannel ? (
-              <p className="text-sm text-gray-500">{selectedChannel.description}</p>
-            ) : null}
-          </div>
-          {/* 게스트가 아닐 때만 초대 버튼 표시 */}
-          {selectedChannel && !isGuest ? (
-            <button
-              type="button"
-              onClick={handleOpenInviteModal}
-              className="px-3 py-1.5 text-sm font-medium text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50"
-              aria-label={`${selectedChannel.name} 채널에 초대`}
-            >
-              초대하기
-            </button>
-          ) : null}
-        </header>
+        <ChatChannelHeader selectedChannel={selectedChannel} isGuest={isGuest} />
 
         {/* ✅ T-10: 위젯 레벨 에러 바운더리 */}
         <ErrorBoundary
@@ -276,17 +233,6 @@ export function ChatPage() {
         onCreateEmoji={handleCreateCustomEmoji}
         onDeleteEmoji={handleDeleteCustomEmoji}
       />
-
-      {selectedChannel ? (
-        <InviteLinkModal
-          isOpen={isInviteModalOpen}
-          channelName={selectedChannel.name}
-          inviteLink={currentInviteLink}
-          isCreating={createInvite.isPending}
-          onClose={handleCloseInviteModal}
-          onCreateInvite={handleCreateInvite}
-        />
-      ) : null}
     </div>
   );
 }
