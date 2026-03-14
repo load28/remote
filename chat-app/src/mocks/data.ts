@@ -1,6 +1,24 @@
 import type { User } from '@/features/user/types';
 import type { Channel } from '@/features/channel/types';
 import type { Message } from '@/features/message/types';
+import type { Workspace } from '@/features/workspace/types';
+
+export const MOCK_WORKSPACES: Workspace[] = [
+  {
+    id: 'workspace-1',
+    name: '개발팀',
+    iconUrl: 'https://api.dicebear.com/9.x/identicon/svg?seed=dev-team',
+    memberCount: 4,
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'workspace-2',
+    name: '디자인팀',
+    iconUrl: 'https://api.dicebear.com/9.x/identicon/svg?seed=design-team',
+    memberCount: 3,
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+];
 
 export const MOCK_USERS: User[] = [
   {
@@ -40,6 +58,7 @@ export const MOCK_USERS: User[] = [
 export const MOCK_CHANNELS: Channel[] = [
   {
     id: 'channel-1',
+    workspaceId: 'workspace-1',
     name: 'general',
     description: '일반 대화 채널',
     isPrivate: false,
@@ -48,6 +67,7 @@ export const MOCK_CHANNELS: Channel[] = [
   },
   {
     id: 'channel-2',
+    workspaceId: 'workspace-1',
     name: 'random',
     description: '자유로운 대화',
     isPrivate: false,
@@ -56,6 +76,7 @@ export const MOCK_CHANNELS: Channel[] = [
   },
   {
     id: 'channel-3',
+    workspaceId: 'workspace-1',
     name: 'dev',
     description: '개발 관련 논의',
     isPrivate: false,
@@ -64,11 +85,21 @@ export const MOCK_CHANNELS: Channel[] = [
   },
   {
     id: 'channel-4',
+    workspaceId: 'workspace-2',
     name: 'design',
     description: '디자인 관련 논의',
     isPrivate: true,
     memberCount: 2,
     createdAt: '2024-01-03T00:00:00Z',
+  },
+  {
+    id: 'channel-5',
+    workspaceId: 'workspace-2',
+    name: 'feedback',
+    description: '디자인 피드백',
+    isPrivate: false,
+    memberCount: 3,
+    createdAt: '2024-01-04T00:00:00Z',
   },
 ];
 
