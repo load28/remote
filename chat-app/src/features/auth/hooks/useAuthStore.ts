@@ -10,17 +10,20 @@ import type { AuthUser } from '../types';
 
 // ✅ P-03: 모듈 레벨 상수
 const AUTH_STORAGE_KEY = 'chat-auth';
-const AUTH_STORAGE_VERSION = 1; // S-15: 스키마 버전
+const AUTH_STORAGE_VERSION = 2; // S-15: 스키마 버전 (게스트 지원 추가)
 
 // ✅ T-13: named exported interface
 export interface AuthState {
   currentUser: AuthUser | null;
   token: string | null;
   isAuthenticated: boolean; // N-04: Boolean is 접두사
+  isGuest: boolean; // N-04: 게스트 여부
+  guestChannelId: string | null;
 }
 
 export interface AuthActions {
   signIn: (user: AuthUser, token: string) => void;
+  signInAsGuest: (user: AuthUser, token: string, channelId: string) => void;
   signOut: () => void;
 }
 
@@ -31,8 +34,29 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       currentUser: null,
       token: null,
       isAuthenticated: false,
-      signIn: (user, token) => set({ currentUser: user, token, isAuthenticated: true }),
-      signOut: () => set({ currentUser: null, token: null, isAuthenticated: false }),
+      isGuest: false,
+      guestChannelId: null,
+      signIn: (user, token) => set({
+        currentUser: user,
+        token,
+        isAuthenticated: true,
+        isGuest: false,
+        guestChannelId: null,
+      }),
+      signInAsGuest: (user, token, channelId) => set({
+        currentUser: user,
+        token,
+        isAuthenticated: true,
+        isGuest: true,
+        guestChannelId: channelId,
+      }),
+      signOut: () => set({
+        currentUser: null,
+        token: null,
+        isAuthenticated: false,
+        isGuest: false,
+        guestChannelId: null,
+      }),
     }),
     {
       name: `${AUTH_STORAGE_KEY}_v${AUTH_STORAGE_VERSION}`, // S-15: 버전 키
@@ -40,6 +64,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         currentUser: state.currentUser,
         token: state.token,
         isAuthenticated: state.isAuthenticated,
+        isGuest: state.isGuest,
+        guestChannelId: state.guestChannelId,
       }),
     },
   ),
