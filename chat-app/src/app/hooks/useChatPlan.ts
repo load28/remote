@@ -1,7 +1,6 @@
 // A-04: 높은 응집도 — Plan 관련 로직 응집
 // useChatThread 패턴 동일
 
-import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useChannelPlans,
@@ -15,7 +14,6 @@ import {
   canAddItem,
   PLAN_QUERY_KEY,
 } from '@/features/plan';
-import type { Plan } from '@/features/plan';
 import type { PlanPanelActions, PlanPermissions } from '@/features/plan';
 import type { ChatPlanSidebarProps } from '../components/ChatPlanSidebar';
 
@@ -36,45 +34,35 @@ export function useChatPlan(channelId: string, currentUserId: string) {
 
   const activePlan = plans.find((p) => p.id === activePlanId) ?? null;
 
-  const invalidatePlans = useCallback(() => {
+  // P-01: useCallback 제거 — 하위 컴포넌트가 memo되지 않아 메모이제이션 불필요
+  // mutation 반환 객체가 상태 변경마다 새 참조 → useCallback deps 불안정
+  const invalidatePlans = () => {
     queryClient.invalidateQueries({ queryKey: [...PLAN_QUERY_KEY, channelId] });
-  }, [queryClient, channelId]);
+  };
 
-  const handleCreatePlan = useCallback(
-    (title: string) => {
-      createPlan.mutate({ channelId, title }, { onSuccess: (plan) => { invalidatePlans(); openPlan(plan.id); } });
-    },
-    [createPlan, channelId, invalidatePlans, openPlan],
-  );
+  const handleCreatePlan = (title: string) => {
+    createPlan.mutate({ channelId, title }, { onSuccess: (plan) => { invalidatePlans(); openPlan(plan.id); } });
+  };
 
-  const handleAddItem = useCallback(
-    (content: string) => {
-      if (!activePlanId) return;
-      addPlanItem.mutate({ planId: activePlanId, content }, { onSuccess: invalidatePlans });
-    },
-    [addPlanItem, activePlanId, invalidatePlans],
-  );
+  const handleAddItem = (content: string) => {
+    if (!activePlanId) return;
+    addPlanItem.mutate({ planId: activePlanId, content }, { onSuccess: invalidatePlans });
+  };
 
-  const handleToggleItem = useCallback(
-    (itemId: string) => {
-      if (!activePlanId) return;
-      togglePlanItem.mutate({ planId: activePlanId, itemId }, { onSuccess: invalidatePlans });
-    },
-    [togglePlanItem, activePlanId, invalidatePlans],
-  );
+  const handleToggleItem = (itemId: string) => {
+    if (!activePlanId) return;
+    togglePlanItem.mutate({ planId: activePlanId, itemId }, { onSuccess: invalidatePlans });
+  };
 
-  const handleDeleteItem = useCallback(
-    (itemId: string) => {
-      if (!activePlanId) return;
-      deletePlanItem.mutate({ planId: activePlanId, itemId }, { onSuccess: invalidatePlans });
-    },
-    [deletePlanItem, activePlanId, invalidatePlans],
-  );
+  const handleDeleteItem = (itemId: string) => {
+    if (!activePlanId) return;
+    deletePlanItem.mutate({ planId: activePlanId, itemId }, { onSuccess: invalidatePlans });
+  };
 
-  const handleDeletePlan = useCallback(() => {
+  const handleDeletePlan = () => {
     if (!activePlanId) return;
     deletePlan.mutate(activePlanId, { onSuccess: () => { invalidatePlans(); closePlan(); } });
-  }, [deletePlan, activePlanId, invalidatePlans, closePlan]);
+  };
 
   const permissions: PlanPermissions = {
     canAdd: activePlan ? canAddItem(activePlan.items) : false,

@@ -13,17 +13,17 @@ export interface CreatePlanFormProps {
 export function CreatePlanForm({ onSubmit, isSubmitting }: CreatePlanFormProps) {
   const [title, setTitle] = useState('');
 
+  // S-03: validation은 title에서 파생 — state 저장 금지, 렌더 중 직접 계산
+  const validation = validateTitle(title.trim());
+
   // ✅ N-03: 내부 handle*, props on*
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = title.trim();
-    const validation = validateTitle(trimmed);
-    if (!validation.isValid) return;
+    if (!trimmed) return;
     onSubmit(trimmed);
     setTitle('');
   };
-
-  const validation = validateTitle(title.trim());
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">

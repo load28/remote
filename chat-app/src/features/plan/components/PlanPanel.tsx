@@ -32,7 +32,10 @@ export function PlanPanel({ plan, permissions, onAction }: PlanPanelProps) {
   const [newItemContent, setNewItemContent] = useState('');
 
   const progress = calculateProgress(plan.items);
-  const hasCanAddItem = canAddItem(plan.items);
+  const canAddMoreItems = canAddItem(plan.items);
+
+  // ✅ P-05: inline style 회피 — 동적 값을 변수로 추출
+  const progressBarWidth = { width: `${progress.percentage}%` } as const;
 
   // ✅ N-03: 내부 handle*, props on*
   const handleSubmitItem = (e: React.FormEvent) => {
@@ -85,7 +88,7 @@ export function PlanPanel({ plan, permissions, onAction }: PlanPanelProps) {
           >
             <div
               className="h-full bg-indigo-500 rounded-full transition-all duration-300"
-              style={{ width: `${progress.percentage}%` }}
+              style={progressBarWidth}
             />
           </div>
         </div>
@@ -108,7 +111,7 @@ export function PlanPanel({ plan, permissions, onAction }: PlanPanelProps) {
         ) : null}
       </ul>
 
-      {permissions.canAdd && hasCanAddItem ? (
+      {permissions.canAdd && canAddMoreItems ? (
         <form onSubmit={handleSubmitItem} className="px-4 py-3 border-t border-gray-200">
           <div className="flex gap-2">
             <input
