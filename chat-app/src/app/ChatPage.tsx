@@ -27,6 +27,22 @@ import { ChatChannelHeader } from './components/ChatChannelHeader';
 // ✅ P-03: 모듈 레벨 상수
 const DEFAULT_CHANNEL_ID = 'channel-1';
 
+// ✅ P-04: 중첩 삼항 금지 → 헬퍼 함수로 분리
+function getVisibleChannels(
+  channels: { id: string; workspaceId: string }[],
+  isGuest: boolean,
+  guestChannelId: string | null,
+  workspaceId: string | null,
+) {
+  if (isGuest) {
+    return channels.filter((c) => c.id === guestChannelId);
+  }
+  if (workspaceId) {
+    return channels.filter((c) => c.workspaceId === workspaceId);
+  }
+  return channels;
+}
+
 export function ChatPage() {
   // ✅ S-09: 사용처 가까이 배치
   const [selectedChannelId, setSelectedChannelId] = useState(DEFAULT_CHANNEL_ID);
@@ -63,12 +79,8 @@ export function ChatPage() {
   const selectedChannel = channels.find((c) => c.id === effectiveChannelId);
   const currentUserDetail = users.find((u) => u.id === currentUserId);
 
-  // 게스트는 초대된 채널만, 일반 사용자는 워크스페이스 기준 필터
-  const visibleChannels = isGuest
-    ? channels.filter((c) => c.id === guestChannelId)
-    : effectiveWorkspaceId
-      ? channels.filter((c) => c.workspaceId === effectiveWorkspaceId)
-      : channels;
+  // ✅ P-04: 중첩 삼항 금지 → 함수로 분리
+  const visibleChannels = getVisibleChannels(channels, isGuest, guestChannelId, effectiveWorkspaceId);
 
   // ✅ A-01: feature 간 의존 제거 — app 레벨에서 User→MessageAuthor 변환
   // ✅ P-14: 객체 의존성 useMemo

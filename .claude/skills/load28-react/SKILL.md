@@ -129,7 +129,7 @@ Glob("reference-code/**/*{태그}*")
 - **S-06**: 함수형 setState (prev => prev + 1)
 - **S-16**: useEffect cleanup 구현
 - **P-03**: 모듈 레벨 기본값 상수 (inline 기본값 금지)
-- **P-04**: 삼항 연산자 조건부 렌더 (number/string 조건에서 && 미사용)
+- **P-04**: 삼항 연산자 조건부 렌더 (number/string 조건에서 && 미사용, 중첩 삼항 금지)
 - **P-05**: inline style 객체 없음
 - **T-04**: any 타입 미사용 (unknown + type guard)
 - **N-03**: on*/handle* 이벤트 네이밍
