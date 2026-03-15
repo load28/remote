@@ -15,9 +15,8 @@ import {
   canAddItem,
   PLAN_QUERY_KEY,
 } from '@/features/plan';
-import type { Plan } from '@/features/plan';
 import type { PlanPanelActions, PlanPermissions } from '@/features/plan';
-import type { ChatPlanSidebarProps } from '../components/ChatPlanSidebar';
+import type { ChatPlanSidebarProps } from '@/widgets/chat-sidebar';
 
 export function useChatPlan(channelId: string, currentUserId: string) {
   const queryClient = useQueryClient();

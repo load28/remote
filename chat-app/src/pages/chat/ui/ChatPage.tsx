@@ -14,23 +14,23 @@ import { ThreadPanel, ThreadIndicator, UnreadBadge, type ThreadAuthor } from '@/
 import { NotificationPanel, useNotifications, useReadNotification, useReadAllNotifications, useNotificationStore, getUnreadCount } from '@/features/notification';
 import { PlanPanel } from '@/features/plan';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
-import { ChatChannelHeader } from './components/ChatChannelHeader';
-import { PendingThreadPanel } from './components/PendingThreadPanel';
-import { useChatThread } from './hooks/useChatThread';
-import { useChatReadTracking } from './hooks/useChatReadTracking';
-import { useChatPlan } from './hooks/useChatPlan';
-import { ChatPlanSidebar } from './components/ChatPlanSidebar';
+import { ChatChannelHeader } from '@/widgets/chat-header';
+import { PendingThreadPanel } from '@/widgets/pending-thread';
+import { useChatThread } from '../model/useChatThread';
+import { useChatReadTracking } from '../model/useChatReadTracking';
+import { useChatPlan } from '../model/useChatPlan';
+import { ChatPlanSidebar } from '@/widgets/chat-sidebar';
 
 // ✅ P-03: 모듈 레벨 상수
 const DEFAULT_CHANNEL_ID = 'channel-1';
 
 // ✅ P-04: 중첩 삼항 금지 → 헬퍼 함수
-function getVisibleChannels(
-  channels: { id: string; workspaceId: string }[],
+function getVisibleChannels<T extends { id: string; workspaceId: string }>(
+  channels: T[],
   isGuest: boolean,
   guestChannelId: string | null,
   workspaceId: string | null,
-) {
+): T[] {
   if (isGuest) return channels.filter((c) => c.id === guestChannelId);
   if (workspaceId) return channels.filter((c) => c.workspaceId === workspaceId);
   return channels;

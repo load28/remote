@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { MOCK_CHANNELS, MOCK_CHANNEL_MEMBERS, MOCK_MESSAGES, MOCK_USERS, MOCK_WORKSPACES } from './data';
 import { MOCK_RECENT_USERS } from './recentUsers';
 import type { Message } from '@/features/message/types';
-import type { Channel, ChannelMember, ChannelMemberRole, AddChannelMemberInput, UpdateMemberRoleInput } from '@/features/channel/types';
+import type { Channel, ChannelMember, AddChannelMemberInput, UpdateMemberRoleInput } from '@/features/channel/types';
 import type { LoginCredentials } from '@/features/auth/types';
 import type { User, UpdateProfileInput } from '@/features/user/types';
 import type { CustomEmoji } from '@/features/emoji/types';

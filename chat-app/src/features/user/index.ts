@@ -1,7 +1,11 @@
-// A-07: barrel file public API만 노출, P-06: named export만
-export { UserProfile } from './components/UserProfile';
-export { ProfileEditModal } from './components/ProfileEditModal';
-export { useUsers, USER_QUERY_KEY } from './hooks/useUsers';
+// A-07: barrel file — FSD: entities에서 re-export + feature 전용 export
+// P-06: named export만
+
+// entities/user에서 re-export (도메인 모델)
+export { UserProfile, useUsers, USER_QUERY_KEY } from '@/entities/user';
+export type { User, UpdateProfileInput, UserProfileProps } from '@/entities/user';
+
+// feature 전용 (사용자 인터랙션)
 export { useCurrentUser } from './hooks/useCurrentUser';
 export { useUpdateProfile } from './hooks/useUpdateProfile';
-export type { User, UpdateProfileInput } from './types';
+export { ProfileEditModal } from './components/ProfileEditModal';

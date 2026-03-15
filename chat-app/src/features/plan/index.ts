@@ -1,13 +1,10 @@
-// A-07: barrel file public API만 노출, P-06: named export만
+// A-07: barrel file — FSD: entities에서 re-export + feature 전용 export
+// P-06: named export만
 
-// Components
-export { PlanPanel, type PlanPermissions, type PlanPanelActions } from './components/PlanPanel';
-export { PlanList } from './components/PlanList';
-export { PlanItemRow } from './components/PlanItemRow';
-export { CreatePlanForm } from './components/CreatePlanForm';
-
-// Hooks
+// entities/plan에서 re-export (도메인 모델)
 export {
+  PlanList,
+  PlanItemRow,
   useChannelPlans,
   usePlanDetail,
   useCreatePlan,
@@ -15,22 +12,16 @@ export {
   useTogglePlanItem,
   useDeletePlanItem,
   useDeletePlan,
-  PLAN_QUERY_KEY,
-} from './hooks/usePlan';
-
-export { usePlanStore } from './hooks/usePlanStore';
-
-// Domain
-export {
+  usePlanStore,
   calculateProgress,
   canDeletePlan,
   canAddItem,
   validateTitle,
   sortPlansByCreatedAt,
   filterIncompletePlans,
-} from './domain/planRules';
+  PLAN_QUERY_KEY,
+} from '@/entities/plan';
 
-// Types
 export type {
   Plan,
   PlanItem,
@@ -38,4 +29,8 @@ export type {
   AddPlanItemInput,
   TogglePlanItemInput,
   DeletePlanItemInput,
-} from './types';
+} from '@/entities/plan';
+
+// feature 전용 (사용자 인터랙션 UI)
+export { PlanPanel, type PlanPermissions, type PlanPanelActions } from './components/PlanPanel';
+export { CreatePlanForm } from './components/CreatePlanForm';
