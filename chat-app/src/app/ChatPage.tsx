@@ -5,7 +5,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChannelList, ChannelMemberPanel, useChannels } from '@/features/channel';
-import { MessageList, MessageInput, useMessages, useSendMessage, MESSAGE_QUERY_KEY, type MessageAuthor, type Message } from '@/features/message';
+import { MessageList, MessageInput, MessageSearchBar, useMessages, useSendMessage, useMessageSearch, filterMessagesByQuery, MESSAGE_QUERY_KEY, type MessageAuthor, type Message } from '@/features/message';
 import { UserProfile, ProfileEditModal, useUsers, useUpdateProfile, USER_QUERY_KEY, type UpdateProfileInput } from '@/features/user';
 import { EmojiPicker, CustomEmojiManager, useCustomEmojis, useCreateCustomEmoji, useDeleteCustomEmoji, CUSTOM_EMOJI_QUERY_KEY, EMOJI_CATEGORIES, type CustomEmoji, type CreateCustomEmojiInput } from '@/features/emoji';
 import { WorkspaceSwitcher, useWorkspaces, useWorkspaceStore } from '@/features/workspace';
@@ -68,6 +68,9 @@ export function ChatPage() {
   const thread = useChatThread(effectiveChannelId, currentUserId);
   const readTracking = useChatReadTracking(currentUserId);
   const plan = useChatPlan(effectiveChannelId, currentUserId);
+
+  // 검색 (S-18: nuqs로 URL 상태 관리)
+  const { searchQuery, handleSearch, handleClearSearch } = useMessageSearch();
 
   // 알림
   const { data: notifications = [] } = useNotifications(currentUserId);
@@ -197,6 +200,7 @@ export function ChatPage() {
 
       <main className="flex-1 flex flex-col">
         <ChatChannelHeader selectedChannel={selectedChannel} isGuest={isGuest} unreadNotificationCount={unreadNotificationCount} onToggleMemberPanel={() => setIsMemberPanelOpen((prev) => !prev)} onToggleNotificationPanel={toggleNotificationPanel} />
+        <MessageSearchBar searchQuery={searchQuery} onSearch={handleSearch} onClear={handleClearSearch} />
         <ErrorBoundary
           fallback={(error, reset) => (
             <div className="flex-1 flex items-center justify-center" role="alert">
@@ -208,7 +212,7 @@ export function ChatPage() {
             </div>
           )}
         >
-          <MessageList messages={messages} authorMap={authorMap} currentUserId={currentUserId} threadIndicatorRenderer={renderThreadIndicator} onStartThread={thread.handleStartThread} />
+          <MessageList messages={filterMessagesByQuery(messages, searchQuery)} authorMap={authorMap} currentUserId={currentUserId} threadIndicatorRenderer={renderThreadIndicator} onStartThread={thread.handleStartThread} />
         </ErrorBoundary>
         <MessageInput
           content={messageContent} onChangeContent={setMessageContent} onSendMessage={handleSendMessage}
