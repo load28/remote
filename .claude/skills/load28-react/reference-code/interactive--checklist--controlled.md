@@ -34,7 +34,7 @@ export interface EntityPanelActions {
   isAdding: boolean;
 }
 
-function EntityPanel({
+export function EntityPanel({
   entity,
   items,
   currentUserId,
@@ -109,7 +109,7 @@ export interface EntityItemRowProps {
   onDelete: () => void;
 }
 
-function EntityItemRow({ item, canEdit, onToggle, onDelete }: EntityItemRowProps) {
+export function EntityItemRow({ item, canEdit, onToggle, onDelete }: EntityItemRowProps) {
   return (
     <li>
       <label>

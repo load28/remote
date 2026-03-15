@@ -33,6 +33,10 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     } else {
       dialog.close();
     }
+
+    return () => {
+      dialog.close();
+    };
   }, [isOpen]);
 
   // ✅ S-16: ESC 키 처리 cleanup

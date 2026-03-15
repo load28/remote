@@ -47,7 +47,20 @@ Zustand 등 클라이언트 전역 상태 스토어를 작성할 때 반드시 �
 
 ---
 
-## 5. Coupling
+## 5. Selectors
+
+| name | expression | 사용처 |
+|------|-----------|--------|
+| `___` | `(state) => state.___` | `___` |
+
+- 컴포넌트에서 `useStore()` 전체 구독 금지 — 필요한 필드만 selector로 선택
+- 여러 필드 선택 시 `useShallow` 활용으로 참조 안정화
+- 파생값은 selector 내부에서 계산 [S-03]
+- selector가 없으면 "없음"으로 명시 (단, 전체 구독 금지는 유지)
+
+---
+
+## 6. Coupling
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
@@ -63,5 +76,6 @@ Zustand 등 클라이언트 전역 상태 스토어를 작성할 때 반드시 �
 □ State classification — client 확인, scope 근거 명시
 □ State fields 전부 기입
 □ Actions 전부 기입
+□ Selectors 기입 — 전체 구독 금지, 필요 필드만 선택
 □ Coupling 확인
 ```

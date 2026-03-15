@@ -1,6 +1,6 @@
 ---
 tags: [zustand, state, client-state]
-rules: [S-08, S-09, S-01]
+rules: [S-08, S-09, S-01, T-13, N-04]
 description: Zustand 전역 클라이언트 상태 — 서버/클라이언트 분리, 상태 코로케이션
 ---
 
@@ -34,7 +34,29 @@ export const useEntityStore = create<EntityStoreState & EntityStoreActions>()((s
   toggleSidebar: () => set((prev) => ({ isSidebarOpen: !prev.isSidebarOpen })),
 }));
 
+```
+
+```tsx
 // ✅ selector 패턴: 필요한 상태만 구독 → 불필요한 리렌더 방지
-// const selectedId = useEntityStore((s) => s.selectedEntityId);
-// const selectEntity = useEntityStore((s) => s.selectEntity);
+// 컴포넌트에서 useEntityStore() 전체 구독 금지
+
+// ✅ GOOD: 단일 필드 selector
+function EntityDetail() {
+  const selectedId = useEntityStore((s) => s.selectedEntityId);
+  const selectEntity = useEntityStore((s) => s.selectEntity);
+  // ...
+}
+
+// ✅ GOOD: 여러 필드 필요 시 useShallow로 참조 안정화
+import { useShallow } from 'zustand/react/shallow';
+
+function EntitySidebar() {
+  const { isSidebarOpen, toggleSidebar } = useEntityStore(
+    useShallow((s) => ({ isSidebarOpen: s.isSidebarOpen, toggleSidebar: s.toggleSidebar })),
+  );
+  // ...
+}
+
+// ❌ BAD: 전체 스토어 구독 → name만 변해도 리렌더
+// const store = useEntityStore(); // 전체 구독 금지
 ```

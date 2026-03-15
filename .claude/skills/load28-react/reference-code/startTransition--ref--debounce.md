@@ -1,6 +1,6 @@
 ---
 tags: [startTransition, ref, debounce, state, hook, custom-hook]
-rules: [P-11, P-12]
+rules: [P-11, P-12, S-11]
 description: startTransition — 검색 입력 긴급/비긴급 업데이트 분리
 ---
 

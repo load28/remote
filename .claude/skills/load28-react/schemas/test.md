@@ -48,8 +48,8 @@
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
-| network_mock | `MSW` | 고정. jest.mock(axios)/global.fetch 금지 [T-02] |
-| mock_handlers | `[___]` | MSW handler 목록 |
+| network_mock | `MSW` / `불필요` | unit에서 네트워크 불필요 시 "불필요" 가능. integration 이상은 `MSW` 고정. jest.mock(axios)/global.fetch 금지 [T-02] |
+| mock_handlers | `[___]` | MSW handler 목록 (network_mock이 "불필요"면 "해당없음") |
 
 ---
 
@@ -82,7 +82,7 @@
 □ Identity — 소스 파일 옆에 배치 확인
 □ Pyramid level 선택됨
 □ Test perspective — 사용자 행동 관점 확인
-□ Mocking — MSW 사용 확인
+□ Mocking — unit(네트워크 없음)이면 "불필요" 가능, integration 이상은 MSW 확인
 □ Bug fix면 재현 테스트 우선 확인
 □ Test cases 전부 기입
 ```

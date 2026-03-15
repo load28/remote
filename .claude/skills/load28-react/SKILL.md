@@ -1,6 +1,6 @@
 ---
 name: load28-react
-description: Use when creating or modifying React, TSX, or JSX files - enforces 98 coding rules across architecture, naming, component, state, performance, and testing categories. Rules are embedded as structural slots in schemas — fill slots to design, generate code from filled slots.
+description: Use when creating or modifying React, TSX, or JSX files - enforces 79 coding rules across architecture, naming, component, state, performance, and testing categories. Rules are embedded as structural slots in schemas — fill slots to design, generate code from filled slots.
 ---
 
 <SUBAGENT-STOP>
@@ -26,7 +26,7 @@ Grammar Scan 없이 코드를 제출하지 않는다.
 
 ```
 ❌ 기존 (규칙 = 지식):
-   98개 규칙 암기 → 리액트 코드 구상 → 규칙 매칭 → 누락 발견 → 수정
+   79개 규칙 암기 → 리액트 코드 구상 → 규칙 매칭 → 누락 발견 → 수정
 
 ✅ 현재 (규칙 = 슬롯):
    스키마 로드 → 빈 슬롯 채우기 = 설계 완료
@@ -191,29 +191,33 @@ Glob("reference-code/**/*{태그}*")
 
 ### Step 3: 보고
 
+위반이 없으면 1줄 요약, 위반이 있으면 수정 내역만 보고:
+
 ```
 ## load28 React Review
 
 ### 채워진 스키마
-- 📋 component: ThreadPanel (슬롯 10/10 완료)
+- 📋 component: ThreadPanel (슬롯 12/12 완료)
 - 📋 hook: useThreadReplies (슬롯 8/8 완료)
-- 📋 type: ThreadTypes (슬롯 5/5 완료)
 
-### Grammar Scan 결과
-- ✅ N-01~04, N-06, N-08: 통과
-- ✅ S-01~03, S-05~06, S-16~17: 통과
+### Grammar Scan: 전체 통과 (34개 규칙 스캔)
 - 🔧 P-04: && → 삼항으로 수정 (1건)
-- ✅ C-01~03, C-06, C-13, C-15: 통과
-- ✅ T-04, T-11, T-13: 통과
 
-✅ 전체 완료 — 스키마 X개 완성, Grammar Scan 통과
+✅ 전체 완료
 ```
 
 ---
 
 ## Phase 1-A: 레퍼런스 추가 (매칭 없을 때만)
 
-매칭되는 레퍼런스가 없을 때 실행한다. **레퍼런스 없이 코드를 작성하지 않는다.**
+매칭되는 레퍼런스가 없을 때 실행한다.
+
+**탈출 조건:** 정확히 매칭되는 레퍼런스가 없더라도,
+태그가 1개 이상 겹치는 유사 레퍼런스가 존재하면 Phase 1-A를 건너뛰고
+해당 레퍼런스를 구조적 참고로 사용하여 Phase 2로 진행할 수 있다.
+단, 보고 시 "유사 레퍼런스 참고: [파일명]"을 명시한다.
+
+유사 레퍼런스도 전혀 없는 새로운 패턴인 경우에만 아래 절차로 레퍼런스를 생성한다.
 
 ### 핵심 원칙: 도메인 비종속
 
@@ -274,7 +278,7 @@ Glob("reference-code/**/*{태그}*")
 |------|------|
 | "스키마 읽기 없이 바로 코드 쓰자" | 스키마 없이는 슬롯이 없고, 슬롯 없이는 코드 없다. |
 | "슬롯 채우기가 과하다" | 슬롯이 곧 설계다. 설계 없이 코드를 쓰는 것이 과한 것이다. |
-| "간단한 수정이라 스키마 불필요" | 수정할 부분의 슬롯만 채우면 된다. 전체를 채울 필요 없다. |
+| "간단한 수정이라 스키마 불필요" | JSX 구조가 변하면 해당 슬롯 채우기 필수. JSX 변경 없는 수정(변수 리네이밍, import 수정 등)은 Grammar Scan만 필수. |
 | "이미 규칙을 알고 있다" | 기억이 아니라 슬롯이다. 슬롯을 채워라. |
 | "이번만 예외" | 예외는 없다. |
 | "Grammar Scan은 형식적" | Scan은 변환의 증거다. 생략 불가. |

@@ -28,7 +28,7 @@
 | error-boundary | ErrorBoundary 컴포넌트 |
 | key-reset | key prop으로 상태 리셋 |
 | portal | React Portal |
-| forwardRef | forwardRef 패턴 |
+| ref-prop | ref를 일반 prop으로 전달 (React 19+, forwardRef 금지 [C-15]) |
 
 ## 컴포넌트 패턴
 

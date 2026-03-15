@@ -1,6 +1,6 @@
 ---
 tags: [compound-component, context, generic, component, useMemo, a11y]
-rules: [C-09]
+rules: [C-09, C-10, T-13, N-03, N-04, S-14]
 description: Compound Component — 제네릭 DataTable 합성 패턴 + 사용 예시
 ---
 
@@ -67,7 +67,7 @@ function Column({ field, label, isSortable = false }: ColumnProps) {
       scope="col"
       aria-sort={isActive ? 'ascending' : undefined}
       onClick={isSortable ? () => onSort(field) : undefined}
-      style={isSortable ? { cursor: 'pointer' } : undefined}
+      className={isSortable ? 'sortable-column' : undefined}
     >
       {label}
       {isActive ? ' ↑' : ''}
