@@ -149,9 +149,10 @@ ref 사용 계획을 기입 [S-11, S-12, P-12]:
 
 | 슬롯 | 값 |
 |------|-----|
-| imports_from | `[___]` — `app → features → shared` 방향만 [A-01] |
-| forbidden_imports | `[___]` — 동일 레이어/역방향 금지 |
-| import_style | barrel import만 [A-07] — 내부 경로 직접 import 금지 |
+| fsd_layer | `app` / `pages` / `widgets` / `features` / `entities` / `shared` | 이 컴포넌트가 속한 FSD 레이어 [A-01] |
+| imports_from | `[___]` — 하위 레이어만 허용 [A-01]. 예: features → entities, shared |
+| forbidden_imports | `[___]` — 같은 레이어 슬라이스 / 상위 레이어 금지 |
+| import_style | barrel import만 [A-07] — 세그먼트 내부 경로 직접 import 금지. @x 예외 |
 
 ---
 
