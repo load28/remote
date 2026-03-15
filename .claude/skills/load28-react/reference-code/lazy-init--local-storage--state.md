@@ -24,6 +24,7 @@ export function usePersistedState<T>(key: string, defaultValue: T) {
 
   useEffect(() => {
     localStorage.setItem(versionedKey, JSON.stringify(state));
+    // S-16 예외: 동기적 localStorage 쓰기, 구독/리스너/타이머 없음 — cleanup 대상 없음
   }, [versionedKey, state]);
 
   return [state, setState] as const;

@@ -83,7 +83,29 @@
 
 ---
 
-## 5. Effects
+## 5. Refs
+
+ref 사용 계획을 기입 [S-11, S-12, P-12]:
+
+| name | type | purpose | ref 선택 근거 |
+|------|------|---------|--------------|
+| `___` | `___` | `___` | state 아닌 이유: ___ |
+
+- 렌더에 사용되는 값은 state, 렌더에 불필요한 값은 ref [S-11]
+- DOM 접근용 ref도 여기에 기입 (예: `dialogRef`, `inputRef`)
+- 빈번 변경값(스크롤 위치, 타이머 ID 등)은 ref [P-12]
+- ref가 없으면 "없음"으로 명시
+
+**ref 전달 (React 19):**
+
+| 슬롯 | 값 | 제약 |
+|------|-----|------|
+| ref_forwarding | `yes` / `no` | forwardRef 금지 [C-15] — ref는 일반 prop으로 전달 |
+| ref_type | `HTMLDivElement` 등 | ref 사용 시 구체적 요소 타입 명시 |
+
+---
+
+## 6. Effects
 
 각 useEffect를 기입. cleanup은 필수 슬롯 [S-16]:
 
@@ -94,10 +116,11 @@
 - cleanup 칸이 비어있으면 코드 생성 불가
 - deps에 객체/배열 직접 사용 금지 → primitive 추출 [P-14]
 - effect가 없으면 "없음"으로 명시
+- **S-16 예외:** 구독/리스너/타이머/Observer를 시작하지 않는 동기적 일회성 작업(localStorage.setItem, document.title 등)은 cleanup에 `// S-16 예외: [사유]` 주석 기입
 
 ---
 
-## 6. Conditional Rendering
+## 7. Conditional Rendering
 
 모든 조건부 렌더링 [P-04]:
 
@@ -111,7 +134,7 @@
 
 ---
 
-## 7. Data Flow & Patterns
+## 8. Data Flow & Patterns
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
@@ -122,7 +145,7 @@
 
 ---
 
-## 8. Dependencies
+## 9. Dependencies
 
 | 슬롯 | 값 |
 |------|-----|
@@ -132,7 +155,7 @@
 
 ---
 
-## 8. Composition
+## 10. Composition
 
 컴포넌트가 props으로 모든 변형을 제어하는가? [C-08]:
 
@@ -155,6 +178,7 @@
 □ Events 테이블 작성 (없으면 "없음")
 □ State 테이블 작성 (없으면 "없음")
 □ 파생값 테이블 작성 (없으면 "없음")
+□ Refs 테이블 작성 + ref 전달 판단 (없으면 "없음")
 □ Effects 테이블 작성, cleanup 전부 채움 (없으면 "없음")
 □ Conditionals 테이블 작성 (없으면 "없음")
 □ Data Flow — controlled/uncontrolled 택일, key 리셋 판단
