@@ -158,9 +158,9 @@ Design Guard는 module.md에만 있던 아키텍처/성능 규칙을 각 스키�
 | replies.length > 0 | replies.length > 0 ? <List /> : null |
 
 ### Dependencies
-- imports_from: [features/thread (barrel), entities/thread, shared/ui]
-- forbidden: [features/message, features/chat (같은 레이어 슬라이스 직접 참조)]
 - fsd_layer: features
+- imports_from: [entities/thread, shared/ui] — 하위 레이어만
+- forbidden: [features/message, features/chat (같은 레이어 슬라이스 직접 참조), pages/*, widgets/* (상위 레이어)]
 - import_style: barrel import
 
 ### Composition

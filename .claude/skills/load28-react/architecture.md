@@ -276,7 +276,7 @@ function OrderSummary({ orderId }: { orderId: string }) {
 
 ```tsx
 // ❌ BAD: 교체 가능성 있는 구현체에 직접 의존 (여러 파일에서)
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/shared/lib/supabase';
 
 function useUsers() {
   return useQuery({
@@ -379,7 +379,7 @@ import axios from 'axios';
 const users = await axios.get('/api/users');
 
 // ✅ GOOD: 래퍼 1개만 axios를 알고 있음
-// src/lib/httpClient.ts
+// src/shared/api/httpClient.ts  ← FSD shared/api 세그먼트
 import axios from 'axios'; // 이 파일만 axios를 import
 
 export interface HttpClient {
@@ -393,7 +393,7 @@ export const httpClient: HttpClient = {
 };
 
 // 나머지 파일은 래퍼만 import
-import { httpClient } from '@/lib/httpClient';
+import { httpClient } from '@/shared/api/httpClient';
 const users = await httpClient.get<User[]>('/api/users');
 ```
 

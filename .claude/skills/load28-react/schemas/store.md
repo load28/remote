@@ -71,7 +71,17 @@ Zustand 등 클라이언트 전역 상태 스토어를 작성할 때 반드시 �
 
 ---
 
-## 7. Coupling
+## 7. FSD Dependencies [A-01]
+
+| 슬롯 | 값 | 제약 |
+|------|-----|------|
+| fsd_layer | `app` / `pages` / `widgets` / `features` / `entities` / `shared` | 이 스토어가 속한 FSD 레이어 [A-01] |
+| imports_from | `[___]` | 하위 레이어만 허용. 예: features → entities, shared |
+| forbidden_imports | `[___]` | 같은 레이어 슬라이스 / 상위 레이어 금지 |
+
+---
+
+## 8. Coupling
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
@@ -89,5 +99,6 @@ Zustand 등 클라이언트 전역 상태 스토어를 작성할 때 반드시 �
 □ Actions 전부 기입
 □ Selectors 기입 — 전체 구독 금지, 필요 필드만 선택
 □ Design Guard 2항목 전부 확인 (해당/해당없음 명시)
+□ FSD Dependencies — fsd_layer 명시, imports_from 하위 레이어만
 □ Coupling 확인
 ```

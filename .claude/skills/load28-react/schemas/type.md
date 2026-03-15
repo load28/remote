@@ -50,7 +50,16 @@
 
 ---
 
-## 5. Safety
+## 5. FSD Dependencies [A-01]
+
+| 슬롯 | 값 | 제약 |
+|------|-----|------|
+| fsd_layer | `app` / `pages` / `widgets` / `features` / `entities` / `shared` | 이 타입이 속한 FSD 레이어 [A-01] |
+| imports_from | `[___]` / `없음` | 다른 타입을 참조하는 경우 하위 레이어만 허용 |
+
+---
+
+## 6. Safety
 
 | 제약 | 확인 |
 |------|------|
@@ -66,5 +75,6 @@
 □ Type definitions 전부 기입
 □ 각 타입의 strategy 선택됨
 □ Optional field audit 완료 — 부당한 optional 없음
+□ FSD Dependencies — fsd_layer 명시
 □ Safety 확인
 ```
