@@ -21,7 +21,7 @@
 
 **interface_name:** `___Props` — 반드시 named export [T-13]
 
-**type_strategy** — 하나를 선택 [T-14, T-15]:
+**type_strategy** — 하나를 선택 [T-14, T-15] — **WHY:** optional 남용 시 잘못된 props 조합이 타입 허용됨:
 
 | 전략 | 조건 | 선택 |
 |------|------|------|
@@ -63,7 +63,7 @@
 
 ## 4. State
 
-각 상태 변수를 기입 [S-08, S-09]:
+각 상태 변수를 기입 [S-08, S-09] — **WHY:** 불필요한 전역화는 앱 전체 리렌더를 유발 [S-09]:
 
 | name | type | source | 코로케이션 근거 [S-09] |
 |------|------|--------|----------------------|
@@ -113,8 +113,8 @@ ref 사용 계획을 기입 [S-11, S-12, P-12]:
 |---------|---------------|-------------|
 | `___` | `___` | `[primitive만]` |
 
-- cleanup 칸이 비어있으면 코드 생성 불가
-- deps에 객체/배열 직접 사용 금지 → primitive 추출 [P-14]
+- cleanup 칸이 비어있으면 코드 생성 불가 — **WHY:** cleanup 누락 시 메모리 누수, 좀비 리스너, 레이스 컨디션 발생 [S-16]
+- deps에 객체/배열 직접 사용 금지 → primitive 추출 — **WHY:** 객체 deps는 매 렌더마다 새 참조 → 무한 실행 [P-14]
 - effect가 없으면 "없음"으로 명시
 - **S-16 예외:** 구독/리스너/타이머/Observer를 시작하지 않는 동기적 일회성 작업(localStorage.setItem, document.title 등)은 cleanup에 `// S-16 예외: [사유]` 주석 기입
 
@@ -139,9 +139,9 @@ ref 사용 계획을 기입 [S-11, S-12, P-12]:
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
 | data_flow | `props down, events up` | 고정. 자식→부모 직접 변경 금지 [A-08] |
-| controlled_strategy | `controlled` / `uncontrolled` / `해당없음` | 하나만 선택. 혼합 금지 [S-13] |
-| context_reset | `key` / `해당없음` | 컨텍스트 전환 시 key로 리셋 [C-12] — useEffect 수동 리셋 금지 |
-| suspense_usage | `lazy` / `use()` / `TanStack suspense` / `해당없음` | Suspense 사용 시 호환 API만 [T-05] |
+| controlled_strategy | `controlled` / `uncontrolled` / `해당없음` | 하나만 선택. 혼합 금지 [S-13] — 해당없음 조건: 이 컴포넌트에 폼 입력이나 사용자 편집 가능한 값이 없을 때만 |
+| context_reset | `key` / `해당없음` | 컨텍스트 전환 시 key로 리셋 [C-12] — useEffect 수동 리셋 금지. 해당없음 조건: 동일 위치에서 다른 엔터티를 렌더하는 경우가 없을 때만 |
+| suspense_usage | `lazy` / `use()` / `TanStack suspense` / `해당없음` | Suspense 사용 시 호환 API만 [T-05] — 해당없음 조건: 비동기 로딩이나 코드 스플리팅이 필요 없을 때만 |
 
 ---
 
@@ -155,7 +155,21 @@ ref 사용 계획을 기입 [S-11, S-12, P-12]:
 
 ---
 
-## 10. Composition
+## 10. Design Guard — 코드 생성 전 필수 확인
+
+슬롯 채우기 완료 후, 아래 항목을 확인한다. 해당 시 설계에 즉시 반영:
+
+| # | 확인 | 해당 시 조치 | 해당없음 조건 |
+|---|------|------------|-------------|
+| DG-1 | 외부 UI 라이브러리를 직접 사용하는가? [C-11] | 2개+ 파일 사용 시 래퍼 컴포넌트로 격리 | 프로젝트 내 해당 라이브러리를 이 파일에서만 사용 |
+| DG-2 | 스크롤 필요한 50개+ 항목 리스트를 렌더하는가? [P-02] | 가상화 필수 (@tanstack/react-virtual 등) | 리스트가 없거나 항목 수가 고정적으로 적음 |
+| DG-3 | 무거운 자식 컴포넌트(차트, 에디터, PDF 등)가 있는가? [P-08] | React.lazy + Suspense로 dynamic import | 모든 자식이 가벼운 표준 컴포넌트 |
+| DG-4 | 렌더 함수 안에 변하지 않는 정적 JSX가 있는가? [P-10] | 모듈 레벨 상수로 추출 | 모든 JSX가 props/state에 의존 |
+| DG-5 | 비긴급 업데이트가 입력 반응성을 저하시키는가? [P-11] | startTransition으로 분리 | 사용자 입력과 무거운 렌더가 동시에 없음 |
+
+---
+
+## 11. Composition
 
 컴포넌트가 props으로 모든 변형을 제어하는가? [C-08]:
 
@@ -183,5 +197,6 @@ ref 사용 계획을 기입 [S-11, S-12, P-12]:
 □ Conditionals 테이블 작성 (없으면 "없음")
 □ Data Flow — controlled/uncontrolled 택일, key 리셋 판단
 □ Dependencies 방향 명시
+□ Design Guard 5항목 전부 확인 (해당/해당없음 명시)
 □ Composition 판단 완료
 ```

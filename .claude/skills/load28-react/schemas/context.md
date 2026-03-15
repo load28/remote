@@ -77,7 +77,19 @@ function use___() {
 
 ---
 
-## 6. Layer
+## 6. Design Guard — 코드 생성 전 필수 확인
+
+슬롯 채우기 완료 후, 아래 항목을 확인한다. 해당 시 설계에 즉시 반영:
+
+| # | 확인 | 해당 시 조치 | 해당없음 조건 |
+|---|------|------------|-------------|
+| DG-1 | 이 Context에 변경 빈도가 다른 값이 혼합되어 있는가? [S-07] | 변경 빈도별로 Context 분리 | 모든 값의 변경 빈도가 동일 |
+| DG-2 | Provider value에 useMemo가 적용되어 있는가? [S-14] | 반드시 useMemo로 감싸기 | — (필수, 해당없음 불가) |
+| DG-3 | 이 Context에 비즈니스 로직이 포함되어 있는가? [A-05] | 별도 순수 함수 파일로 추출 | Context가 순수 상태 전달만 담당 |
+
+---
+
+## 7. Layer
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
@@ -94,5 +106,6 @@ function use___() {
 □ Value interface 정의 + named export
 □ useMemo deps 명시
 □ Consumer hook null check 포함
+□ Design Guard 3항목 전부 확인 (해당/해당없음 명시)
 □ Layer 판단 완료
 ```

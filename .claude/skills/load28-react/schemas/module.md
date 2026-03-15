@@ -120,11 +120,12 @@
 ```
 1. 이 Module Schema 완성
 2. type.md 스키마 채우기 → 타입 코드 생성
-3. api-layer.md 스키마 채우기 → API 코드 생성
-4. hook.md 스키마 채우기 → 훅 코드 생성
-5. component.md 스키마 채우기 → 컴포넌트 코드 생성
+3. api-layer.md 스키마 채우기 + Design Guard → API 코드 생성
+4. hook.md 스키마 채우기 + Design Guard → 훅 코드 생성
+5. component.md 스키마 채우기 + Design Guard → 컴포넌트 코드 생성
 6. barrel.md 스키마 채우기 → index.ts 생성
-7. test.md 스키마 채우기 → 테스트 코드 생성
+7. test.md 스키마 채우기 + Design Guard → 테스트 코드 생성
 ```
 
-각 단계에서 해당 스키마의 모든 슬롯을 채운 후에만 코드를 생성한다.
+각 단계에서 해당 스키마의 모든 슬롯을 채우고, **Design Guard를 확인**한 후에만 코드를 생성한다.
+개별 스키마(component, hook, context, store, api-layer, test)에 각각 Design Guard가 내장되어 있다.

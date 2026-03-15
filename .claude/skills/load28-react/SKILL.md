@@ -47,7 +47,9 @@ TypeScript 컴파일러가 타입 오류를 "검사"하는 게 아니라 **컴�
 ## 동작 프로토콜
 
 ```
-Phase 1: 스키마 선택 → Phase 2: 슬롯 채우기 → Phase 3: 코드 생성 + Grammar Scan → 보고
+Phase 1: 스키마 선택 → 스키마+Grammar 읽기 → 레퍼런스 검색(태그→폴백)
+Phase 2: 슬롯 채우기 → Design Guard 확인
+Phase 3: Grammar Section A(Pre) → 코드 변환 → Grammar Section B(Post) → 보고
 ```
 
 ---
@@ -92,17 +94,22 @@ Glob("reference-code/**/*{태그}*")
 
 ---
 
-## Phase 2: 슬롯 채우기
+## Phase 2: 슬롯 채우기 + Design Guard
 
 ### The Iron Law
 
 ```
 빈 슬롯이 하나라도 있으면 코드를 생성하지 않는다.
+Design Guard를 확인하지 않으면 코드를 생성하지 않는다.
 ```
 
 ### 실행
 
-스키마의 모든 슬롯을 채운다. 출력 형식:
+스키마의 모든 슬롯을 채운다. 슬롯 채우기 완료 후, 스키마에 포함된 **Design Guard** 체크리스트를 확인한다.
+Design Guard는 module.md에만 있던 아키텍처/성능 규칙을 각 스키마 유형에 맞게 내려보낸 것이다.
+해당 항목이 있으면 즉시 설계에 반영하고, 없으면 "해당없음"으로 명시한다.
+
+출력 형식:
 
 ```
 ## Filled Schema: component
@@ -167,9 +174,15 @@ Glob("reference-code/**/*{태그}*")
 
 ---
 
-## Phase 3: 코드 생성 + Grammar Scan
+## Phase 3: Grammar Pre-Check → 코드 생성 → Grammar Post-Scan
 
-### Step 1: 슬롯 → 코드 변환
+### Step 1: Grammar Section A — Pre-Generation Check
+
+[schemas/_grammar.md](schemas/_grammar.md)의 **Section A (Pre-Generation)** 규칙을 채워진 슬롯에 대해 검증한다.
+이 단계는 코드를 생성하기 **전에** 슬롯 수준에서 아키텍처 위반을 잡는다.
+위반 발견 시 슬롯을 수정한 후에만 코드 변환으로 진행한다.
+
+### Step 2: 슬롯 → 코드 변환
 
 채워진 슬롯을 TypeScript/React 코드로 기계적으로 변환한다.
 레퍼런스의 구조를 따르되, 도메인 용어만 프로젝트에 맞게 교체한다.
@@ -184,12 +197,12 @@ Glob("reference-code/**/*{태그}*")
 - Conditionals → 삼항 연산자 JSX
 - Dependencies → import 문
 
-### Step 2: Grammar Scan
+### Step 3: Grammar Section B — Post-Generation Scan
 
-[schemas/_grammar.md](schemas/_grammar.md)의 테이블을 위에서 아래로 기계적으로 스캔한다.
+[schemas/_grammar.md](schemas/_grammar.md)의 **Section B (Post-Generation)** 테이블을 위에서 아래로 기계적으로 스캔한다.
 위반 발견 시 즉시 수정. **이 스캔은 생략할 수 없다.**
 
-### Step 3: 보고
+### Step 4: 보고
 
 위반이 없으면 1줄 요약, 위반이 있으면 수정 내역만 보고:
 
@@ -197,10 +210,11 @@ Glob("reference-code/**/*{태그}*")
 ## load28 React Review
 
 ### 채워진 스키마
-- 📋 component: ThreadPanel (슬롯 12/12 완료)
-- 📋 hook: useThreadReplies (슬롯 8/8 완료)
+- 📋 component: ThreadPanel (슬롯 12/12 완료, Design Guard 5/5 확인)
+- 📋 hook: useThreadReplies (슬롯 8/8 완료, Design Guard 3/3 확인)
 
-### Grammar Scan: 전체 통과 (34개 규칙 스캔)
+### Grammar Section A (Pre): 전체 통과 (7개 규칙 스캔)
+### Grammar Section B (Post): 전체 통과 (34개 규칙 스캔)
 - 🔧 P-04: && → 삼항으로 수정 (1건)
 
 ✅ 전체 완료
@@ -213,9 +227,12 @@ Glob("reference-code/**/*{태그}*")
 매칭되는 레퍼런스가 없을 때 실행한다.
 
 **탈출 조건:** 정확히 매칭되는 레퍼런스가 없더라도,
-태그가 1개 이상 겹치는 유사 레퍼런스가 존재하면 Phase 1-A를 건너뛰고
+**핵심 패턴 태그(파일명의 첫 번째 태그)가 일치**하는 유사 레퍼런스가 존재하면 Phase 1-A를 건너뛰고
 해당 레퍼런스를 구조적 참고로 사용하여 Phase 2로 진행할 수 있다.
 단, 보고 시 "유사 레퍼런스 참고: [파일명]"을 명시한다.
+
+**폴백 검색:** 태그 매칭이 실패하면, 레퍼런스 파일의 frontmatter `rules:` 필드를 기준으로
+현재 작업에 관련된 규칙 코드(예: S-16, P-14)와 일치하는 레퍼런스를 검색한다.
 
 유사 레퍼런스도 전혀 없는 새로운 패턴인 경우에만 아래 절차로 레퍼런스를 생성한다.
 
