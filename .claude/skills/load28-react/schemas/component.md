@@ -67,7 +67,7 @@
 
 | name | type | source | 코로케이션 근거 [S-09] |
 |------|------|--------|----------------------|
-| `___` | `___` | `local` / `context` / `zustand` / `server-query` | 왜 여기에? |
+| `___` | `___` | `local` / `context` / `zustand` / `server-query` / `url-query` | 왜 여기에? |
 
 - boolean state는 `is/has/can/should` 접두사 필수 [N-04]
 - `server-query` 선택 시 → TanStack Query 사용 강제 [S-04]

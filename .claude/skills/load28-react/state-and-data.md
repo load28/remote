@@ -393,3 +393,45 @@ updateEntity.mutate(input, {
   },
 });
 ```
+
+---
+
+## S-18: URL 상태 수동 조작 금지
+
+**분류:** NEVER
+
+**WHY:** URL 상태를 URLSearchParams·router.push 쿼리스트링·useSearchParams로 직접 조작하면, 특정 파라미터만 설정할 때 기존 파라미터가 유실된다(`?page=2&sort=asc`에서 page만 바꾸려다 sort 유실). 수동 파싱(`parseInt(params.get(...))`)은 타입 안전성이 없고 직렬화/역직렬화 불일치를 유발한다. nuqs는 내부적으로 기존 쿼리파람을 merge하고 타입 안전한 파서를 제공하여 이 문제를 원천 방지한다.
+
+**전제 조건:** NuqsAdapter가 앱 최상위(layout.tsx 또는 main.tsx)에 설정되어 있어야 함.
+
+```tsx
+// ❌ BAD: URLSearchParams 직접 조작 → 기존 파라미터 유실
+const handleSearch = (query: string) => {
+  const params = new URLSearchParams();
+  params.set('q', query);
+  navigate(`?${params.toString()}`); // page, sort 등 전부 유실!
+};
+
+// ❌ BAD: useSearchParams 직접 조작
+const [searchParams, setSearchParams] = useSearchParams();
+searchParams.set('page', '2');
+setSearchParams(searchParams);
+
+// ❌ BAD: 수동 파싱 → 타입 불안전, 기본값 처리 누락
+const params = new URLSearchParams(location.search);
+const page = parseInt(params.get('page') || '1', 10);
+
+// ❌ BAD: router.push로 쿼리스트링 직접 구성
+router.push(`${pathname}?q=${query}&page=1`);
+
+// ✅ GOOD: nuqs로 URL 상태 관리
+const [filters, setFilters] = useQueryStates(searchParams);
+setFilters({ q: query, page: 1 }); // 나머지 파라미터 자동 보존
+
+// ✅ GOOD: 개별 파라미터도 nuqs로
+const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+```
+
+**예외:** API 호출 URL 구성용 URLSearchParams는 대상 아님 (httpClient 내부 등).
+
+**검증:** 컴포넌트/훅에서 URL 쿼리파라미터를 읽거나 쓰면서 nuqs(useQueryState/useQueryStates/createSerializer)를 사용하지 않으면 REJECT.

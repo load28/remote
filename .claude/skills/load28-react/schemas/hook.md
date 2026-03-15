@@ -51,7 +51,7 @@
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
-| state_tool | `useState` / `useReducer` / `zustand` | [S-08] |
+| state_tool | `useState` / `useReducer` / `zustand` / `nuqs` | [S-08, S-18] — URL 쿼리파람 상태는 nuqs 필수 |
 | scope | `local` / `feature` / `global` | 최소 범위 원칙 [S-09] |
 
 **localStorage 사용 시:**

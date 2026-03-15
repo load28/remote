@@ -25,6 +25,7 @@ Grammar는 두 단계로 나뉜다:
 | S-07 | Context 분리 | State 슬롯 (context 사용 시) | 하나의 Context에 변경 빈도가 다른 값 혼합 |
 | S-09 | 상태 코로케이션 | State source 슬롯 | 한 컴포넌트만 사용하는 state를 global/context에 배치 |
 | S-14 | Provider value useMemo | Provider value (context 작성 시) | Provider value에 useMemo 미사용 |
+| S-18 | URL 상태 수동 조작 금지 | State source/state_tool 슬롯 | URL 쿼리파라미터를 다루면서 source에 `url-query`가 아닌 값, 또는 state_tool에 `nuqs`가 아닌 수동 방식 선택 |
 
 ---
 
@@ -59,6 +60,7 @@ Grammar는 두 단계로 나뉜다:
 | S-10 | lazy state 초기화 | useState 인자 | 함수 호출(`fn()`)이 직접 인자로 전달 → `() => fn()` 래핑 필요 |
 | S-16 | useEffect cleanup | 모든 useEffect | cleanup 함수 반환 없음. 예외: 구독/리스너/타이머 없는 동기적 일회성 작업은 `// S-16 예외: [사유]` 주석으로 허용 |
 | S-17 | mutation onSuccess 내장 금지 | 모든 useMutation | 훅 정의에 onSuccess/onError 포함 |
+| S-18 | URL 상태 수동 조작 금지 | URL 쿼리파라미터 조작 코드 | `new URLSearchParams()`로 쿼리스트링 직접 구성, `useSearchParams()` 직접 사용, `window.location.search` 직접 파싱, `router.push`/`router.replace`에 쿼리스트링 리터럴 구성. 예외: API 호출 URL 구성용은 대상 아님 |
 
 ### Performance
 

@@ -71,6 +71,7 @@
 |------|------|
 | zustand | Zustand 전역 상태 관리 |
 | client-state | 클라이언트 전용 상태 (UI 토글, 선택 등) |
+| nuqs | nuqs URL 쿼리파람 상태 관리 |
 
 ## 아키텍처
 
