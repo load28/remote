@@ -3,7 +3,7 @@
 // P-13: AbortController 비동기 취소 지원
 
 import { httpClient } from '@/shared/lib/httpClient';
-import type { LoginCredentials, AuthResponse, RecentUser } from '../types';
+import type { LoginCredentials, AuthResponse, RecentUser, ChangePasswordInput, ChangePasswordResult } from '../types';
 
 // ✅ P-07: 앱 설정 API (병렬 fetch 대상)
 export interface AppConfig {
@@ -21,4 +21,7 @@ export const authApi = {
 
   getConfig: (signal?: AbortSignal): Promise<AppConfig> =>
     httpClient.get('/api/config', { signal }),
+
+  changePassword: (input: ChangePasswordInput): Promise<ChangePasswordResult> =>
+    httpClient.post('/api/auth/change-password', input),
 };

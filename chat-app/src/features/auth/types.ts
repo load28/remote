@@ -36,3 +36,14 @@ export interface RecentUser {
   displayName: string;
   avatarUrl: string;
 }
+
+// ✅ T-13: 비밀번호 변경 입력
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+// ✅ T-13: 비밀번호 변경 응답
+export interface ChangePasswordResult {
+  message: string;
+}

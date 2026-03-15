@@ -9,7 +9,8 @@ import { MessageList, MessageInput, MessageSearchBar, useMessages, useSendMessag
 import { UserProfile, ProfileEditModal, useUsers, useUpdateProfile, USER_QUERY_KEY, type UpdateProfileInput } from '@/features/user';
 import { EmojiPicker, CustomEmojiManager, useCustomEmojis, useCreateCustomEmoji, useDeleteCustomEmoji, CUSTOM_EMOJI_QUERY_KEY, EMOJI_CATEGORIES, type CustomEmoji, type CreateCustomEmojiInput } from '@/features/emoji';
 import { WorkspaceSwitcher, useWorkspaces, useWorkspaceStore } from '@/features/workspace';
-import { useAuthStore } from '@/features/auth';
+import { useAuthStore, PasswordChangeModal, useChangePassword, validatePasswordChange } from '@/features/auth';
+import type { ChangePasswordInput } from '@/features/auth';
 import { ThreadPanel, ThreadIndicator, UnreadBadge, type ThreadAuthor } from '@/features/thread';
 import { NotificationPanel, useNotifications, useReadNotification, useReadAllNotifications, useNotificationStore, getUnreadCount } from '@/features/notification';
 import { PlanPanel } from '@/features/plan';
@@ -39,6 +40,7 @@ function getVisibleChannels(
 export function ChatPage() {
   const [selectedChannelId, setSelectedChannelId] = useState(DEFAULT_CHANNEL_ID);
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
+  const [isPasswordChangeOpen, setIsPasswordChangeOpen] = useState(false);
   const [isCustomEmojiManagerOpen, setIsCustomEmojiManagerOpen] = useState(false);
   const [isMemberPanelOpen, setIsMemberPanelOpen] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
@@ -61,6 +63,7 @@ export function ChatPage() {
   const { data: customEmojis = [] } = useCustomEmojis();
   const sendMessage = useSendMessage(effectiveChannelId);
   const updateProfile = useUpdateProfile(currentUserId);
+  const changePassword = useChangePassword();
   const createCustomEmoji = useCreateCustomEmoji(currentUserId);
   const deleteCustomEmoji = useDeleteCustomEmoji();
 
@@ -159,6 +162,11 @@ export function ChatPage() {
   const handleSubmitProfile = (input: UpdateProfileInput) => {
     updateProfile.mutate(input, { onSuccess: () => { queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY }); setIsProfileEditOpen(false); } });
   };
+  const handleSubmitPasswordChange = (input: ChangePasswordInput) => {
+    const validationError = validatePasswordChange(input);
+    if (validationError) return;
+    changePassword.mutate(input, { onSuccess: () => setIsPasswordChangeOpen(false) });
+  };
   const handleCreateCustomEmoji = (input: CreateCustomEmojiInput) => {
     createCustomEmoji.mutate(input, { onSuccess: () => queryClient.invalidateQueries({ queryKey: CUSTOM_EMOJI_QUERY_KEY }) });
   };
@@ -195,7 +203,7 @@ export function ChatPage() {
           </ErrorBoundary>
         </div>
         <ChatPlanSidebar {...plan.sidebarProps} />
-        {currentUserDetail ? <UserProfile user={currentUserDetail} onEditProfile={() => setIsProfileEditOpen(true)} /> : null}
+        {currentUserDetail ? <UserProfile user={currentUserDetail} onEditProfile={() => setIsProfileEditOpen(true)} onChangePassword={() => setIsPasswordChangeOpen(true)} /> : null}
       </aside>
 
       <main className="flex-1 flex flex-col">
@@ -283,6 +291,7 @@ export function ChatPage() {
       {currentUserDetail ? (
         <ProfileEditModal user={currentUserDetail} isOpen={isProfileEditOpen} isSubmitting={updateProfile.isPending} onClose={() => setIsProfileEditOpen(false)} onSubmitProfile={handleSubmitProfile} />
       ) : null}
+      <PasswordChangeModal isOpen={isPasswordChangeOpen} isSubmitting={changePassword.isPending} onClose={() => setIsPasswordChangeOpen(false)} onSubmitPassword={handleSubmitPasswordChange} />
       <CustomEmojiManager isOpen={isCustomEmojiManagerOpen} customEmojis={customEmojis} isCreating={createCustomEmoji.isPending} onClose={() => setIsCustomEmojiManagerOpen(false)} onCreateEmoji={handleCreateCustomEmoji} onDeleteEmoji={handleDeleteCustomEmoji} />
     </div>
   );

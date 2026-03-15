@@ -3,7 +3,7 @@ import { MOCK_CHANNELS, MOCK_CHANNEL_MEMBERS, MOCK_MESSAGES, MOCK_USERS, MOCK_WO
 import { MOCK_RECENT_USERS } from './recentUsers';
 import type { Message } from '@/features/message/types';
 import type { Channel, ChannelMember, ChannelMemberRole, AddChannelMemberInput, UpdateMemberRoleInput } from '@/features/channel/types';
-import type { LoginCredentials } from '@/features/auth/types';
+import type { LoginCredentials, ChangePasswordInput } from '@/features/auth/types';
 import type { User, UpdateProfileInput } from '@/features/user/types';
 import type { CustomEmoji } from '@/features/emoji/types';
 import type { InviteLink, GuestJoinInput } from '@/features/invite/types';
@@ -126,6 +126,27 @@ export const handlers = [
       },
       token: `mock-token-${user.id}`,
     });
+  }),
+
+  // --- Change Password ---
+  http.post('/api/auth/change-password', async ({ request }) => {
+    const body = (await request.json()) as ChangePasswordInput;
+
+    if (body.currentPassword !== MOCK_PASSWORD) {
+      return HttpResponse.json(
+        { message: '현재 비밀번호가 올바르지 않습니다' },
+        { status: 401 },
+      );
+    }
+
+    if (body.newPassword.length < 6) {
+      return HttpResponse.json(
+        { message: '새 비밀번호는 6자 이상이어야 합니다' },
+        { status: 400 },
+      );
+    }
+
+    return HttpResponse.json({ message: '비밀번호가 변경되었습니다' });
   }),
 
   // --- App Config (P-07: 병렬 fetch 대상) ---
