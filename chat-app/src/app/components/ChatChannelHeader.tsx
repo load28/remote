@@ -7,16 +7,19 @@ import { useState } from 'react';
 import { InviteLinkModal, useCreateInvite } from '@/features/invite';
 import type { InviteLink } from '@/features/invite';
 import type { Channel } from '@/features/channel';
+import { NotificationBell } from '@/features/notification';
 
 // ✅ T-13: named exported interface
 export interface ChatChannelHeaderProps {
   selectedChannel: Channel | undefined;
   isGuest: boolean; // N-04
+  unreadNotificationCount: number;
   onToggleMemberPanel: () => void; // N-03
+  onToggleNotificationPanel: () => void; // N-03
 }
 
 // ✅ C-10: 파일당 1 exported 컴포넌트
-export function ChatChannelHeader({ selectedChannel, isGuest, onToggleMemberPanel }: ChatChannelHeaderProps) {
+export function ChatChannelHeader({ selectedChannel, isGuest, unreadNotificationCount, onToggleMemberPanel, onToggleNotificationPanel }: ChatChannelHeaderProps) {
   // ✅ S-09: 사용처 가까이 배치
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [currentInviteLink, setCurrentInviteLink] = useState<InviteLink | null>(null);
@@ -73,6 +76,7 @@ export function ChatChannelHeader({ selectedChannel, isGuest, onToggleMemberPane
             >
               초대하기
             </button>
+            <NotificationBell unreadCount={unreadNotificationCount} onTogglePanel={onToggleNotificationPanel} />
           </div>
         ) : null}
       </header>

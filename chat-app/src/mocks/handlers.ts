@@ -9,6 +9,7 @@ import type { CustomEmoji } from '@/features/emoji/types';
 import type { InviteLink, GuestJoinInput } from '@/features/invite/types';
 import type { ThreadInfo, ThreadReply, ReadPosition, UnreadCount } from '@/features/thread/types';
 import type { Plan, PlanItem } from '@/features/plan/types';
+import type { Notification } from '@/features/notification/types';
 
 // ✅ P-03: 모듈 레벨 상수
 const MOCK_PASSWORD = 'password';
@@ -36,6 +37,67 @@ let threadReplyIdCounter = 1;
 let plans: Plan[] = [];
 let planIdCounter = 1;
 let planItemIdCounter = 1;
+let notifications: Notification[] = [
+  {
+    type: 'message',
+    id: 'notif-1',
+    channelId: 'channel-1',
+    channelName: 'general',
+    senderName: 'Alice',
+    preview: '안녕하세요! 새로운 프로젝트 관련 공유드립니다.',
+    isRead: false,
+    createdAt: '2026-03-16T09:00:00.000Z',
+  },
+  {
+    type: 'mention',
+    id: 'notif-2',
+    channelId: 'channel-1',
+    channelName: 'general',
+    senderName: 'Bob',
+    preview: '@user-1 이 이슈 확인 부탁드려요',
+    isRead: false,
+    createdAt: '2026-03-16T09:15:00.000Z',
+  },
+  {
+    type: 'thread_reply',
+    id: 'notif-3',
+    channelId: 'channel-2',
+    threadId: 'thread-1',
+    senderName: 'Charlie',
+    preview: '그 방법 좋은 것 같습니다!',
+    isRead: false,
+    createdAt: '2026-03-16T09:30:00.000Z',
+  },
+  {
+    type: 'channel_invite',
+    id: 'notif-4',
+    channelId: 'channel-3',
+    channelName: 'design-review',
+    inviterName: 'Diana',
+    isRead: true,
+    createdAt: '2026-03-16T08:00:00.000Z',
+  },
+  {
+    type: 'mention',
+    id: 'notif-5',
+    channelId: 'channel-2',
+    channelName: 'dev-team',
+    senderName: 'Eve',
+    preview: '@user-1 PR 리뷰 부탁드립니다',
+    isRead: false,
+    createdAt: '2026-03-16T10:00:00.000Z',
+  },
+  {
+    type: 'thread_reply',
+    id: 'notif-6',
+    channelId: 'channel-1',
+    threadId: 'thread-2',
+    senderName: 'Frank',
+    preview: '배포 일정 확정되었습니다',
+    isRead: true,
+    createdAt: '2026-03-16T07:30:00.000Z',
+  },
+];
 
 export const handlers = [
   // --- Workspaces ---
@@ -750,6 +812,40 @@ export const handlers = [
       return HttpResponse.json({ message: 'Plan not found' }, { status: 404 });
     }
     plans = plans.filter((p) => p.id !== planId);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // --- Notifications ---
+  http.get('/api/notifications', ({ request }) => {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get('userId') ?? '';
+    // user-1 기준 모킹 데이터 반환
+    if (userId) {
+      return HttpResponse.json(notifications);
+    }
+    return HttpResponse.json([]);
+  }),
+
+  http.put('/api/notifications/:id/read', ({ params }) => {
+    const notifId = params['id'] as string;
+    const notifIndex = notifications.findIndex((n) => n.id === notifId);
+    if (notifIndex === -1) {
+      return HttpResponse.json({ message: 'Notification not found' }, { status: 404 });
+    }
+
+    const updated: Notification = { ...notifications[notifIndex], isRead: true };
+    notifications = notifications.map((n, i) => (i === notifIndex ? updated : n));
+    return HttpResponse.json(updated);
+  }),
+
+  http.put('/api/notifications/read-all', ({ request }) => {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get('userId') ?? '';
+    if (!userId) {
+      return HttpResponse.json({ message: 'userId required' }, { status: 400 });
+    }
+
+    notifications = notifications.map((n) => ({ ...n, isRead: true }));
     return new HttpResponse(null, { status: 204 });
   }),
 ];

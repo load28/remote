@@ -11,6 +11,7 @@ import { EmojiPicker, CustomEmojiManager, useCustomEmojis, useCreateCustomEmoji,
 import { WorkspaceSwitcher, useWorkspaces, useWorkspaceStore } from '@/features/workspace';
 import { useAuthStore } from '@/features/auth';
 import { ThreadPanel, ThreadIndicator, UnreadBadge, type ThreadAuthor } from '@/features/thread';
+import { NotificationPanel, useNotifications, useReadNotification, useReadAllNotifications, useNotificationStore, getUnreadCount } from '@/features/notification';
 import { PlanPanel } from '@/features/plan';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { ChatChannelHeader } from './components/ChatChannelHeader';
@@ -67,6 +68,23 @@ export function ChatPage() {
   const thread = useChatThread(effectiveChannelId, currentUserId);
   const readTracking = useChatReadTracking(currentUserId);
   const plan = useChatPlan(effectiveChannelId, currentUserId);
+
+  // 알림
+  const { data: notifications = [] } = useNotifications(currentUserId);
+  const readNotification = useReadNotification();
+  const readAllNotifications = useReadAllNotifications();
+  const isNotificationPanelOpen = useNotificationStore((s) => s.isPanelOpen);
+  const toggleNotificationPanel = useNotificationStore((s) => s.togglePanel);
+  const closeNotificationPanel = useNotificationStore((s) => s.closePanel);
+  const unreadNotificationCount = getUnreadCount(notifications);
+
+  const handleReadNotification = (id: string) => {
+    readNotification.mutate(id);
+  };
+
+  const handleReadAllNotifications = () => {
+    readAllNotifications.mutate(currentUserId);
+  };
 
   const selectedChannel = channels.find((c) => c.id === effectiveChannelId);
   const currentUserDetail = users.find((u) => u.id === currentUserId);
@@ -178,7 +196,7 @@ export function ChatPage() {
       </aside>
 
       <main className="flex-1 flex flex-col">
-        <ChatChannelHeader selectedChannel={selectedChannel} isGuest={isGuest} onToggleMemberPanel={() => setIsMemberPanelOpen((prev) => !prev)} />
+        <ChatChannelHeader selectedChannel={selectedChannel} isGuest={isGuest} unreadNotificationCount={unreadNotificationCount} onToggleMemberPanel={() => setIsMemberPanelOpen((prev) => !prev)} onToggleNotificationPanel={toggleNotificationPanel} />
         <ErrorBoundary
           fallback={(error, reset) => (
             <div className="flex-1 flex items-center justify-center" role="alert">
@@ -247,6 +265,15 @@ export function ChatPage() {
 
       {plan.isPlanPanelOpen && plan.activePlan ? (
         <PlanPanel plan={plan.activePlan} permissions={plan.permissions} onAction={plan.panelActions} />
+      ) : null}
+
+      {isNotificationPanelOpen ? (
+        <NotificationPanel
+          notifications={notifications}
+          onReadNotification={handleReadNotification}
+          onReadAll={handleReadAllNotifications}
+          onClose={closeNotificationPanel}
+        />
       ) : null}
 
       {currentUserDetail ? (
