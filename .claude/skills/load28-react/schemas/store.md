@@ -10,7 +10,7 @@ Zustand 등 클라이언트 전역 상태 스토어를 작성할 때 반드시 �
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
 | name | `use___Store` | use + 동사 + Store [N-05] |
-| file_path | `features/___/store/use___Store.ts` | feature 기반 [A-02] |
+| file_path | `{layer}/{slice}/model/use___Store.ts` | FSD model 세그먼트 [A-02]. 예: `features/auth/model/useAuthStore.ts`, `entities/user/model/useUserStore.ts` |
 | purpose | `___` | 단일 관심사 [A-04] |
 
 ---

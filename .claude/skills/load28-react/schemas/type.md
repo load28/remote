@@ -9,7 +9,7 @@
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
-| file_path | `features/___/types.ts` | feature 기반 [A-02] |
+| file_path | `{layer}/{slice}/model/types.ts` 또는 `{layer}/{slice}/api/types.ts` | FSD 세그먼트 [A-02]. 도메인 타입은 model/, API 응답 타입은 api/ |
 | file_name | camelCase | 컴포넌트가 아니므로 [N-07] |
 
 ---

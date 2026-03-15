@@ -1,45 +1,81 @@
 # 아키텍처 원칙
 
-## A-01: 단방향 의존성
+## A-01: 단방향 의존성 (FSD Import Rule)
 
 **분류:** NEVER (역방향/횡단 참조)
 
-**WHY:** 양방향 의존성은 순환 참조를 만들고, 하나의 변경이 예측 불가능한 곳에 전파된다. 의존성 그래프는 반드시 DAG(Directed Acyclic Graph)여야 한다.
+**WHY:** 양방향 의존성은 순환 참조를 만들고, 하나의 변경이 예측 불가능한 곳에 전파된다. 의존성 그래프는 반드시 DAG(Directed Acyclic Graph)여야 한다. FSD에서는 **상위 레이어만 하위 레이어를 import할 수 있다.**
 
 ```
-허용되는 방향:
-  app → features → shared
-  app → shared
+FSD 레이어 계층 (위→아래 방향만 import 허용):
+
+  ┌─────────┐
+  │   app   │  ← 라우팅, 프로바이더, 글로벌 설정
+  ├─────────┤
+  │  pages  │  ← 페이지 단위 조합 (widgets, features, entities 조합)
+  ├─────────┤
+  │ widgets │  ← 자기 완결적 UI 블록 (features, entities 조합)
+  ├─────────┤
+  │features │  ← 재사용 가능한 사용자 인터랙션 (entities, shared 사용)
+  ├─────────┤
+  │entities │  ← 비즈니스 도메인 모델 (shared만 사용)
+  ├─────────┤
+  │ shared  │  ← 프로젝트 비종속 재사용 코드 (외부 의존 없음)
+  └─────────┘
+
+허용되는 방향 (상위 → 하위만):
+  app → pages, widgets, features, entities, shared
+  pages → widgets, features, entities, shared
+  widgets → features, entities, shared
+  features → entities, shared
+  entities → shared
 
 금지되는 방향:
-  shared → features    (공유 모듈이 특정 기능을 알면 안 됨)
-  features → features  (기능 간 직접 참조 금지)
+  shared → entities/features/…  (하위가 상위를 알면 안 됨)
+  entities → features           (하위가 상위를 알면 안 됨)
+  features → widgets/pages      (하위가 상위를 알면 안 됨)
+  같은 레이어 내 슬라이스 간 직접 참조 금지 (예외: @x 교차 import)
 ```
 
 ```tsx
-// ❌ BAD: shared 컴포넌트가 특정 feature를 import
-// src/components/Button.tsx
-import { useAuth } from '@/features/auth/useAuth';
+// ❌ BAD: shared가 상위 레이어를 import
+// src/shared/ui/Button.tsx
+import { useAuth } from '@/features/auth';
 
-// ❌ BAD: feature가 다른 feature를 직접 import
-// src/features/comments/CommentList.tsx
-import { DiscussionHeader } from '@/features/discussions/DiscussionHeader';
+// ❌ BAD: 같은 레이어 슬라이스 간 직접 import
+// src/features/comments/ui/CommentList.tsx
+import { DiscussionHeader } from '@/features/discussions';
 
-// ✅ GOOD: feature는 shared만 import
-// src/features/comments/CommentList.tsx
-import { Card } from '@/components/Card';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
+// ❌ BAD: 하위 레이어가 상위 레이어를 import
+// src/entities/user/model/useUser.ts
+import { useLoginForm } from '@/features/auth';
+
+// ✅ GOOD: 상위 → 하위 방향만
+// src/features/comments/ui/CommentList.tsx
+import { UserAvatar } from '@/entities/user';
+import { Card } from '@/shared/ui';
+
+// ✅ GOOD: @x 교차 import (entities 간 명시적 공개 API)
+// src/entities/comment/@x/post.ts  ← post 엔티티를 위한 공개 API
+export { CommentPreview } from '../ui/CommentPreview';
+// src/entities/post/ui/PostCard.tsx
+import { CommentPreview } from '@/entities/comment/@x/post';
 ```
 
-**검증:** import 경로가 features → features, shared → features로 향하면 REJECT.
+**@x 교차 import 규칙 (FSD v2.1):**
+- 같은 레이어의 슬라이스 간 참조가 불가피할 때만 사용
+- `entities/[source]/@x/[consumer].ts` 파일로 명시적 공개 API 생성
+- 무분별한 사용 금지 — 교차 참조가 많으면 설계 재검토
+
+**검증:** import 경로가 하위→상위, 또는 같은 레이어 슬라이스 간 직접 참조(비@x)면 REJECT.
 
 ---
 
-## A-02: Feature 기반 폴더 구조
+## A-02: FSD 디렉토리 구조
 
 **분류:** ALWAYS
 
-**WHY:** 타입별 구조(components/, hooks/, services/)는 하나의 기능을 추가/삭제할 때 5-6개 디렉토리를 동시에 수정해야 한다. Feature 기반 구조는 기능 단위로 자기 완결적이다.
+**WHY:** 타입별 구조(components/, hooks/, services/)는 하나의 기능을 추가/삭제할 때 5-6개 디렉토리를 동시에 수정해야 한다. FSD는 레이어 > 슬라이스 > 세그먼트로 코드를 조직하여 예측 가능한 구조를 만든다.
 
 ```
 // ❌ BAD: 타입별 구조
@@ -48,16 +84,79 @@ src/hooks/useUserProfile.ts
 src/services/userProfileApi.ts
 src/types/userProfile.ts
 
-// ✅ GOOD: Feature 기반 구조
-src/features/user-profile/
-  components/UserProfile.tsx
-  hooks/useUserProfile.ts
-  api/userProfileApi.ts
-  types.ts
-  index.ts          ← public API
+// ✅ GOOD: FSD 구조
+src/
+├── app/                        ← 앱 초기화, 라우팅, 프로바이더
+│   ├── providers/
+│   ├── routes/
+│   └── styles/
+│
+├── pages/                      ← 페이지 단위 (슬라이스 구조)
+│   ├── home/
+│   │   ├── ui/
+│   │   └── index.ts
+│   └── profile/
+│       ├── ui/
+│       ├── model/
+│       └── index.ts
+│
+├── widgets/                    ← 자기 완결적 UI 블록
+│   ├── header/
+│   │   ├── ui/
+│   │   ├── model/
+│   │   └── index.ts
+│   └── sidebar/
+│       ├── ui/
+│       └── index.ts
+│
+├── features/                   ← 사용자 인터랙션 (재사용 가능)
+│   ├── auth/
+│   │   ├── ui/
+│   │   ├── model/
+│   │   ├── api/
+│   │   └── index.ts
+│   └── comments/
+│       ├── ui/
+│       ├── model/
+│       ├── api/
+│       └── index.ts
+│
+├── entities/                   ← 비즈니스 도메인 모델
+│   ├── user/
+│   │   ├── ui/                 ← UserAvatar, UserCard 등
+│   │   ├── model/              ← useUser, userStore 등
+│   │   ├── api/                ← userApi
+│   │   ├── @x/                 ← 교차 import 공개 API (필요 시)
+│   │   └── index.ts
+│   └── post/
+│       ├── ui/
+│       ├── model/
+│       ├── api/
+│       └── index.ts
+│
+└── shared/                     ← 프로젝트 비종속 재사용 코드
+    ├── ui/                     ← Button, Card, Modal 등
+    ├── api/                    ← httpClient, API 유틸
+    ├── lib/                    ← 유틸 함수
+    ├── config/                 ← 환경 변수, 상수
+    └── types/                  ← 공통 타입
 ```
 
-**검증:** 새 기능 추가 시 3개 이상의 분산된 디렉토리를 수정하면 REJECT.
+**세그먼트 (슬라이스 내부 기술 분류):**
+| 세그먼트 | 용도 | 예시 |
+|---------|------|------|
+| `ui/` | UI 컴포넌트, 포매터, 스타일 | `UserCard.tsx`, `formatDate.ts` |
+| `model/` | 비즈니스 로직, 스토어, 스키마 | `useUser.ts`, `userStore.ts` |
+| `api/` | 백엔드 통신, 요청 함수 | `userApi.ts`, `types.ts` |
+| `lib/` | 슬라이스 내부 유틸리티 | `validation.ts` |
+| `config/` | 설정, 피처 플래그 | `constants.ts` |
+
+**FSD v2.1 "Pages First" 원칙:**
+- 다른 페이지에서 재사용하지 않는 코드는 해당 page 슬라이스 내부에 유지
+- Widgets도 자체 store, 비즈니스 로직, API 호출을 가질 수 있음
+- 재사용 필요가 생겼을 때 하위 레이어(features, entities, shared)로 이동
+
+**검증:** 새 기능 추가 시 3개 이상의 분산된 레이어를 수정하면 구조 재검토. 슬라이스 안에서 세그먼트로 분류되어야 한다.
 
 ---
 
@@ -146,17 +245,17 @@ function OrderSummary({ orderId }: { orderId: string }) {
 }
 
 // ✅ GOOD: 3개 레이어 분리
-// Data layer: src/features/orders/api/orderApi.ts
+// Data layer (api 세그먼트): src/features/orders/api/orderApi.ts
 export const fetchOrder = (id: string): Promise<RawOrder> =>
   httpClient.get(`/orders/${id}`);
 
-// Business layer: src/features/orders/domain/orderCalculations.ts
+// Business layer (model 세그먼트): src/features/orders/model/orderCalculations.ts
 export function calculateOrderTotal(order: RawOrder): OrderSummary {
   const tax = order.subtotal * 0.08;
   return { ...order, tax, total: order.subtotal + tax };
 }
 
-// Presentation: src/features/orders/components/OrderSummary.tsx
+// Presentation (ui 세그먼트): src/features/orders/ui/OrderSummary.tsx
 function OrderSummary({ orderId }: { orderId: string }) {
   const { data: order } = useOrder(orderId);
   return <div>{order?.total}</div>;
@@ -215,16 +314,16 @@ const supabaseUserRepo: UserRepository = {
 **WHY:** 내부 파일 경로로 import하면, 내부 리팩토링(파일 이름 변경, 구조 변경)이 외부 소비자를 깨뜨린다. barrel file(index.ts)로 public API만 노출하면 내부 구조 변경이 외부에 투명하다.
 
 ```tsx
-// ❌ BAD: 내부 경로 직접 import
-import { TodoItem } from '@/features/todo/components/todo-list/TodoItem';
-import { todoReducer } from '@/features/todo/store/reducers/todoReducer';
+// ❌ BAD: 내부 경로(세그먼트) 직접 import
+import { TodoItem } from '@/features/todo/ui/todo-list/TodoItem';
+import { todoReducer } from '@/features/todo/model/reducers/todoReducer';
 
-// ✅ GOOD: barrel file의 public API만 import
+// ✅ GOOD: barrel file(슬라이스의 index.ts)의 public API만 import
 import { TodoItem, useTodos } from '@/features/todo';
 
 // features/todo/index.ts (public API 명시)
-export { TodoItem } from './components/TodoList';
-export { useTodos } from './hooks/useTodos';
+export { TodoItem } from './ui/TodoList';
+export { useTodos } from './model/useTodos';
 // 내부 helper, reducer 등은 export하지 않음
 ```
 
@@ -232,7 +331,7 @@ export { useTodos } from './hooks/useTodos';
 - named export 사용 (`export *` 금지 — tree-shaking 파괴)
 - third-party 라이브러리용 barrel file 생성 금지
 
-**검증:** feature 내부 경로(features/xxx/components/yyy)를 직접 import하면 REJECT.
+**검증:** 슬라이스 내부 세그먼트 경로(features/xxx/ui/yyy, entities/xxx/model/yyy)를 직접 import하면 REJECT. 반드시 슬라이스의 barrel file(index.ts)을 통해서만 import.
 
 ---
 
@@ -318,12 +417,17 @@ src/styles/UserProfile.css
 tests/components/UserProfile.test.tsx
 src/types/UserProfile.ts
 
-// ✅ GOOD: 관련 파일이 같은 디렉토리
-src/features/user-profile/
-  UserProfile.tsx
-  UserProfile.test.tsx
-  UserProfile.module.css
-  types.ts
+// ✅ GOOD: FSD 세그먼트 내 코로케이션
+src/entities/user/
+  ui/
+    UserProfile.tsx
+    UserProfile.test.tsx
+    UserProfile.module.css
+  model/
+    useUser.ts
+    useUser.test.ts
+  api/
+    userApi.ts
   index.ts
 ```
 

@@ -10,7 +10,7 @@
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
 | name | `___` | PascalCase만 허용 [N-01] |
-| file_path | `features/___/components/___.tsx` | feature 기반 경로만 허용 [A-02, C-14] |
+| file_path | `{layer}/{slice}/ui/___.tsx` | FSD 세그먼트 경로 [A-02, C-14]. 예: `features/auth/ui/LoginForm.tsx`, `entities/user/ui/UserCard.tsx`, `shared/ui/Button.tsx` |
 | responsibility | `___` | 한 문장. "그리고(and)" 포함 시 분리 필요 [C-07] |
 | line_budget | `___/250` | 250 초과 불가. 초과 예상 시 설계 단계에서 분리 [C-05] |
 | exports | `1` | 고정값. 변경 불가 [C-10] |

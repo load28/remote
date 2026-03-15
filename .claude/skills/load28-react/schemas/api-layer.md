@@ -10,7 +10,7 @@ API/데이터 접근 레이어를 작성할 때 반드시 채워야 하는 슬�
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
 | name | `___Api` / `___Repository` | camelCase 파일 [N-07] |
-| file_path | `features/___/api/___.ts` | feature 기반 [A-02] |
+| file_path | `{layer}/{slice}/api/___.ts` | FSD api 세그먼트 [A-02]. 예: `features/auth/api/authApi.ts`, `entities/user/api/userApi.ts` |
 | purpose | `___` | |
 
 ---

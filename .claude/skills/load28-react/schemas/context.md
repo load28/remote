@@ -12,7 +12,7 @@ Context + Provider를 작성할 때 반드시 채워야 하는 슬롯.
 | context_name | `___Context` | PascalCase [N-01] |
 | provider_name | `___Provider` | PascalCase [N-01] |
 | hook_name | `use___` | use + 동사 [N-05] |
-| file_path | `features/___/contexts/___.tsx` | feature 기반 [A-02] |
+| file_path | `{layer}/{slice}/model/___.tsx` | FSD model 세그먼트 [A-02]. 예: `features/auth/model/AuthContext.tsx`, `app/providers/ThemeContext.tsx` |
 | line_budget | `___/250` | [C-05] |
 
 ---
