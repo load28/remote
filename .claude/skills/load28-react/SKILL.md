@@ -116,7 +116,7 @@ Design Guard는 module.md에만 있던 아키텍처/성능 규칙을 각 스키�
 
 ### Identity
 - name: ThreadPanel
-- file_path: features/thread/components/ThreadPanel.tsx
+- file_path: features/thread/ui/ThreadPanel.tsx
 - responsibility: 스레드 패널의 메시지 목록과 입력을 렌더링한다
 - line_budget: 180/250
 - exports: 1
@@ -158,8 +158,9 @@ Design Guard는 module.md에만 있던 아키텍처/성능 규칙을 각 스키�
 | replies.length > 0 | replies.length > 0 ? <List /> : null |
 
 ### Dependencies
-- imports_from: [features/thread (barrel), shared/components]
-- forbidden: [features/message, features/chat]
+- fsd_layer: features
+- imports_from: [entities/thread, shared/ui] — 하위 레이어만
+- forbidden: [features/message, features/chat (같은 레이어 슬라이스 직접 참조), pages/*, widgets/* (상위 레이어)]
 - import_style: barrel import
 
 ### Composition

@@ -10,7 +10,7 @@
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
 | name | `___` | PascalCase만 허용 [N-01] |
-| file_path | `features/___/components/___.tsx` | feature 기반 경로만 허용 [A-02, C-14] |
+| file_path | `{layer}/{slice}/ui/___.tsx` | FSD 세그먼트 경로 [A-02, C-14]. 예: `features/auth/ui/LoginForm.tsx`, `entities/user/ui/UserCard.tsx`, `shared/ui/Button.tsx` |
 | responsibility | `___` | 한 문장. "그리고(and)" 포함 시 분리 필요 [C-07] |
 | line_budget | `___/250` | 250 초과 불가. 초과 예상 시 설계 단계에서 분리 [C-05] |
 | exports | `1` | 고정값. 변경 불가 [C-10] |
@@ -145,13 +145,14 @@ ref 사용 계획을 기입 [S-11, S-12, P-12]:
 
 ---
 
-## 9. Dependencies
+## 9. Dependencies [A-01]
 
-| 슬롯 | 값 |
-|------|-----|
-| imports_from | `[___]` — `app → features → shared` 방향만 [A-01] |
-| forbidden_imports | `[___]` — 동일 레이어/역방향 금지 |
-| import_style | barrel import만 [A-07] — 내부 경로 직접 import 금지 |
+| 슬롯 | 값 | 제약 |
+|------|-----|------|
+| fsd_layer | `app` / `pages` / `widgets` / `features` / `entities` / `shared` | 이 컴포넌트가 속한 FSD 레이어 [A-01] |
+| imports_from | `[___]` | 하위 레이어만 허용 [A-01]. 예: features → entities, shared |
+| forbidden_imports | `[___]` | 같은 레이어 슬라이스 / 상위 레이어 금지 |
+| import_style | `barrel` | barrel import만 [A-07] — 세그먼트 내부 경로 직접 import 금지. @x 예외 |
 
 ---
 

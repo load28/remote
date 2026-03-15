@@ -9,8 +9,8 @@ index.ts barrel 파일을 작성할 때 반드시 채워야 하는 슬롯.
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
-| file_path | `features/___/index.ts` | feature 루트 [A-07] |
-| purpose | `___` | feature의 public API 정의 |
+| file_path | `{layer}/{slice}/index.ts` | 슬라이스 루트 [A-07]. 예: `features/auth/index.ts`, `entities/user/index.ts` |
+| purpose | `___` | 슬라이스의 public API 정의 |
 
 ---
 

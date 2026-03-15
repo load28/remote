@@ -10,7 +10,7 @@
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
 | name | `use___` | `use` + 동사. 모호한 이름(useData, useInfo) 금지 [N-05, N-08] |
-| file_path | `features/___/hooks/use___.ts` | feature 기반 경로 [A-02] |
+| file_path | `{layer}/{slice}/model/use___.ts` | FSD model 세그먼트 [A-02]. 예: `features/auth/model/useAuth.ts`, `entities/user/model/useUser.ts` |
 | purpose | `___` | 한 문장으로 설명 |
 | line_budget | `___/250` | [C-05] |
 
@@ -102,7 +102,17 @@
 
 ---
 
-## 5. Return Type
+## 5. FSD Dependencies [A-01]
+
+| 슬롯 | 값 | 제약 |
+|------|-----|------|
+| fsd_layer | `app` / `pages` / `widgets` / `features` / `entities` / `shared` | 이 훅이 속한 FSD 레이어 [A-01] |
+| imports_from | `[___]` | 하위 레이어만 허용. 예: features → entities, shared |
+| forbidden_imports | `[___]` | 같은 레이어 슬라이스 / 상위 레이어 금지 |
+
+---
+
+## 6. Return Type
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
@@ -111,7 +121,7 @@
 
 ---
 
-## 6. Hook Rules 확인
+## 7. Hook Rules 확인
 
 | 제약 | 확인 |
 |------|------|
@@ -131,6 +141,7 @@
 □ Category 1개 선택됨
 □ 선택된 카테고리의 Section 3x 슬롯 전부 채움
 □ Design Guard 3항목 전부 확인 (해당/해당없음 명시)
+□ FSD Dependencies — fsd_layer 명시, imports_from 하위 레이어만
 □ Return type 명시
 □ Hook Rules 확인 전부 체크
 ```

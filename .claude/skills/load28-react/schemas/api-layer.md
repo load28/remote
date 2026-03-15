@@ -10,7 +10,7 @@ API/데이터 접근 레이어를 작성할 때 반드시 채워야 하는 슬�
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
 | name | `___Api` / `___Repository` | camelCase 파일 [N-07] |
-| file_path | `features/___/api/___.ts` | feature 기반 [A-02] |
+| file_path | `{layer}/{slice}/api/___.ts` | FSD api 세그먼트 [A-02]. 예: `features/auth/api/authApi.ts`, `entities/user/api/userApi.ts` |
 | purpose | `___` | |
 
 ---
@@ -68,7 +68,17 @@ API/데이터 접근 레이어를 작성할 때 반드시 채워야 하는 슬�
 
 ---
 
-## 7. Consumer Hook
+## 7. FSD Dependencies [A-01]
+
+| 슬롯 | 값 | 제약 |
+|------|-----|------|
+| fsd_layer | `app` / `pages` / `widgets` / `features` / `entities` / `shared` | 이 API 레이어가 속한 FSD 레이어 [A-01] |
+| imports_from | `[___]` | 하위 레이어만 허용. httpClient는 shared/api에서 import |
+| forbidden_imports | `[___]` | 같은 레이어 슬라이스 / 상위 레이어 금지 |
+
+---
+
+## 8. Consumer Hook
 
 이 API를 소비하는 훅이 있으면:
 
@@ -89,5 +99,6 @@ API/데이터 접근 레이어를 작성할 때 반드시 채워야 하는 슬�
 □ Waterfall 검사 완료
 □ Cancellation 전략 명시
 □ Design Guard 3항목 전부 확인 (해당/해당없음 명시)
+□ FSD Dependencies — fsd_layer 명시, imports_from 하위 레이어만
 □ Consumer hook 정의 (있으면)
 ```

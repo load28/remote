@@ -9,7 +9,7 @@
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
-| file_path | `features/___/types.ts` | feature 기반 [A-02] |
+| file_path | `{layer}/{slice}/model/types.ts` 또는 `{layer}/{slice}/api/types.ts` | FSD 세그먼트 [A-02]. 도메인 타입은 model/, API 응답 타입은 api/ |
 | file_name | camelCase | 컴포넌트가 아니므로 [N-07] |
 
 ---
@@ -50,7 +50,16 @@
 
 ---
 
-## 5. Safety
+## 5. FSD Dependencies [A-01]
+
+| 슬롯 | 값 | 제약 |
+|------|-----|------|
+| fsd_layer | `app` / `pages` / `widgets` / `features` / `entities` / `shared` | 이 타입이 속한 FSD 레이어 [A-01] |
+| imports_from | `[___]` / `없음` | 다른 타입을 참조하는 경우 하위 레이어만 허용 |
+
+---
+
+## 6. Safety
 
 | 제약 | 확인 |
 |------|------|
@@ -66,5 +75,6 @@
 □ Type definitions 전부 기입
 □ 각 타입의 strategy 선택됨
 □ Optional field audit 완료 — 부당한 optional 없음
+□ FSD Dependencies — fsd_layer 명시
 □ Safety 확인
 ```

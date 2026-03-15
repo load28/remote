@@ -12,7 +12,7 @@ Context + Provider를 작성할 때 반드시 채워야 하는 슬롯.
 | context_name | `___Context` | PascalCase [N-01] |
 | provider_name | `___Provider` | PascalCase [N-01] |
 | hook_name | `use___` | use + 동사 [N-05] |
-| file_path | `features/___/contexts/___.tsx` | feature 기반 [A-02] |
+| file_path | `{layer}/{slice}/model/___.tsx` | FSD model 세그먼트 [A-02]. 예: `features/auth/model/AuthContext.tsx`, `app/providers/ThemeContext.tsx` |
 | line_budget | `___/250` | [C-05] |
 
 ---
@@ -89,12 +89,14 @@ function use___() {
 
 ---
 
-## 7. Layer
+## 7. FSD Dependencies [A-01]
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
-| layer | `presentation` / `business` / `data` | [A-05] |
-| react_free_logic | `___` | 비즈니스 로직이 있으면 별도 파일로 추출 [A-05] |
+| fsd_layer | `app` / `pages` / `widgets` / `features` / `entities` / `shared` | 이 Context가 속한 FSD 레이어 [A-01] |
+| imports_from | `[___]` | 하위 레이어만 허용. 예: features → entities, shared |
+| forbidden_imports | `[___]` | 같은 레이어 슬라이스 / 상위 레이어 금지 |
+| react_free_logic | `___` / `해당없음` | 비즈니스 로직이 있으면 model/ 세그먼트 별도 파일로 추출 [A-05] |
 
 ---
 
@@ -107,5 +109,5 @@ function use___() {
 □ useMemo deps 명시
 □ Consumer hook null check 포함
 □ Design Guard 3항목 전부 확인 (해당/해당없음 명시)
-□ Layer 판단 완료
+□ FSD Dependencies — fsd_layer 명시, imports_from 하위 레이어만
 ```

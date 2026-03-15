@@ -18,7 +18,7 @@ Grammar는 두 단계로 나뉜다:
 
 | # | 규칙 | 스캔 대상 (슬롯) | 위반 조건 |
 |---|------|----------------|----------|
-| A-01 | 단방향 의존성 | Dependencies 슬롯 | features→features 또는 shared→features 방향 참조 |
+| A-01 | FSD 단방향 의존성 | Dependencies 슬롯 + layer 슬롯 | 상위→하위 위반 (예: entities→features, shared→entities), 같은 레이어 슬라이스 간 직접 참조 (비@x), 하위→상위 역방향 참조 |
 | A-05 | 레이어 분리 | State/Effects 슬롯 | 컴포넌트 안에 fetch 직접 호출, 비즈니스 계산 로직 혼입 |
 | A-08 | 단방향 데이터 흐름 | Events/State 슬롯 | 자식→부모 직접 state/ref 변경 설계 |
 | A-09 | Anti-Corruption Layer | Dependencies 슬롯 | third-party SDK를 래퍼 없이 2개+ 파일에서 직접 import |
@@ -89,7 +89,7 @@ Grammar는 두 단계로 나뉜다:
 
 | # | 규칙 | 스캔 대상 | 위반 조건 |
 |---|------|----------|----------|
-| A-07 | barrel import 강제 | 모든 import 문 | `features/xxx/components/yyy` 내부 경로 직접 import — barrel(index.ts) 통해서만 import |
+| A-07 | barrel import 강제 | 모든 import 문 | 슬라이스 내부 세그먼트 경로 직접 import (예: `features/xxx/ui/yyy`, `entities/xxx/model/yyy`) — 슬라이스 barrel(index.ts) 통해서만 import. 예외: @x 교차 import 경로 |
 
 ### Type Safety
 
