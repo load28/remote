@@ -16,10 +16,11 @@ export interface ChatChannelHeaderProps {
   unreadNotificationCount: number;
   onToggleMemberPanel: () => void; // N-03
   onToggleNotificationPanel: () => void; // N-03
+  onToggleExportPanel: () => void; // N-03
 }
 
 // ✅ C-10: 파일당 1 exported 컴포넌트
-export function ChatChannelHeader({ selectedChannel, isGuest, unreadNotificationCount, onToggleMemberPanel, onToggleNotificationPanel }: ChatChannelHeaderProps) {
+export function ChatChannelHeader({ selectedChannel, isGuest, unreadNotificationCount, onToggleMemberPanel, onToggleNotificationPanel, onToggleExportPanel }: ChatChannelHeaderProps) {
   // ✅ S-09: 사용처 가까이 배치
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [currentInviteLink, setCurrentInviteLink] = useState<InviteLink | null>(null);
@@ -75,6 +76,14 @@ export function ChatChannelHeader({ selectedChannel, isGuest, unreadNotification
               aria-label={`${selectedChannel.name} 채널에 초대`}
             >
               초대하기
+            </button>
+            <button
+              type="button"
+              onClick={onToggleExportPanel}
+              className="px-3 py-1.5 text-sm font-medium text-emerald-600 border border-emerald-300 rounded-lg hover:bg-emerald-50"
+              aria-label="대회 Export"
+            >
+              Export
             </button>
             <NotificationBell unreadCount={unreadNotificationCount} onTogglePanel={onToggleNotificationPanel} />
           </div>

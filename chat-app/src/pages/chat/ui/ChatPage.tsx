@@ -13,6 +13,7 @@ import { useAuthStore } from '@/features/auth';
 import { ThreadPanel, ThreadIndicator, UnreadBadge, type ThreadAuthor } from '@/features/thread';
 import { NotificationPanel, useNotifications, useReadNotification, useReadAllNotifications, useNotificationStore, getUnreadCount } from '@/features/notification';
 import { PlanPanel } from '@/features/plan';
+import { ContestExportPanel, useContestExport, useContestExportStore } from '@/features/contest-export';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { ChatChannelHeader } from '@/widgets/chat-header';
 import { PendingThreadPanel } from '@/widgets/pending-thread';
@@ -69,6 +70,12 @@ export function ChatPage() {
   const thread = useChatThread(effectiveChannelId, currentUserId);
   const readTracking = useChatReadTracking(currentUserId);
   const plan = useChatPlan(effectiveChannelId, currentUserId);
+
+  // 대회 export
+  const isExportPanelOpen = useContestExportStore((s) => s.isExportPanelOpen);
+  const toggleExportPanel = useContestExportStore((s) => s.toggleExportPanel);
+  const closeExportPanel = useContestExportStore((s) => s.closeExportPanel);
+  const { data: contestExportData = null, isLoading: isExportLoading } = useContestExport(effectiveChannelId, isExportPanelOpen);
 
   // 검색 (S-18: nuqs로 URL 상태 관리)
   const { searchQuery, handleSearch, handleClearSearch } = useMessageSearch();
@@ -200,7 +207,7 @@ export function ChatPage() {
       </aside>
 
       <main className="flex-1 flex flex-col">
-        <ChatChannelHeader selectedChannel={selectedChannel} isGuest={isGuest} unreadNotificationCount={unreadNotificationCount} onToggleMemberPanel={() => setIsMemberPanelOpen((prev) => !prev)} onToggleNotificationPanel={toggleNotificationPanel} />
+        <ChatChannelHeader selectedChannel={selectedChannel} isGuest={isGuest} unreadNotificationCount={unreadNotificationCount} onToggleMemberPanel={() => setIsMemberPanelOpen((prev) => !prev)} onToggleNotificationPanel={toggleNotificationPanel} onToggleExportPanel={toggleExportPanel} />
         <MessageSearchBar searchQuery={searchQuery} onSearch={handleSearch} onClear={handleClearSearch} />
         <ErrorBoundary
           fallback={(error, reset) => (
@@ -270,6 +277,15 @@ export function ChatPage() {
 
       {plan.isPlanPanelOpen && plan.activePlan ? (
         <PlanPanel plan={plan.activePlan} permissions={plan.permissions} onAction={plan.panelActions} />
+      ) : null}
+
+      {isExportPanelOpen ? (
+        <ContestExportPanel
+          channelName={selectedChannel?.name ?? ''}
+          exportData={contestExportData}
+          isLoading={isExportLoading}
+          onClose={closeExportPanel}
+        />
       ) : null}
 
       {isNotificationPanelOpen ? (
