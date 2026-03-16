@@ -187,3 +187,32 @@ const cartProducts = cart.getProducts();
 function validateOrderInput(input: OrderInput) { ... }
 const orderTotal = calculateTotal(order);
 ```
+
+---
+
+## N-09: Jotai atom 네이밍 `___Atom` 접미사
+
+**분류:** ALWAYS (Jotai 사용 시)
+
+**WHY:** Jotai atom은 일반 변수와 구분이 어렵다. `Atom` 접미사 없이 `const count = atom(0)`으로 선언하면, 사용처에서 `count`가 atom인지 일반 값인지 알 수 없다. `countAtom`으로 명명하면 `useAtom(countAtom)`, `useAtomValue(countAtom)` 사용 시 atom임이 즉시 드러나고, DevTools에서도 식별이 용이하다.
+
+```tsx
+// ❌ BAD: Atom 접미사 없음 → 일반 변수와 구분 불가
+const count = atom(0);
+const filter = atom('all');
+const users = atom((get) => get(allUsersAtom).filter(...));
+
+// ✅ GOOD: Atom 접미사로 명확히 구분
+const countAtom = atom(0);
+const filterAtom = atom('all');
+const filteredUsersAtom = atom((get) => get(allUsersAtom).filter(...));
+```
+
+**atomFamily의 경우:** `AtomFamily` 접미사 사용.
+
+```tsx
+// ✅ GOOD
+const entityAtomFamily = atomFamily((id: string) => atom(null));
+```
+
+**검증:** `atom()`으로 생성된 변수에 `Atom` 접미사가 없으면 REJECT. `atomFamily()`로 생성된 변수에 `AtomFamily` 접미사가 없으면 REJECT.

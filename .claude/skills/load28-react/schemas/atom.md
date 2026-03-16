@@ -85,6 +85,7 @@ atom_type에 따라 해당 슬롯만 채운다. 하나의 파일에 여러 atom�
 | param_type | `___` | any 금지 [T-04]. **primitive(string/number)만 허용** [S-25] — 객체/배열 파라미터는 문자열 직렬화로 변환 |
 | base_atom_type | `primitive` / `derived` / `writable` / `async` | |
 | (해당 base_atom_type의 슬롯) | | 위 3-A ~ 3-D 중 해당 슬롯 채움 |
+| debugLabel | `___AtomFamily` | 필수. atomFamily 선언 직후 할당 [S-26] |
 
 > **주의**: atomFamily는 param을 `===`로 비교한다. 객체/배열 param 사용 시 매번 새 atom이 생성되므로, primitive 값(string, number) 사용을 권장한다.
 
@@ -110,7 +111,7 @@ ___Atom
 
 | # | 확인 | 해당 시 조치 | 해당없음 조건 |
 |---|------|------------|-------------|
-| DG-1 | atom이 외부 서비스/SDK에 직접 의존하는가? [A-03] | 인터페이스로 추상화, 구현체 주입 | atom이 순수 클라이언트 상태만 관리 |
+| DG-1 | atom이 외부 서비스/SDK에 직접 의존하는가? [A-06, A-09] | 인터페이스로 추상화, 구현체 주입 | atom이 순수 클라이언트 상태만 관리 |
 | DG-2 | 최소 권한 hook을 선택했는가? | useAtomValue(읽기만) / useSetAtom(쓰기만) / useAtom(양쪽) 중 최소 권한 선택 | — (필수, 해당없음 불가. 항상 최소 권한 선택) |
 | DG-3 | 서버 데이터를 async atom으로 처리하는가? [S-08] | TanStack Query로 전환 | async atom이 순수 클라이언트 계산만 수행 |
 | DG-4 | 단일 컴포넌트만 사용하는가? [S-09] | useState로 전환, atom 불필요 | 2개 이상 컴포넌트에서 공유 |
