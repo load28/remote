@@ -64,6 +64,10 @@
 | react-hook-form | React Hook Form 라이브러리 |
 | validation | 폼 유효성 검증 |
 | zod | Zod 스키마 검증 |
+| zod-resolver | React Hook Form + Zod resolver 통합 |
+| form-field | 폼 필드 컴포넌트 (useFormContext) |
+| form-store-sync | 폼 제출 결과 → 외부 store 반영 패턴 |
+| useWatch | React Hook Form useWatch 격리 패턴 |
 
 ## 상태 관리 (외부 라이브러리)
 
@@ -74,6 +78,9 @@
 | atom | Jotai 기본 atom (primitive/writable) |
 | derived-atom | Jotai 파생 atom (의존 체인) |
 | client-state | 클라이언트 전용 상태 (UI 토글, 선택 등) |
+| atom-family | Jotai atomFamily 패턴 |
+| write-only-atom | Jotai write-only atom (액션 캡슐화) |
+| debug-label | Jotai atom debugLabel 설정 |
 | nuqs | nuqs URL 쿼리파람 상태 관리 |
 
 ## 아키텍처

@@ -51,7 +51,7 @@
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
-| state_tool | `useState` / `useReducer` / `zustand` / `jotai` / `nuqs` | [S-08, S-18] — URL 쿼리파람 상태는 nuqs 필수 |
+| state_tool | `useState` / `useReducer` / `zustand` / `jotai` / `nuqs` / `react-hook-form` | [S-08, S-18] — URL 쿼리파람: nuqs 필수, 폼 상태: react-hook-form 선택 시 아래 슬롯 추가 |
 | scope | `local` / `feature` / `global` | 최소 범위 원칙 [S-09] |
 
 **jotai 사용 시:**
@@ -67,6 +67,16 @@
 |------|-----|------|
 | searchParams_file | `___` | searchParams 정의 파일 경로. 예: `features/___/searchParams.ts` |
 | history_mode | `replace` / `push` | replace(기본): 빈번한 업데이트, push: 뒤로 가기 기대 시 |
+
+**react-hook-form 사용 시:**
+
+| 슬롯 | 값 | 제약 |
+|------|-----|------|
+| validation_strategy | `zod-resolver` | inline validate 금지 [S-21] |
+| zod_schema_file | `___` | zod 스키마 정의 파일 경로 |
+| mode | `onSubmit` / `onBlur` | `onChange` 금지 (프로파일링 근거 없이) [P-15] |
+| field_separation | `yes` / `no` | 3개+ 필드 → FormProvider + useFormContext 분리 필수 [C-16] |
+| store_sync | `onSubmit-only` / `none` | 폼 값을 store에 동기화 금지 [S-28, S-29] |
 
 **localStorage 사용 시:**
 

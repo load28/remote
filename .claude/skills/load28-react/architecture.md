@@ -437,3 +437,28 @@ src/entities/user/
 3. 앱 전체가 필요 → 그때만 context/global state
 
 **검증:** 기능 삭제 시 5개 이상 분산된 디렉토리를 수정해야 하면 코로케이션 위반.
+
+---
+
+## A-11: atom 정의 파일은 model/ 세그먼트에 배치
+
+**분류:** ALWAYS (Jotai 사용 시)
+
+**WHY:** Jotai atom은 비즈니스 상태 모델이다. FSD에서 상태/비즈니스 로직은 `model/` 세그먼트에 배치한다. atom을 `ui/`에 두면 프레젠테이션과 상태 정의가 혼재되고, 별도 `atoms/` 디렉토리를 만들면 FSD 세그먼트 규약을 위반한다. Zustand store도 동일하게 `model/`에 배치한다.
+
+```
+// ❌ BAD: atom을 ui/ 세그먼트에 배치
+features/chat/ui/chatAtoms.ts
+
+// ❌ BAD: FSD 세그먼트가 아닌 임의 디렉토리
+features/chat/atoms/chatAtoms.ts
+
+// ✅ GOOD: model/ 세그먼트에 배치
+features/chat/model/chatAtoms.ts
+entities/user/model/userAtoms.ts
+shared/model/themeAtoms.ts
+```
+
+**파일명 규칙:** `{슬라이스명}Atoms.ts` — 하나의 파일에 관련 atom을 함께 정의한다. atom이 많아지면 관심사별로 파일을 분리한다 (`chatMessageAtoms.ts`, `chatSettingsAtoms.ts`).
+
+**검증:** Jotai atom 정의 파일이 `model/` 세그먼트 외부에 있으면 REJECT.

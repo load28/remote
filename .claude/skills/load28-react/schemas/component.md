@@ -167,6 +167,9 @@ ref 사용 계획을 기입 [S-11, S-12, P-12]:
 | DG-3 | 무거운 자식 컴포넌트(차트, 에디터, PDF 등)가 있는가? [P-08] | React.lazy + Suspense로 dynamic import | 모든 자식이 가벼운 표준 컴포넌트 |
 | DG-4 | 렌더 함수 안에 변하지 않는 정적 JSX가 있는가? [P-10] | 모듈 레벨 상수로 추출 | 모든 JSX가 props/state에 의존 |
 | DG-5 | 비긴급 업데이트가 입력 반응성을 저하시키는가? [P-11] | startTransition으로 분리 | 사용자 입력과 무거운 렌더가 동시에 없음 |
+| DG-6 | 3개 이상 필드를 가진 폼인가? [C-16] | FormProvider + useFormContext로 필드별 컴포넌트 분리 | 폼이 아니거나 필드 2개 이하 |
+| DG-7 | 폼에서 useForm을 사용하는가? [S-19, S-21, P-15] | useForm 1개만, zod resolver 통합, mode 'onBlur'/'onSubmit' 확인 | 폼이 아님 |
+| DG-8 | 폼 값을 외부 store에 동기화하는가? [S-28, S-29] | 폼 상태는 RHF 소유. 제출 성공 시에만 store 반영 | 폼과 store 연동 없음 |
 
 ---
 
@@ -198,6 +201,6 @@ ref 사용 계획을 기입 [S-11, S-12, P-12]:
 □ Conditionals 테이블 작성 (없으면 "없음")
 □ Data Flow — controlled/uncontrolled 택일, key 리셋 판단
 □ Dependencies 방향 명시
-□ Design Guard 5항목 전부 확인 (해당/해당없음 명시)
+□ Design Guard 8항목 전부 확인 (해당/해당없음 명시)
 □ Composition 판단 완료
 ```

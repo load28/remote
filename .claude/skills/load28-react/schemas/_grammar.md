@@ -26,6 +26,9 @@ Grammar는 두 단계로 나뉜다:
 | S-09 | 상태 코로케이션 | State source 슬롯 | 한 컴포넌트만 사용하는 state를 global/context에 배치 |
 | S-14 | Provider value useMemo | Provider value (context 작성 시) | Provider value에 useMemo 미사용 |
 | S-18 | URL 상태 수동 조작 금지 | State source/state_tool 슬롯 | URL 쿼리파라미터를 다루면서 source에 `url-query`가 아닌 값, 또는 state_tool에 `nuqs`가 아닌 수동 방식 선택 |
+| S-23 | atom 모듈 레벨 선언 | Atoms 정의 슬롯 | atom() 호출이 컴포넌트/훅 함수 내부에서 실행되는 설계 |
+| S-28 | 폼 상태 소유권 분리 | State 슬롯 | 폼 필드 값을 zustand/jotai/context에 동기화하는 설계 — 폼 상태는 React Hook Form이 소유 |
+| A-11 | atom 파일 model/ 배치 | Atoms Identity file_path 슬롯 | atom 정의 파일이 model/ 세그먼트 외부에 배치 |
 
 ---
 
@@ -62,6 +65,17 @@ Grammar는 두 단계로 나뉜다:
 | S-16 | useEffect cleanup | 모든 useEffect | cleanup 함수 반환 없음. 예외: 구독/리스너/타이머 없는 동기적 일회성 작업은 `// S-16 예외: [사유]` 주석으로 허용 |
 | S-17 | mutation onSuccess 내장 금지 | 모든 useMutation | 훅 정의에 onSuccess/onError 포함 |
 | S-18 | URL 상태 수동 조작 금지 | URL 쿼리파라미터 조작 코드 | `new URLSearchParams()`로 쿼리스트링 직접 구성, `useSearchParams()` 직접 사용, `window.location.search` 직접 파싱, `router.push`/`router.replace`에 쿼리스트링 리터럴 구성. 예외: API 호출 URL 구성용은 대상 아님 |
+| S-19 | 컴포넌트당 useForm 1개 | 모든 useForm 호출 | 하나의 컴포넌트에서 `useForm` 2회 이상 호출 |
+| S-20 | register vs Controller 선택 | 모든 폼 필드 | 네이티브 input에 Controller 사용, 커스텀 UI에 register 사용 |
+| S-21 | zod resolver 통합 | 모든 useForm | `register`에 inline validate/required/pattern 옵션 사용 + zodResolver 미사용 |
+| S-22 | watch 남용 금지 | 모든 watch() 호출 | 폼 루트 컴포넌트에서 `watch()` 전체 감시 또는 `watch('field')` 사용 — `useWatch` 별도 컴포넌트로 분리 필요 |
+| S-23 | atom 모듈 레벨 선언 | 모든 atom() 호출 | 컴포넌트/훅 함수 내부에서 `atom()`, `atomFamily()`, `atomWithStorage()` 호출 |
+| S-24 | derived atom 비동기 금지 | 모든 derived atom | `atom((get) => ...)` 또는 `atom(async (get) => ...)` 내에서 fetch/API 호출 |
+| S-25 | atomFamily 키 직렬화 | 모든 atomFamily | 파라미터 타입이 객체/배열 |
+| S-26 | atom debugLabel 필수 | 모든 atom 선언 | atom 선언 직후 `debugLabel` 할당 없음 |
+| S-27 | write-only atom 캡슐화 | 컴포넌트 내 다중 atom set | 하나의 핸들러에서 3개+ atom을 `set`하는 패턴이 2개+ 컴포넌트에서 반복 → write-only atom으로 캡슐화 |
+| S-28 | 폼 상태 store 복제 금지 | watch 구독 코드 | `watch` 구독 결과를 Zustand/Jotai/Context에 동기화 |
+| S-29 | 제출 결과만 store 반영 | 폼→store 연동 | `handleSubmit` 콜백 외부에서 폼 값을 global store에 반영 |
 
 ### Performance
 
@@ -73,6 +87,7 @@ Grammar는 두 단계로 나뉜다:
 | P-05 | inline style 금지 | JSX style prop | `style={{ ... }}` 인라인 객체. 예외: 런타임 수치(`width`, `top`, `transform` 등)·CSS 변수 주입만 허용 |
 | P-06 | export * 금지 | 모든 barrel file | `export * from` |
 | P-14 | deps primitive 추출 | useEffect/useMemo deps | 객체/배열이 deps에 직접 포함 |
+| P-15 | 폼 validation mode | useForm mode 옵션 | `mode: 'onChange'` 설정 (프로파일링 근거 없이) |
 
 ### Component
 
@@ -85,6 +100,7 @@ Grammar는 두 단계로 나뉜다:
 | C-10 | 파일당 1 exported 컴포넌트 | 모든 .tsx 파일 | 2개 이상 `export function`/`export const` 컴포넌트 |
 | C-13 | 클로저 트랩 | useCallback | 빈 deps에서 state 참조 |
 | C-15 | React 19 제거 API | 모든 코드 | forwardRef, defaultProps, propTypes, string ref, findDOMNode |
+| C-16 | 폼 필드 컴포넌트 분리 | 3개+ 필드 폼 | `FormProvider`/`useFormContext` 없이 모든 필드를 하나의 컴포넌트에 배치 |
 
 ### Module Boundary
 
