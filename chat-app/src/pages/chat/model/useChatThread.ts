@@ -23,6 +23,9 @@ import { MESSAGE_QUERY_KEY } from '@/features/message';
 import type { ThreadInfo } from '@/features/thread';
 import type { Message } from '@/features/message';
 
+// P-03: 모듈 레벨 상수
+const DEFAULT_EMPTY_ARRAY: never[] = [];
+
 // ✅ T-13: named exported interface
 export interface ChatThreadState {
   activeThreadId: string | null;
@@ -56,8 +59,8 @@ export function useChatThread(channelId: string, userId: string): ChatThreadStat
   const openThread = useThreadStore((s) => s.openThread);
   const closeThread = useThreadStore((s) => s.closeThread);
 
-  const { data: channelThreads = [] } = useChannelThreads(channelId);
-  const { data: threadReplies = [] } = useThreadReplies(activeThreadId ?? '');
+  const { data: channelThreads = DEFAULT_EMPTY_ARRAY } = useChannelThreads(channelId);
+  const { data: threadReplies = DEFAULT_EMPTY_ARRAY } = useThreadReplies(activeThreadId ?? '');
   const createThread = useCreateThread(userId);
   const replyToThread = useReplyToThread(userId);
   const lockThread = useLockThread(userId);

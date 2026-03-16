@@ -14,7 +14,8 @@ import { GuestJoinPage, useInviteInfo, useJoinAsGuest } from '@/features/invite'
 
 // ✅ P-08: ChatPage를 lazy로 분리 — 로그인 전에는 번들에 포함되지 않음
 // ✅ T-05: Suspense + lazy() 조합 — 올바른 사용 (일반 fetch에 Suspense 사용 금지)
-const ChatPage = lazy(() => import('./ChatPage').then((m) => ({ default: m.ChatPage })));
+// FSD: pages 레이어에서 ChatPage import
+const ChatPage = lazy(() => import('@/pages/chat').then((m) => ({ default: m.ChatPage })));
 
 // ✅ P-03: 모듈 레벨 상수
 const EMPTY_RECENT_USERS: never[] = [];

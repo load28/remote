@@ -1,12 +1,11 @@
-// A-07: barrel file — named export만, export * 금지 (P-06)
+// A-07: barrel file — FSD: entities에서 re-export + feature 전용 export
+// P-06: named export만
 
-export type { Notification, NotificationType } from './types';
-export { useNotifications } from './hooks/useNotifications';
-export { useReadNotification } from './hooks/useReadNotification';
-export { useReadAllNotifications } from './hooks/useReadAllNotifications';
-export { useNotificationStore } from './hooks/useNotificationStore';
-export type { NotificationPanelState, NotificationPanelActions } from './hooks/useNotificationStore';
-export { getUnreadCount } from './domain/notificationRules';
+// entities/notification에서 re-export (도메인 모델)
+export { useNotifications, useReadNotification, useReadAllNotifications, useNotificationStore, getUnreadCount } from '@/entities/notification';
+export type { Notification, NotificationType, NotificationPanelState, NotificationPanelActions } from '@/entities/notification';
+
+// feature 전용 (사용자 인터랙션 UI)
 export { NotificationBell } from './components/NotificationBell';
 export type { NotificationBellProps } from './components/NotificationBell';
 export { NotificationItem } from './components/NotificationItem';

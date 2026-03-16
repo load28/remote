@@ -1,7 +1,7 @@
-import type { User } from '@/features/user/types';
-import type { Channel, ChannelMember } from '@/features/channel/types';
-import type { Message } from '@/features/message/types';
-import type { Workspace } from '@/features/workspace/types';
+import type { User } from '@/features/user';
+import type { Channel, ChannelMember } from '@/features/channel';
+import type { Message } from '@/features/message';
+import type { Workspace } from '@/features/workspace';
 
 export const MOCK_WORKSPACES: Workspace[] = [
   {

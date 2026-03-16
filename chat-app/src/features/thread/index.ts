@@ -1,13 +1,11 @@
-// A-07: barrel file public API만 노출, P-06: named export만
+// A-07: barrel file — FSD: entities에서 re-export + feature 전용 export
+// P-06: named export만
 
-// Components
-export { ThreadPanel, type ThreadAuthor, type ThreadParentInfo, type ThreadPermissions, type ThreadPanelActions } from './components/ThreadPanel';
-export { ThreadIndicator } from './components/ThreadIndicator';
-export { ThreadReplyItem } from './components/ThreadReplyItem';
-export { UnreadBadge } from './components/UnreadBadge';
-
-// Hooks
+// entities/thread에서 re-export (도메인 모델)
 export {
+  ThreadReplyItem,
+  ThreadIndicator,
+  UnreadBadge,
   useChannelThreads,
   useThreadDetail,
   useThreadReplies,
@@ -19,16 +17,7 @@ export {
   useReadPosition,
   useMarkAsRead,
   useMarkThreadAsRead,
-  THREAD_QUERY_KEY,
-  THREAD_REPLIES_QUERY_KEY,
-  READ_POSITION_QUERY_KEY,
-  UNREAD_COUNTS_QUERY_KEY,
-} from './hooks/useThread';
-
-export { useThreadStore } from './hooks/useThreadStore';
-
-// Domain
-export {
+  useThreadStore,
   canReplyToThread,
   canLockThread,
   canUnlockThread,
@@ -42,14 +31,18 @@ export {
   isRateLimited,
   sortThreadsByLastReply,
   filterActiveThreads,
-} from './domain/threadRules';
+  THREAD_QUERY_KEY,
+  THREAD_REPLIES_QUERY_KEY,
+  READ_POSITION_QUERY_KEY,
+  UNREAD_COUNTS_QUERY_KEY,
+} from '@/entities/thread';
 
-// Types
 export type {
   ThreadInfo,
   ThreadReply,
   ThreadSummary,
   ThreadStatus,
+  ThreadAuthor,
   CreateThreadInput,
   ReplyToThreadInput,
   LockThreadInput,
@@ -57,4 +50,7 @@ export type {
   UnreadCount,
   MarkAsReadInput,
   MarkThreadAsReadInput,
-} from './types';
+} from '@/entities/thread';
+
+// feature 전용 (사용자 인터랙션)
+export { ThreadPanel, type ThreadParentInfo, type ThreadPermissions, type ThreadPanelActions } from './components/ThreadPanel';

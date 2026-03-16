@@ -1,15 +1,15 @@
 import { http, HttpResponse } from 'msw';
 import { MOCK_CHANNELS, MOCK_CHANNEL_MEMBERS, MOCK_MESSAGES, MOCK_USERS, MOCK_WORKSPACES } from './data';
 import { MOCK_RECENT_USERS } from './recentUsers';
-import type { Message } from '@/features/message/types';
-import type { Channel, ChannelMember, ChannelMemberRole, AddChannelMemberInput, UpdateMemberRoleInput } from '@/features/channel/types';
-import type { LoginCredentials } from '@/features/auth/types';
-import type { User, UpdateProfileInput } from '@/features/user/types';
-import type { CustomEmoji } from '@/features/emoji/types';
-import type { InviteLink, GuestJoinInput } from '@/features/invite/types';
-import type { ThreadInfo, ThreadReply, ReadPosition, UnreadCount } from '@/features/thread/types';
-import type { Plan, PlanItem } from '@/features/plan/types';
-import type { Notification } from '@/features/notification/types';
+import type { Message } from '@/features/message';
+import type { Channel, ChannelMember, AddChannelMemberInput, UpdateMemberRoleInput } from '@/features/channel';
+import type { LoginCredentials } from '@/features/auth';
+import type { User, UpdateProfileInput } from '@/features/user';
+import type { CustomEmoji } from '@/features/emoji';
+import type { InviteLink, GuestJoinInput } from '@/features/invite';
+import type { ThreadInfo, ThreadReply, ReadPosition, UnreadCount } from '@/features/thread';
+import type { Plan, PlanItem } from '@/features/plan';
+import type { Notification } from '@/features/notification';
 
 // ✅ P-03: 모듈 레벨 상수
 const MOCK_PASSWORD = 'password';
