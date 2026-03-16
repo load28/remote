@@ -87,6 +87,7 @@
 | barrel-file | barrel file (index.ts) 패턴 |
 | feature-module | Feature 모듈 패턴 |
 | layer-separation | 레이어 분리 |
+| migration | 마이그레이션 (From→To 패턴 전환) |
 
 ## 성능
 

@@ -284,7 +284,11 @@ Design Guard는 module.md에만 있던 아키텍처/성능 규칙을 각 스키�
 
 ## 기존 코드 수정 시
 
-새 파일이 아니라 기존 파일을 수정하는 경우에도 프로토콜은 동일하다:
+**Q: 삭제되거나 이름이 바뀌는 export가 있는가?**
+
+### A. 단일 파일 수정 (No — export 변경 없음)
+
+같은 스키마 내 부분 수정. 프로토콜은 동일하다:
 
 1. 수정 대상 파일을 읽는다
 2. 해당 파일 유형의 스키마를 읽는다
@@ -296,6 +300,153 @@ Design Guard는 module.md에만 있던 아키텍처/성능 규칙을 각 스키�
 예: 컴포넌트에 새 이벤트 핸들러 추가
 → component.md의 Events 슬롯과 Props 슬롯만 채움
 → 코드 변환 → Grammar Scan
+```
+
+### B. 연쇄 변경 — 마이그레이션/리팩토링 (Yes — export 삭제/변경)
+
+스키마 유형이 바뀌거나, 다른 파일의 import/API가 변경되는 경우.
+**Impact Analysis 슬롯이 비면 마이그레이션을 시작할 수 없다.**
+
+```
+Phase M-1: Impact Analysis (신규) → 구조화된 슬롯 형식으로 영향 분석
+Phase M-2: Target Design         → 기존 Phase 1+2 재사용
+Phase M-3: Ordered Execution     → 기존 Phase 3 반복
+Phase M-4: Integrity Check (신규) → 파일 간 정합성 검증
+```
+
+#### 마이그레이션 시나리오 분류
+
+모든 시나리오가 동일한 Phase M-1~M-4를 사용한다. Step 1(Impact Analysis)의 초점만 다르다:
+
+| 시나리오 | 예시 | Step 1 초점 |
+|---------|------|------------|
+| M1: 상태 도구 전환 | Zustand→Jotai, Context→Zustand | source store → target atom 매핑 |
+| M2: FSD 레이어 재배치 | pages→features 분리 | layer 변경 → import 경로 변경 |
+| M3: 컴포넌트 분해 | 250줄 컴포넌트 분리 | 원본 슬롯 분석 → 분할 계획 |
+| M4: 패턴 전환 | useEffect fetch→TanStack Query | Grammar 위반 → 대체 패턴 |
+| M5: API 레이어 전환 | axios→fetch 래퍼 | shared/api 변경 → consumer 파급 |
+
+---
+
+#### Phase M-1: Impact Analysis
+
+Migration Context를 구조화된 슬롯 형식으로 채운다. **빈 슬롯이 있으면 Phase M-2로 진행하지 않는다.**
+
+```
+## Migration Impact Analysis
+
+### Identity
+| 슬롯 | 값 | 제약 |
+|------|-----|------|
+| migration_trigger | `___` | 왜 마이그레이션하는가? |
+| migration_type | `M1` / `M2` / `M3` / `M4` / `M5` | 시나리오 식별 |
+| scope | `slice` / `feature` / `app-wide` | 영향 범위 |
+
+### Schema Transition (생산자 — 삭제/대체 대상 → 생성 목표)
+| From File | From Schema | To File | To Schema | Action |
+|-----------|------------|---------|-----------|--------|
+| `___` | `___` | `___` | `___` | CREATE / REPLACE / DELETE |
+
+### Consumer Impact (소비자 — 연쇄 변경 대상)
+| File | Schema Type | 변경 슬롯 | Old → New |
+|------|------------|----------|-----------|
+| `___` | `___` | `___` | `___` |
+
+### Barrel Impact
+| Barrel File | Removed Exports | Added Exports |
+|------------|----------------|---------------|
+| `___` | `___` | `___` |
+
+### Infrastructure (해당없음 허용)
+| File | 변경 유형 |
+|------|----------|
+| `___` | Provider / test / config / package.json |
+
+### 슬롯 완료 체크
+□ Identity 3개 슬롯 전부 채움
+□ Schema Transition 테이블 작성
+□ Consumer Impact 테이블 작성 (0건이면 STOP — consumer 없는 마이그레이션은 재검토)
+□ Barrel Impact 테이블 작성
+□ Infrastructure 기입 또는 "해당없음"
+```
+
+**개발자에게 영향 범위 확인을 받는다.** scope가 app-wide이면 반드시 확인.
+
+---
+
+#### Phase M-2: Target Design + Execution Order
+
+##### Step 1: Dependency Graph + Migration Unit
+
+- source 간 의존 관계 분석
+- Migration Unit 결정 (슬라이스 단위 권장)
+- 실행 순서: **leaf → root**
+- 순서 최적화: consumer 중복 수정 최소화 (같은 consumer를 공유하는 source들은 같은 배치에서 처리)
+- 점진적 전환 시: 임시 호환 레이어/bridge 명시 (해당없음 허용)
+
+```
+### Execution Order
+| 순서 | File | Action | 의존 |
+|------|------|--------|------|
+| 1 | `___` | `___` | — |
+| 2 | `___` | `___` | 1 완료 후 |
+```
+
+##### Step 2: From→To API Mapping
+
+Consumer 변환의 기계적 일관성을 확보하기 위한 매핑 테이블:
+
+```
+### API Mapping
+| From (현재) | To (목표) | 변환 규칙 | 주의 |
+|------------|----------|----------|------|
+| import 패턴 | import 패턴 | | |
+| 읽기 API | 읽기 API | | |
+| 쓰기 API | 쓰기 API | | |
+| 호출 시그니처 | 호출 시그니처 | | ⚠️ 파라미터 변경 시 |
+| barrel export | barrel export | | export 수 변경 시 |
+| 테스트 패턴 | 테스트 패턴 | | ⚠️ 구조적 변경 시 |
+| 영속화 | 영속화 | | ⚠️ storage key/version 변경 시 |
+```
+
+레퍼런스 검색: `reference-code/` 에서 `migration` 태그로 매칭되는 레퍼런스를 검색한다.
+매칭됨 → 매핑 테이블 참고. 매칭 안 됨 → 직접 작성 후 Phase 1-A로 레퍼런스 추가.
+
+##### Step 3: Target 스키마 슬롯 채우기
+
+Execution Order의 각 CREATE/REPLACE 파일에 대해:
+- 해당 스키마 선택 + 슬롯 채우기 (기존 Phase 1 + Phase 2 재사용)
+- Design Guard 확인
+
+---
+
+#### Phase M-3: Ordered Execution
+
+Execution Order 순서대로 실행한다:
+
+| Action | 실행 방법 |
+|--------|----------|
+| **CREATE** | 기존 Phase 1→2→3 (신규 생성 프로토콜) |
+| **REPLACE** | To 스키마 전체 슬롯 채우기 → Phase 2→3 |
+| **DELETE** | 파일 삭제 (Phase M-4에서 잔재 확인) |
+| **Consumer 변경** | 단순 수정 프로토콜 (해당 슬롯만 + API Mapping 기반 기계적 변환 + Grammar Scan) |
+| **Barrel 업데이트** | barrel.md 스키마 해당 슬롯만 |
+
+---
+
+#### Phase M-4: Integrity Check
+
+모든 Migration Unit 실행 완료 후, 파일 간 정합성을 검증한다:
+
+```
+□ From 패턴 잔재 없음 (이전 import/API 호출 0건 — grep 확인)
+□ Barrel file export 정합성
+□ FSD 단방향 의존성 유지 (A-01 재확인)
+□ Provider 계층 정상 (추가/제거/순서)
+□ 테스트 패턴 전환 완료
+□ TypeScript 컴파일 에러 없음
+□ localStorage/persistence 호환성 (해당 시 — storage key/version 확인)
+□ Migration Unit 완료 조건 달성
 ```
 
 ---
@@ -312,3 +463,8 @@ Design Guard는 module.md에만 있던 아키텍처/성능 규칙을 각 스키�
 | "이미 규칙을 알고 있다" | 기억이 아니라 슬롯이다. 슬롯을 채워라. |
 | "이번만 예외" | 예외는 없다. |
 | "Grammar Scan은 형식적" | Scan은 변환의 증거다. 생략 불가. |
+| "consumer 나중에 고치자" | consumer 변경 없이 source 삭제 = 빌드 에러. Impact Analysis에서 consumer가 0이면 STOP. |
+| "영향 분석 없이 바로 변환하자" | Impact Analysis 슬롯이 비면 마이그레이션 불가. 파일 누락은 필연. |
+| "API 매핑 안 해도 되겠지" | 호출 시그니처 불일치 = 런타임 에러. 매핑 테이블 필수. |
+| "한 번에 전부 바꾸자" | scope가 app-wide이면 Migration Unit으로 분할. 35개 파일 동시 변경은 디버깅 불가. |
+| "마이그레이션이니까 Grammar Scan 생략" | 예외 없음. 각 파일 Grammar Scan 필수. |
