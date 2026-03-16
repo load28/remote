@@ -1,6 +1,6 @@
 # Store Schema
 
-Zustand 등 클라이언트 전역 상태 스토어를 작성할 때 반드시 채워야 하는 슬롯.
+Zustand 클라이언트 전역 상태 스토어를 작성할 때 반드시 채워야 하는 슬롯.
 **빈 슬롯이 하나라도 있으면 코드를 생성하지 않는다.**
 
 ---
@@ -9,9 +9,10 @@ Zustand 등 클라이언트 전역 상태 스토어를 작성할 때 반드시 �
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
-| name | `use___Store` | use + 동사 + Store [N-05] |
+| name | `use___Store` | use + PascalCase명 + Store |
 | file_path | `{layer}/{slice}/model/use___Store.ts` | FSD model 세그먼트 [A-02]. 예: `features/auth/model/useAuthStore.ts`, `entities/user/model/useUserStore.ts` |
 | purpose | `___` | 단일 관심사 [A-04] |
+| line_budget | `___/250` | 파일 250줄 이하 [C-05] |
 
 ---
 
@@ -93,7 +94,7 @@ Zustand 등 클라이언트 전역 상태 스토어를 작성할 때 반드시 �
 ## 슬롯 완료 체크
 
 ```
-□ Identity 3개 슬롯 전부 채움
+□ Identity 4개 슬롯 전부 채움
 □ State classification — client 확인, scope 근거 명시
 □ State fields 전부 기입
 □ Actions 전부 기입

@@ -66,6 +66,7 @@ Phase 3: Grammar Section A(Pre) → 코드 변환 → Grammar Section B(Post) �
 | 커스텀 훅 | [schemas/hook.md](schemas/hook.md) | 필수 |
 | Context + Provider | [schemas/context.md](schemas/context.md) | 필수 |
 | Zustand 스토어 | [schemas/store.md](schemas/store.md) | 필수 |
+| Jotai Atom | [schemas/atom.md](schemas/atom.md) | 필수 |
 | API/데이터 레이어 | [schemas/api-layer.md](schemas/api-layer.md) | 필수 |
 | 테스트 파일 | [schemas/test.md](schemas/test.md) | 필수 |
 | 타입 정의 | [schemas/type.md](schemas/type.md) | 필수 |
@@ -75,6 +76,14 @@ Phase 3: Grammar Section A(Pre) → 코드 변환 → Grammar Section B(Post) �
 **여러 파일을 작성하는 경우:**
 1. 먼저 [schemas/module.md](schemas/module.md)로 모듈 전체 구조를 설계
 2. 그 안의 각 파일에 대해 개별 스키마를 채움
+
+### 전역 상태 도구 선택
+
+전역 클라이언트 상태가 필요한 경우, **개발자에게 Zustand과 Jotai 중 선택을 묻는다.**
+AI가 자동으로 도구를 결정하지 않는다. [state-and-data.md](state-and-data.md)의 S-08 Decision Tree를 참고하여 선택 기준을 제시한다.
+
+- 개발자가 Zustand 선택 → [schemas/store.md](schemas/store.md) 사용
+- 개발자가 Jotai 선택 → [schemas/atom.md](schemas/atom.md) 사용
 
 ### Step 2: 스키마 + Grammar 읽기
 
@@ -188,7 +197,10 @@ Design Guard는 module.md에만 있던 아키텍처/성능 규칙을 각 스키�
 채워진 슬롯을 TypeScript/React 코드로 기계적으로 변환한다.
 레퍼런스의 구조를 따르되, 도메인 용어만 프로젝트에 맞게 교체한다.
 
-**변환 규칙:**
+**변환 규칙 (component 스키마 예시):**
+아래는 component 스키마의 변환 예시. 다른 스키마(hook, store, atom 등)는
+해당 스키마의 슬롯 구조가 곧 변환 규칙이다 — 슬롯 순서대로 코드를 생성한다.
+
 - Identity → 파일 생성, 컴포넌트 함수 선언
 - Props Interface → interface 정의 + export
 - Events → on/handle 함수 쌍

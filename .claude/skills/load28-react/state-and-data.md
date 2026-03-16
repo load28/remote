@@ -204,9 +204,23 @@ function AppProvider({ children }: PropsWithChildren) {
 
 클라이언트 상태:
   → 로컬 UI: useState / useReducer
-  → 전역 UI: Zustand / Jotai (정말 필요할 때만)
+  → 전역 UI: Zustand 또는 Jotai — 개발자에게 선택을 묻는다 (아래 Decision Tree 참조)
   → URL 상태: router params / nuqs
 ```
+
+### Zustand vs Jotai 선택 (개발자에게 질문)
+
+전역 클라이언트 상태가 필요할 때, 아래 기준을 개발자에게 제시하고 선택을 받는다:
+
+| Zustand이 적합한 경우 | Jotai가 적합한 경우 |
+|----------------------|-------------------|
+| 상태+액션이 강하게 결합된 트랜잭션 | 독립적 상태를 여러 곳에서 개별 구독 |
+| persist/middleware 체이닝 필요 | 파생 상태 그래프가 복잡 (A→B→C) |
+| React 외부 접근이 핵심 패턴 | 단일 boolean/primitive 전역 공유 |
+| (API 인터셉터, WebSocket 핸들러) | Provider scope 격리/테스트 격리 필요 |
+|  | 동적으로 생성/삭제되는 상태 (atomFamily) |
+
+**AI는 기본값을 정하지 않는다. 개발자의 선택을 받은 후 해당 스키마(store.md 또는 atom.md)를 사용한다.**
 
 ---
 

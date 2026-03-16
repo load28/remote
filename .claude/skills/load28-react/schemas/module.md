@@ -39,7 +39,7 @@ Q6. 프로젝트와 무관한 범용 코드인가? → shared
 | 세그먼트 | 파일 목록 | 스키마 |
 |---------|----------|--------|
 | `ui/` | `___` | `component` |
-| `model/` | `___` | `hook` / `store` / `context` (비즈니스 로직, 순수 함수 포함) |
+| `model/` | `___` | `hook` / `store` / `atom` / `context` (비즈니스 로직, 순수 함수 포함) |
 | `api/` | `___` | `api-layer` |
 | `lib/` | `___` / `해당없음` | (슬라이스 내부 유틸) |
 | `config/` | `___` / `해당없음` | (설정, 상수) |
@@ -59,7 +59,7 @@ Q6. 프로젝트와 무관한 범용 코드인가? → shared
 
 | file | segment | schema | 설명 |
 |------|---------|--------|------|
-| `___` | `ui` / `model` / `api` / `lib` / `config` | `component` / `hook` / `context` / `store` / `api-layer` / `test` / `type` / `barrel` | `___` |
+| `___` | `ui` / `model` / `api` / `lib` / `config` | `component` / `hook` / `context` / `store` / `atom` / `api-layer` / `test` / `type` / `barrel` | `___` |
 
 ---
 
@@ -118,7 +118,7 @@ Q6. 프로젝트와 무관한 범용 코드인가? → shared
 
 | export | kind | segment |
 |--------|------|---------|
-| `___` | component / hook / type / store | `ui` / `model` / `api` |
+| `___` | component / hook / type / store / atom | `ui` / `model` / `api` |
 
 - 내부 helper, lib/, config/ 세그먼트는 export하지 않음
 - `export *` 금지 [P-06]
@@ -169,7 +169,7 @@ Q6. 프로젝트와 무관한 범용 코드인가? → shared
 1. 이 Module Schema 완성 (레이어/슬라이스/세그먼트 결정)
 2. type.md 스키마 채우기 → 타입 코드 생성
 3. api-layer.md 스키마 채우기 + Design Guard → API 코드 생성 (api/ 세그먼트)
-4. hook.md / store.md 스키마 채우기 + Design Guard → 훅/스토어 코드 생성 (model/ 세그먼트)
+4. hook.md / store.md / atom.md 스키마 채우기 + Design Guard → 훅/스토어/아톰 코드 생성 (model/ 세그먼트)
 5. component.md 스키마 채우기 + Design Guard → 컴포넌트 코드 생성 (ui/ 세그먼트)
 6. barrel.md 스키마 채우기 → index.ts 생성 (슬라이스 루트)
 7. test.md 스키마 채우기 + Design Guard → 테스트 코드 생성 (각 세그먼트 내 코로케이션)

@@ -70,6 +70,9 @@
 | 태그 | 설명 |
 |------|------|
 | zustand | Zustand 전역 상태 관리 |
+| jotai | Jotai 원자적(atomic) 상태 관리 |
+| atom | Jotai 기본 atom (primitive/writable) |
+| derived-atom | Jotai 파생 atom (의존 체인) |
 | client-state | 클라이언트 전용 상태 (UI 토글, 선택 등) |
 | nuqs | nuqs URL 쿼리파람 상태 관리 |
 

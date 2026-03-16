@@ -43,9 +43,10 @@ Grammar는 두 단계로 나뉜다:
 | N-03 | on*/handle* | 모든 이벤트 함수 | props에 handle*, 내부에 on* 접두사 |
 | N-04 | Boolean is/has/can/should | 커스텀 boolean props/state | 접두사 없음 (HTML 네이티브 제외) |
 | N-05 | 훅 네이밍 use + 동사 | 커스텀 훅 함수명 | `use` 접두사 없는 훅 함수 |
-| N-06 | 상수 UPPER_SNAKE_CASE | 모든 모듈 레벨 const | camelCase 상수 |
+| N-06 | 상수 UPPER_SNAKE_CASE | 모든 모듈 레벨 const | camelCase 상수. 예외: Jotai atom (N-09 camelCase+Atom), 커스텀 훅 (N-05 use+동사), Zustand 스토어 (use+PascalCase명+Store) |
 | N-07 | 비컴포넌트 파일 camelCase | 유틸리티/훅/API 파일명 | PascalCase 파일명 (컴포넌트가 아닌 경우) |
 | N-08 | 의미없는 이름 금지 | 모든 변수/함수명 | data, info, temp, item, value, result |
+| N-09 | atom 네이밍 `___Atom` | 모든 Jotai atom 변수 | `Atom` 접미사 없는 atom 선언 (`const foo = atom(...)` → `const fooAtom = atom(...)`) |
 
 ### State
 

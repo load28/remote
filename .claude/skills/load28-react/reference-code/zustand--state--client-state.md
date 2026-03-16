@@ -5,7 +5,7 @@ description: Zustand 전역 클라이언트 상태 — 서버/클라이언트 �
 ---
 
 ```tsx
-// {Feature}/hooks/use{Feature}Store.ts — Zustand 전역 클라이언트 상태
+// {layer}/{slice}/model/use{Slice}Store.ts — Zustand 전역 클라이언트 상태
 
 import { create } from 'zustand';
 

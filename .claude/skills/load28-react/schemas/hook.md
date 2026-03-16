@@ -51,8 +51,22 @@
 
 | 슬롯 | 값 | 제약 |
 |------|-----|------|
-| state_tool | `useState` / `useReducer` / `zustand` / `nuqs` | [S-08, S-18] — URL 쿼리파람 상태는 nuqs 필수 |
+| state_tool | `useState` / `useReducer` / `zustand` / `jotai` / `nuqs` | [S-08, S-18] — URL 쿼리파람 상태는 nuqs 필수 |
 | scope | `local` / `feature` / `global` | 최소 범위 원칙 [S-09] |
+
+**jotai 사용 시:**
+
+| 슬롯 | 값 | 제약 |
+|------|-----|------|
+| atom_file | `___` | atom 정의 파일 경로. atom.md 스키마로 별도 정의 필수 |
+| consumer_pattern | `useAtomValue` / `useSetAtom` / `useAtom` | 최소 권한 원칙 |
+
+**nuqs 사용 시:**
+
+| 슬롯 | 값 | 제약 |
+|------|-----|------|
+| searchParams_file | `___` | searchParams 정의 파일 경로. 예: `features/___/searchParams.ts` |
+| history_mode | `replace` / `push` | replace(기본): 빈번한 업데이트, push: 뒤로 가기 기대 시 |
 
 **localStorage 사용 시:**
 

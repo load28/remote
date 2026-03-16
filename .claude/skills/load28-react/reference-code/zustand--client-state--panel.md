@@ -1,6 +1,6 @@
 ---
-tags: [zustand, client-state, interactive]
-rules: [S-01, S-08, S-09, T-13, N-05]
+tags: [zustand, client-state, panel]
+rules: [S-01, S-08, S-09, T-13]
 description: Zustand 기반 패널 UI 상태 관리 패턴 (열기/닫기, 선택 ID)
 ---
 
@@ -14,7 +14,7 @@ description: Zustand 기반 패널 UI 상태 관리 패턴 (열기/닫기, 선�
 - S-09: 패널 UI 상태는 해당 feature에 코로케이션
 
 ```ts
-// {Feature}/hooks/use{Feature}Store.ts
+// {layer}/{slice}/model/use{Slice}Store.ts
 import { create } from 'zustand';
 
 export interface EntityPanelState {
@@ -38,4 +38,32 @@ export const useEntityPanelStore = create<EntityPanelState & EntityPanelActions>
       set({ activeEntityId: null, isPanelOpen: false }),
   }),
 );
+```
+
+```tsx
+// ✅ Consumer: selector로 필요한 상태만 구독
+
+import { useShallow } from 'zustand/react/shallow';
+
+// ✅ GOOD: 단일 필드 selector
+function PanelToggleButton() {
+  const isPanelOpen = useEntityPanelStore((s) => s.isPanelOpen);
+  const openPanel = useEntityPanelStore((s) => s.openPanel);
+  // ...
+}
+
+// ✅ GOOD: 여러 필드 필요 시 useShallow
+function EntityPanel() {
+  const { activeEntityId, isPanelOpen, closePanel } = useEntityPanelStore(
+    useShallow((s) => ({
+      activeEntityId: s.activeEntityId,
+      isPanelOpen: s.isPanelOpen,
+      closePanel: s.closePanel,
+    })),
+  );
+  // ...
+}
+
+// ❌ BAD: 전체 스토어 구독 → closePanel만 필요해도 모든 상태 변경에 리렌더
+// const store = useEntityPanelStore(); // 전체 구독 금지
 ```
