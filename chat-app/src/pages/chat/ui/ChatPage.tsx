@@ -23,6 +23,7 @@ import { ChatPlanSidebar } from '@/widgets/chat-sidebar';
 
 // ✅ P-03: 모듈 레벨 상수
 const DEFAULT_CHANNEL_ID = 'channel-1';
+const DEFAULT_EMPTY_ARRAY: never[] = [];
 
 // ✅ P-04: 중첩 삼항 금지 → 헬퍼 함수
 function getVisibleChannels<T extends { id: string; workspaceId: string }>(
@@ -49,16 +50,16 @@ export function ChatPage() {
   const isGuest = useAuthStore((s) => s.isGuest);
   const guestChannelId = useAuthStore((s) => s.guestChannelId);
   const currentUserId = currentUser?.id ?? '';
-  const { data: workspaces = [] } = useWorkspaces();
+  const { data: workspaces = DEFAULT_EMPTY_ARRAY } = useWorkspaces();
   const selectedWorkspaceId = useWorkspaceStore((s) => s.selectedWorkspaceId);
   const selectWorkspace = useWorkspaceStore((s) => s.selectWorkspace);
-  const { data: channels = [] } = useChannels();
-  const { data: users = [] } = useUsers();
+  const { data: channels = DEFAULT_EMPTY_ARRAY } = useChannels();
+  const { data: users = DEFAULT_EMPTY_ARRAY } = useUsers();
   const effectiveWorkspaceId = selectedWorkspaceId ?? workspaces[0]?.id ?? null;
   const effectiveChannelId = isGuest && guestChannelId ? guestChannelId : selectedChannelId;
 
-  const { data: messages = [] } = useMessages(effectiveChannelId);
-  const { data: customEmojis = [] } = useCustomEmojis();
+  const { data: messages = DEFAULT_EMPTY_ARRAY } = useMessages(effectiveChannelId);
+  const { data: customEmojis = DEFAULT_EMPTY_ARRAY } = useCustomEmojis();
   const sendMessage = useSendMessage(effectiveChannelId);
   const updateProfile = useUpdateProfile(currentUserId);
   const createCustomEmoji = useCreateCustomEmoji(currentUserId);
@@ -73,7 +74,7 @@ export function ChatPage() {
   const { searchQuery, handleSearch, handleClearSearch } = useMessageSearch();
 
   // 알림
-  const { data: notifications = [] } = useNotifications(currentUserId);
+  const { data: notifications = DEFAULT_EMPTY_ARRAY } = useNotifications(currentUserId);
   const readNotification = useReadNotification();
   const readAllNotifications = useReadAllNotifications();
   const isNotificationPanelOpen = useNotificationStore((s) => s.isPanelOpen);

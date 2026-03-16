@@ -9,6 +9,9 @@ import {
   UNREAD_COUNTS_QUERY_KEY,
 } from '@/features/thread';
 
+// P-03: 모듈 레벨 상수
+const DEFAULT_EMPTY_ARRAY: never[] = [];
+
 // ✅ T-13: named exported interface
 export interface UnreadInfo {
   messageCount: number;
@@ -22,7 +25,7 @@ export interface ChatReadTrackingResult {
 
 export function useChatReadTracking(userId: string): ChatReadTrackingResult {
   const queryClient = useQueryClient();
-  const { data: unreadCounts = [] } = useUnreadCounts(userId);
+  const { data: unreadCounts = DEFAULT_EMPTY_ARRAY } = useUnreadCounts(userId);
   const markAsRead = useMarkAsRead(userId);
 
   const unreadCountMap = useMemo(() => {

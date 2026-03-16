@@ -25,6 +25,7 @@ export function MessageList({
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // S-16 예외: 동기적 DOM 조작 — 구독/타이머 없음
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 

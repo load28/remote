@@ -18,9 +18,12 @@ import {
 import type { PlanPanelActions, PlanPermissions } from '@/features/plan';
 import type { ChatPlanSidebarProps } from '@/widgets/chat-sidebar';
 
+// P-03: 모듈 레벨 상수
+const DEFAULT_EMPTY_ARRAY: never[] = [];
+
 export function useChatPlan(channelId: string, currentUserId: string) {
   const queryClient = useQueryClient();
-  const { data: plans = [] } = useChannelPlans(channelId);
+  const { data: plans = DEFAULT_EMPTY_ARRAY } = useChannelPlans(channelId);
   const createPlan = useCreatePlan(currentUserId);
   const addPlanItem = useAddPlanItem(currentUserId);
   const togglePlanItem = useTogglePlanItem();

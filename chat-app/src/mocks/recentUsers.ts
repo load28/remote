@@ -1,6 +1,6 @@
 // P-02: 50+ 항목 가상화를 위한 mock 데이터
 
-import type { RecentUser } from '@/features/auth/types';
+import type { RecentUser } from '@/features/auth';
 
 const NAMES = [
   '김민수', '이서연', '박지훈', '최유진', '정태현',
