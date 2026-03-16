@@ -449,3 +449,392 @@ const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
 **예외:** API 호출 URL 구성용 URLSearchParams는 대상 아님 (httpClient 내부 등).
 
 **검증:** 컴포넌트/훅에서 URL 쿼리파라미터를 읽거나 쓰면서 nuqs(useQueryState/useQueryStates/createSerializer)를 사용하지 않으면 REJECT.
+
+---
+
+## S-19: 컴포넌트당 useForm 1개
+
+**분류:** NEVER (복수 useForm)
+
+**WHY:** 하나의 컴포넌트에서 여러 `useForm`을 호출하면 폼 상태가 충돌하고, 어떤 `handleSubmit`이 어떤 필드를 관리하는지 추적이 불가능해진다. 복잡도가 기하급수적으로 증가하며, `FormProvider`/`useFormContext` 사용 시 중첩 Provider로 인한 혼란도 발생한다.
+
+```tsx
+// ❌ BAD: 하나의 컴포넌트에서 복수 useForm
+function SettingsPage() {
+  const profileForm = useForm<ProfileInput>();
+  const passwordForm = useForm<PasswordInput>();
+  // 어떤 form이 어떤 필드를 관리하는지 혼란
+  return (
+    <div>
+      <input {...profileForm.register('name')} />
+      <input {...passwordForm.register('currentPassword')} />
+    </div>
+  );
+}
+
+// ✅ GOOD: 폼 단위로 컴포넌트 분리
+function SettingsPage() {
+  return (
+    <div>
+      <ProfileForm />
+      <PasswordForm />
+    </div>
+  );
+}
+
+function ProfileForm() {
+  const { register, handleSubmit } = useForm<ProfileInput>();
+  return <form onSubmit={handleSubmit(onSubmit)}>...</form>;
+}
+```
+
+**검증:** 하나의 컴포넌트에서 `useForm`이 2회 이상 호출되면 REJECT. 폼 단위로 컴포넌트를 분리한다.
+
+---
+
+## S-20: register vs Controller 선택 기준
+
+**분류:** ALWAYS
+
+**WHY:** `register`는 비제어(uncontrolled) 방식으로 DOM에 직접 연결되어 re-render가 발생하지 않는다. `Controller`는 제어(controlled) 방식으로 렌더 사이클에 값을 동기화한다. 네이티브 HTML input에 `Controller`를 사용하면 불필요한 re-render가 발생하고, 커스텀 UI 컴포넌트에 `register`를 사용하면 ref 전달이 불가능하여 동작하지 않는다.
+
+```tsx
+// ❌ BAD: 네이티브 input에 Controller 사용 → 불필요한 re-render
+<Controller
+  name="email"
+  control={control}
+  render={({ field }) => <input {...field} />}
+/>
+
+// ✅ GOOD: 네이티브 input은 register
+<input {...register('email')} />
+
+// ✅ GOOD: 커스텀 UI 컴포넌트는 Controller
+<Controller
+  name="category"
+  control={control}
+  render={({ field }) => (
+    <CustomSelect
+      value={field.value}
+      onChange={field.onChange}
+      options={categories}
+    />
+  )}
+/>
+```
+
+**검증:** 네이티브 HTML input(`<input>`, `<select>`, `<textarea>`)에 `Controller`를 사용하면 REJECT. 커스텀 UI 컴포넌트에 `register`를 사용하면 REJECT.
+
+---
+
+## S-21: validation은 zod resolver로 통합
+
+**분류:** ALWAYS
+
+**WHY:** `register`의 inline `validate` 옵션으로 규칙을 분산하면, 검증 로직이 여러 필드에 흩어져 전체 폼의 유효성 규칙을 파악할 수 없다. zod 스키마를 단일 진실 원천으로 사용하면 검증 규칙이 한곳에 집중되고, 스키마에서 TypeScript 타입이 자동 추론(`z.infer<typeof schema>`)되어 타입 안전성도 확보된다.
+
+```tsx
+// ❌ BAD: inline validate로 규칙 분산
+const { register } = useForm<FormInput>();
+<input {...register('email', {
+  required: '이메일 필수',
+  pattern: { value: /^[^\s@]+@[^\s@]+$/, message: '이메일 형식' },
+})} />
+<input {...register('age', {
+  min: { value: 18, message: '18세 이상' },
+  validate: v => v <= 100 || '100세 이하',
+})} />
+
+// ✅ GOOD: zod 스키마로 통합
+const formSchema = z.object({
+  email: z.string().min(1, '이메일 필수').email('이메일 형식'),
+  age: z.number().min(18, '18세 이상').max(100, '100세 이하'),
+});
+
+type FormInput = z.infer<typeof formSchema>;
+
+const { register } = useForm<FormInput>({
+  resolver: zodResolver(formSchema),
+});
+```
+
+**예외:** 서버 응답 기반 비동기 검증(예: 이메일 중복 확인)은 zod 스키마로 표현이 어려울 수 있다. 이 경우 `setError`로 서버 에러를 주입하되, 클라이언트 검증은 여전히 zod로 통합한다.
+
+**검증:** `register`에 `validate`, `required`, `pattern`, `min`, `max` 등 inline 검증 옵션이 있으면서 `zodResolver`를 사용하지 않으면 REJECT.
+
+---
+
+## S-22: watch 남용 금지 — formState.errors 구독 우선
+
+**분류:** NEVER (불필요한 watch)
+
+**WHY:** `watch()`는 감시 대상 필드가 변경될 때마다 컴포넌트 전체를 re-render한다. 폼 전체를 `watch()`하면 어떤 필드든 한 글자만 타이핑해도 전체 폼이 re-render된다. 에러 표시만 필요하면 `formState.errors`로 충분하고, 특정 필드 값이 필요하면 `useWatch`를 별도 컴포넌트에서 사용하여 re-render 범위를 격리한다.
+
+```tsx
+// ❌ BAD: 전체 watch → 모든 타이핑에 전체 re-render
+function SignupForm() {
+  const { watch, register } = useForm();
+  const values = watch(); // 모든 필드 감시 → 전체 re-render
+  return (
+    <div>
+      <input {...register('name')} />
+      <input {...register('email')} />
+      {values.name && <span>Welcome, {values.name}</span>}
+    </div>
+  );
+}
+
+// ✅ GOOD: useWatch를 별도 컴포넌트에서 사용 → re-render 격리
+function WelcomeMessage() {
+  const name = useWatch({ name: 'name' });
+  return name ? <span>Welcome, {name}</span> : null;
+}
+
+function SignupForm() {
+  const { register, formState: { errors } } = useForm();
+  return (
+    <FormProvider {...methods}>
+      <input {...register('name')} />
+      {errors.name ? <span>{errors.name.message}</span> : null}
+      <WelcomeMessage />
+    </FormProvider>
+  );
+}
+```
+
+**검증:** `watch()`가 폼 전체를 감시하거나, `useWatch`를 사용하지 않고 `watch('fieldName')`을 폼 루트 컴포넌트에서 호출하면 REJECT. `useWatch`를 별도 컴포넌트로 분리하거나 `formState.errors`로 대체한다.
+
+---
+
+## S-23: atom은 모듈 레벨에서 선언
+
+**분류:** NEVER (컴포넌트 내부 atom 선언)
+
+**WHY:** `atom()`은 호출할 때마다 새로운 atom 인스턴스를 생성한다. 컴포넌트 내부에서 `atom()`을 호출하면 매 렌더마다 새 atom이 생성되어, 이전 atom의 구독이 끊기고 상태가 유실된다. 메모리 누수도 발생한다 (GC되지 않는 atom store 참조).
+
+```tsx
+// ❌ BAD: 컴포넌트 내부 atom 생성 → 매 렌더마다 새 atom
+function Counter() {
+  const countAtom = atom(0); // 렌더마다 새 인스턴스!
+  const [count, setCount] = useAtom(countAtom);
+  return <button onClick={() => setCount(c => c + 1)}>{count}</button>;
+}
+
+// ✅ GOOD: 모듈 레벨에서 선언
+const countAtom = atom(0);
+
+function Counter() {
+  const [count, setCount] = useAtom(countAtom);
+  return <button onClick={() => setCount(c => c + 1)}>{count}</button>;
+}
+```
+
+**검증:** 컴포넌트/훅 함수 내부에서 `atom()`, `atomFamily()`, `atomWithStorage()` 등 atom 생성 함수가 호출되면 REJECT. 모듈 레벨(파일 최상위)에서만 선언한다.
+
+---
+
+## S-24: derived atom에서 비동기 호출 금지
+
+**분류:** NEVER (암묵적 비동기 derived atom)
+
+**WHY:** `atom((get) => ...)` 형태의 derived atom에서 비동기 호출을 하면, 해당 atom을 읽는 컴포넌트에서 암묵적으로 Suspense가 트리거된다. 상위에 `<Suspense>` boundary가 없으면 앱 전체가 중단된다. 비동기가 필요한 경우 명시적으로 async atom으로 분리하고, 서버 데이터 fetch가 목적이면 TanStack Query를 사용한다.
+
+```tsx
+// ❌ BAD: derived atom에 비동기 혼입 → 암묵적 Suspense
+const userProfileAtom = atom(async (get) => {
+  const userId = get(userIdAtom);
+  const response = await fetch(`/api/users/${userId}`); // 서버 fetch!
+  return response.json();
+});
+
+// ✅ GOOD: 서버 데이터는 TanStack Query [S-08]
+function useUserProfile() {
+  const userId = useAtomValue(userIdAtom);
+  return useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => httpClient.get<User>(`/users/${userId}`),
+  });
+}
+
+// ✅ GOOD: 순수 클라이언트 계산만 derived atom으로
+const fullNameAtom = atom((get) => {
+  const first = get(firstNameAtom);
+  const last = get(lastNameAtom);
+  return `${first} ${last}`;
+});
+```
+
+**검증:** `atom((get) => ...)` 또는 `atom(async (get) => ...)` 내부에서 `fetch`, `httpClient`, API 호출이 있으면 REJECT. 서버 데이터는 TanStack Query, 순수 클라이언트 계산만 derived atom.
+
+---
+
+## S-25: atomFamily 키 직렬화 보장
+
+**분류:** ALWAYS
+
+**WHY:** `atomFamily`는 파라미터를 `===` (참조 비교)로 비교하여 기존 atom을 재사용할지 결정한다. 객체를 키로 사용하면 내용이 같아도 매번 새 참조이므로 새 atom이 생성된다. 이는 메모리 누수와 상태 불일치를 유발하며, 디버깅이 매우 어렵다.
+
+```tsx
+// ❌ BAD: 객체 키 → 매번 새 atom 생성
+const entityAtomFamily = atomFamily((params: { type: string; id: string }) =>
+  atom(null)
+);
+// 호출할 때마다 새 atom:
+entityAtomFamily({ type: 'user', id: '1' }); // atom A
+entityAtomFamily({ type: 'user', id: '1' }); // atom B (다른 인스턴스!)
+
+// ✅ GOOD: primitive 키 사용
+const entityAtomFamily = atomFamily((id: string) => atom(null));
+
+// ✅ GOOD: 복합 키가 필요하면 문자열로 직렬화
+const entityAtomFamily = atomFamily((key: string) => atom(null));
+// 사용: entityAtomFamily(`${type}:${id}`)
+```
+
+**검증:** `atomFamily`의 파라미터 타입이 객체/배열이면 REJECT. primitive(string, number) 사용하거나 문자열 직렬화로 변환한다.
+
+---
+
+## S-26: atom debugLabel 필수
+
+**분류:** ALWAYS (개발 환경)
+
+**WHY:** Jotai DevTools에서 atom은 기본적으로 `atom1`, `atom2` 같은 익명 라벨로 표시된다. 상태 그래프가 복잡해지면 어떤 atom이 어떤 역할인지 구분할 수 없어 디버깅이 불가능해진다. `debugLabel`을 설정하면 DevTools에서 `countAtom`, `userNameAtom` 같은 의미있는 이름으로 표시된다.
+
+```tsx
+// ❌ BAD: debugLabel 없음 → DevTools에서 "atom1", "atom2"
+const countAtom = atom(0);
+const userNameAtom = atom('');
+
+// ✅ GOOD: debugLabel 설정
+const countAtom = atom(0);
+countAtom.debugLabel = 'countAtom';
+
+const userNameAtom = atom('');
+userNameAtom.debugLabel = 'userNameAtom';
+```
+
+**검증:** atom 선언 직후 `debugLabel` 할당이 없으면 REJECT.
+
+---
+
+## S-27: write-only atom으로 복잡한 업데이트 캡슐화
+
+**분류:** ALWAYS (복수 atom 동시 업데이트 시)
+
+**WHY:** 여러 atom을 동시에 업데이트하는 로직이 컴포넌트에 흩어지면, 동일한 업데이트 패턴이 여러 곳에서 중복되고 일관성이 깨진다. write-only atom(`atom(null, (get, set, arg) => ...)`)으로 캡슐화하면 업데이트 로직이 한곳에 집중되고 컴포넌트는 `useSetAtom`으로 액션만 디스패치한다.
+
+```tsx
+// ❌ BAD: 컴포넌트에서 여러 atom을 직접 업데이트 → 로직 분산
+function ResetButton() {
+  const setCount = useSetAtom(countAtom);
+  const setFilter = useSetAtom(filterAtom);
+  const setPage = useSetAtom(pageAtom);
+
+  const handleReset = () => {
+    setCount(0);
+    setFilter('all');
+    setPage(1);
+  };
+  return <button onClick={handleReset}>Reset</button>;
+}
+
+// ✅ GOOD: write-only atom으로 캡슐화
+const resetActionAtom = atom(null, (_get, set) => {
+  set(countAtom, 0);
+  set(filterAtom, 'all');
+  set(pageAtom, 1);
+});
+resetActionAtom.debugLabel = 'resetActionAtom';
+
+function ResetButton() {
+  const reset = useSetAtom(resetActionAtom);
+  return <button onClick={reset}>Reset</button>;
+}
+```
+
+**검증:** 하나의 핸들러에서 3개 이상 atom을 `set`하는 패턴이 2개 이상 컴포넌트에서 반복되면 REJECT. write-only atom으로 캡슐화한다.
+
+---
+
+## S-28: 폼 상태는 React Hook Form이 소유
+
+**분류:** NEVER (폼 값을 외부 store에 복제)
+
+**WHY:** React Hook Form은 내부적으로 폼 상태를 비제어(uncontrolled) 방식으로 관리하여 re-render를 최소화한다. 폼 필드 값을 Zustand/Jotai에 동기화하면 React Hook Form의 성능 최적화가 무효화되고, 두 곳의 상태가 불일치할 수 있는 동기화 버그가 발생한다.
+
+```tsx
+// ❌ BAD: 폼 값을 Jotai atom에 동기화 → 이중 상태 관리
+const formDataAtom = atom<FormInput | null>(null);
+
+function SignupForm() {
+  const { register, watch } = useForm<FormInput>();
+  const setFormData = useSetAtom(formDataAtom);
+
+  useEffect(() => {
+    const subscription = watch((values) => {
+      setFormData(values as FormInput); // 매 타이핑마다 atom 업데이트
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, setFormData]);
+}
+
+// ✅ GOOD: 폼 상태는 React Hook Form이 소유
+function SignupForm() {
+  const { register, handleSubmit } = useForm<FormInput>({
+    resolver: zodResolver(signupSchema),
+  });
+
+  const onSubmit = (data: FormInput) => {
+    // 제출 시에만 외부로 전달
+    submitToServer(data);
+  };
+
+  return <form onSubmit={handleSubmit(onSubmit)}>...</form>;
+}
+```
+
+**검증:** `watch`의 구독 결과를 Zustand store/Jotai atom/React Context에 동기화하는 코드가 있으면 REJECT. 폼 라이프사이클 내에서는 React Hook Form이 유일한 상태 소유자다.
+
+---
+
+## S-29: 폼 제출 결과만 외부 store에 반영
+
+**분류:** ALWAYS
+
+**WHY:** S-28에서 폼 상태의 소유권을 React Hook Form에 두었다. 앱 전역 상태(Zustand/Jotai)에는 폼 **제출이 성공한 결과**만 반영해야 한다. 이렇게 하면 폼 라이프사이클(입력 중 → 검증 → 제출)과 앱 상태의 경계가 명확해지고, 사용자가 폼을 취소해도 앱 상태가 오염되지 않는다.
+
+```tsx
+// ❌ BAD: 폼 입력 중에 store 업데이트
+function ProfileForm() {
+  const { register, watch } = useForm<ProfileInput>();
+  const setProfile = useSetAtom(profileAtom);
+
+  // 입력할 때마다 store 반영 → 취소해도 store가 오염됨
+  useEffect(() => {
+    const sub = watch((values) => setProfile(values as ProfileInput));
+    return () => sub.unsubscribe();
+  }, [watch, setProfile]);
+}
+
+// ✅ GOOD: 제출 성공 시에만 store 반영
+function ProfileForm() {
+  const { register, handleSubmit } = useForm<ProfileInput>({
+    resolver: zodResolver(profileSchema),
+  });
+  const setProfile = useSetAtom(profileAtom);
+  const updateProfile = useUpdateProfile();
+
+  const onSubmit = (data: ProfileInput) => {
+    updateProfile.mutate(data, {
+      onSuccess: (saved) => {
+        setProfile(saved); // 서버 응답 성공 후에만 store 반영
+      },
+    });
+  };
+
+  return <form onSubmit={handleSubmit(onSubmit)}>...</form>;
+}
+```
+
+**검증:** `handleSubmit`의 콜백 외부에서 폼 값을 global store에 반영하는 코드가 있으면 REJECT. `onSubmit` 콜백 (또는 mutation의 `onSuccess`) 내에서만 외부 store를 업데이트한다.

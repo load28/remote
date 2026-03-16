@@ -470,3 +470,62 @@ function UserProfile({ shouldLoad }: { shouldLoad: boolean }) {
 ```
 
 **검증:** `forwardRef`, `defaultProps`, `propTypes`, string ref, `findDOMNode`, `UNSAFE_` lifecycle, Legacy Context, `React.SFC/VFC` 사용 시 REJECT (React 19+).
+
+---
+
+## C-16: 폼 필드 컴포넌트 분리 + useFormContext
+
+**분류:** ALWAYS (React Hook Form 사용 시)
+
+**WHY:** 모든 폼 필드를 하나의 컴포넌트에 넣으면 `formState` 변경(에러, dirty, touched 등)이 폼 전체를 re-render한다. 필드를 별도 컴포넌트로 분리하면 해당 필드의 상태만 변경될 때 그 컴포넌트만 re-render된다. `useFormContext`로 props drilling 없이 폼 메서드에 접근한다.
+
+```tsx
+// ❌ BAD: 모든 필드가 하나의 컴포넌트 → 한 필드 에러에 전체 re-render
+function SignupForm() {
+  const { register, handleSubmit, formState: { errors } } = useForm<SignupInput>({
+    resolver: zodResolver(signupSchema),
+  });
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('name')} />
+      {errors.name ? <span>{errors.name.message}</span> : null}
+      <input {...register('email')} />
+      {errors.email ? <span>{errors.email.message}</span> : null}
+      <input {...register('password')} />
+      {errors.password ? <span>{errors.password.message}</span> : null}
+      {/* 더 많은 필드... */}
+    </form>
+  );
+}
+
+// ✅ GOOD: 필드별 컴포넌트 분리 + FormProvider
+function SignupForm() {
+  const methods = useForm<SignupInput>({
+    resolver: zodResolver(signupSchema),
+  });
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(onSubmit)}>
+        <NameField />
+        <EmailField />
+        <PasswordField />
+        <button type="submit">가입</button>
+      </form>
+    </FormProvider>
+  );
+}
+
+function EmailField() {
+  const { register, formState: { errors } } = useFormContext<SignupInput>();
+  return (
+    <div>
+      <input {...register('email')} />
+      {errors.email ? <span>{errors.email.message}</span> : null}
+    </div>
+  );
+}
+```
+
+**적용 기준:** 폼 필드가 3개 이상이면 분리를 권장한다. 2개 이하의 단순 폼은 분리하지 않아도 된다.
+
+**검증:** 3개 이상 필드를 가진 폼에서 `FormProvider`/`useFormContext` 없이 모든 필드를 하나의 컴포넌트에 배치하면 REJECT.

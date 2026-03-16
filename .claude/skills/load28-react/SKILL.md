@@ -1,6 +1,6 @@
 ---
 name: load28-react
-description: Use when creating or modifying React, TSX, or JSX files - enforces 79 coding rules across architecture, naming, component, state, performance, and testing categories. Rules are embedded as structural slots in schemas — fill slots to design, generate code from filled slots.
+description: Use when creating or modifying React, TSX, or JSX files - enforces 95 coding rules across architecture, naming, component, state, performance, and testing categories. Rules are embedded as structural slots in schemas — fill slots to design, generate code from filled slots.
 ---
 
 <SUBAGENT-STOP>
@@ -26,7 +26,7 @@ Grammar Scan 없이 코드를 제출하지 않는다.
 
 ```
 ❌ 기존 (규칙 = 지식):
-   79개 규칙 암기 → 리액트 코드 구상 → 규칙 매칭 → 누락 발견 → 수정
+   95개 규칙 암기 → 리액트 코드 구상 → 규칙 매칭 → 누락 발견 → 수정
 
 ✅ 현재 (규칙 = 슬롯):
    스키마 로드 → 빈 슬롯 채우기 = 설계 완료

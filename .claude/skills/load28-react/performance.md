@@ -346,3 +346,35 @@ useEffect(() => {
 // ✅ GOOD: 부모에서 useMemo
 const filters = useMemo(() => ({ role, status }), [role, status]);
 ```
+
+---
+
+## P-15: 폼 validation mode 기본값
+
+**분류:** ALWAYS (React Hook Form 사용 시)
+
+**WHY:** `mode: 'onChange'`는 사용자가 타이핑할 때마다 validation을 실행한다. 필드 수가 많거나 zod 스키마가 복잡하면 매 키 입력마다 전체 스키마 검증이 실행되어 입력 지연이 발생한다. `'onBlur'`(포커스 해제 시) 또는 `'onSubmit'`(제출 시)을 기본으로 사용하고, `'onChange'`는 프로파일링 후 특정 필드에만 적용한다.
+
+```tsx
+// ❌ BAD: onChange → 매 타이핑마다 전체 validation
+const { register } = useForm<FormInput>({
+  resolver: zodResolver(complexSchema),
+  mode: 'onChange', // 50개 필드 × 매 키 입력 = 성능 저하
+});
+
+// ✅ GOOD: onBlur 기본 → 포커스 해제 시만 validation
+const { register } = useForm<FormInput>({
+  resolver: zodResolver(complexSchema),
+  mode: 'onBlur',
+});
+
+// ✅ GOOD: onSubmit 기본 (가장 가벼움)
+const { register } = useForm<FormInput>({
+  resolver: zodResolver(complexSchema),
+  // mode 생략 시 기본값이 'onSubmit'
+});
+```
+
+**예외:** 실시간 피드백이 UX에 필수적인 필드(비밀번호 강도 표시기 등)에서는 해당 필드에만 `onChange` 트리거를 적용할 수 있다. 이 경우에도 P-01(프로파일링) 원칙에 따라 성능 영향을 확인한다.
+
+**검증:** `useForm`에 `mode: 'onChange'`가 설정되어 있으면서 프로파일링 근거가 없으면 REJECT. `'onBlur'` 또는 `'onSubmit'`으로 변경한다.
