@@ -10,6 +10,7 @@ import type { InviteLink, GuestJoinInput } from '@/features/invite';
 import type { ThreadInfo, ThreadReply, ReadPosition, UnreadCount } from '@/features/thread';
 import type { Plan, PlanItem } from '@/features/plan';
 import type { Notification } from '@/features/notification';
+import type { ContestExportData } from '@/features/contest-export';
 
 // ✅ P-03: 모듈 레벨 상수
 const MOCK_PASSWORD = 'password';
@@ -813,6 +814,82 @@ export const handlers = [
     }
     plans = plans.filter((p) => p.id !== planId);
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // --- Contest Export ---
+  http.get('/api/channels/:channelId/contest-export', ({ params }) => {
+    const channelId = params['channelId'] as string;
+    const channel = channels.find((c) => c.id === channelId);
+    if (!channel) {
+      return HttpResponse.json({ message: 'Channel not found' }, { status: 404 });
+    }
+
+    const channelMessages = messages
+      .filter((m) => m.channelId === channelId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+    const channelThreads = threads.filter((t) => t.channelId === channelId);
+    const channelPlans = plans.filter((p) => p.channelId === channelId);
+
+    const exportMessages = channelMessages.map((msg) => {
+      const user = users.find((u) => u.id === msg.userId);
+      return {
+        id: msg.id,
+        userId: msg.userId,
+        displayName: user?.displayName ?? '알 수 없음',
+        content: msg.content,
+        createdAt: msg.createdAt,
+      };
+    });
+
+    const exportThreads = channelThreads.map((t) => {
+      const parentMsg = messages.find((m) => m.id === t.parentMessageId);
+      const replies = threadReplies
+        .filter((r) => r.threadId === t.id)
+        .map((r) => {
+          const replyUser = users.find((u) => u.id === r.userId);
+          return {
+            id: r.id,
+            userId: r.userId,
+            displayName: replyUser?.displayName ?? '알 수 없음',
+            content: r.content,
+            createdAt: r.createdAt,
+          };
+        });
+      const creator = users.find((u) => u.id === t.createdBy);
+      return {
+        id: t.id,
+        parentMessageContent: parentMsg?.content ?? '',
+        createdBy: creator?.displayName ?? '알 수 없음',
+        createdAt: t.createdAt,
+        replyCount: t.replyCount,
+        replies,
+      };
+    });
+
+    const exportPlans = channelPlans.map((p) => {
+      const creator = users.find((u) => u.id === p.createdBy);
+      return {
+        id: p.id,
+        title: p.title,
+        createdBy: creator?.displayName ?? '알 수 없음',
+        createdAt: p.createdAt,
+        items: p.items.map((planItem) => ({
+          content: planItem.content,
+          isCompleted: planItem.isCompleted,
+        })),
+      };
+    });
+
+    const exportData: ContestExportData = {
+      channelName: channel.name,
+      exportedAt: new Date().toISOString(),
+      messages: exportMessages,
+      threads: exportThreads,
+      plans: exportPlans,
+    };
+
+    return HttpResponse.json(exportData);
   }),
 
   // --- Notifications ---
