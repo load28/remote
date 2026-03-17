@@ -2,6 +2,7 @@
 // N-05: use + 동사
 
 import { useCallback } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useChannelThreads,
@@ -11,7 +12,10 @@ import {
   useLockThread,
   useUnlockThread,
   useMarkThreadAsRead,
-  useThreadStore,
+  activeThreadIdAtom,
+  isThreadPanelOpenAtom,
+  openThreadAtom,
+  closeThreadAtom,
   canReplyToThread,
   canLockThread,
   canUnlockThread,
@@ -54,10 +58,10 @@ export interface ChatThreadActions {
 export function useChatThread(channelId: string, userId: string): ChatThreadState & ChatThreadActions {
   const queryClient = useQueryClient();
 
-  const activeThreadId = useThreadStore((s) => s.activeThreadId);
-  const isThreadPanelOpen = useThreadStore((s) => s.isThreadPanelOpen);
-  const openThread = useThreadStore((s) => s.openThread);
-  const closeThread = useThreadStore((s) => s.closeThread);
+  const activeThreadId = useAtomValue(activeThreadIdAtom);
+  const isThreadPanelOpen = useAtomValue(isThreadPanelOpenAtom);
+  const openThread = useSetAtom(openThreadAtom);
+  const closeThread = useSetAtom(closeThreadAtom);
 
   const { data: channelThreads = DEFAULT_EMPTY_ARRAY } = useChannelThreads(channelId);
   const { data: threadReplies = DEFAULT_EMPTY_ARRAY } = useThreadReplies(activeThreadId ?? '');

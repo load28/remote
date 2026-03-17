@@ -27,8 +27,7 @@ export {
   UNREAD_COUNTS_QUERY_KEY,
 } from './model/useThread';
 
-export { useThreadStore } from './model/useThreadStore';
-export type { ThreadStoreState, ThreadStoreActions } from './model/useThreadStore';
+export { activeThreadIdAtom, isThreadPanelOpenAtom, openThreadAtom, closeThreadAtom } from './model/threadAtoms';
 
 // Domain
 export {

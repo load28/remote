@@ -1,4 +1,4 @@
-// 레퍼런스: interactive--event-naming--a11y.md, custom-emoji--form--mutation--zustand.md
+// 레퍼런스: interactive--event-naming--a11y.md, jotai--atom--client-state.md
 // C-07: SRP — 게스트 입장 폼
 // C-10: 파일당 1 exported 컴포넌트
 // S-13: controlled 컴포넌트

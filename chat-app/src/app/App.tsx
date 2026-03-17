@@ -8,8 +8,9 @@
 // A-07: barrel file public API만 사용
 
 import { lazy, Suspense, useCallback, useState } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { AppProviders } from './providers/AppProviders';
-import { LoginPage, useAuthStore, useRecentUsers, useAppConfig } from '@/features/auth';
+import { LoginPage, isAuthenticatedAtom, signInAsGuestAtom, useRecentUsers, useAppConfig } from '@/features/auth';
 import { GuestJoinPage, useInviteInfo, useJoinAsGuest } from '@/features/invite';
 
 // ✅ P-08: ChatPage를 lazy로 분리 — 로그인 전에는 번들에 포함되지 않음
@@ -32,7 +33,7 @@ function getInviteCode(): string | null {
 function GuestJoinRoute({ inviteCode }: { inviteCode: string }) {
   const { data, isLoading, isError, error } = useInviteInfo(inviteCode);
   const joinAsGuest = useJoinAsGuest(inviteCode);
-  const signInAsGuest = useAuthStore((s) => s.signInAsGuest);
+  const signInAsGuest = useSetAtom(signInAsGuestAtom);
 
   // ✅ N-03: handle 접두사
   const handleJoin = useCallback((nickname: string) => {
@@ -41,16 +42,16 @@ function GuestJoinRoute({ inviteCode }: { inviteCode: string }) {
       {
         // ✅ S-17: onSuccess는 사용처에서 정의
         onSuccess: (response) => {
-          signInAsGuest(
-            {
+          signInAsGuest({
+            user: {
               id: response.user.id,
               username: response.user.nickname,
               displayName: `${response.user.nickname} (게스트)`,
               avatarUrl: response.user.avatarUrl,
             },
-            response.token,
-            response.channelId,
-          );
+            token: response.token,
+            channelId: response.channelId,
+          });
           window.history.replaceState(null, '', '/');
         },
       },
@@ -70,7 +71,7 @@ function GuestJoinRoute({ inviteCode }: { inviteCode: string }) {
 }
 
 function AppContent() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthenticated = useAtomValue(isAuthenticatedAtom);
   const [inviteCode] = useState(getInviteCode);
 
   // ✅ S-04: TanStack Query 사용 (수동 fetch 패턴 미사용)

@@ -1,4 +1,4 @@
-// 레퍼런스: custom-emoji--form--mutation--zustand.md, modal--portal--focus-management--a11y.md
+// 레퍼런스: jotai--atom--client-state.md, modal--portal--focus-management--a11y.md
 // C-07: SRP, S-13: controlled, T-11: 시맨틱 HTML
 
 import { useState, type FormEvent } from 'react';

@@ -8,4 +8,4 @@ export type { CustomEmoji, CreateCustomEmojiInput, EmojiCategory } from '@/entit
 // feature 전용 (사용자 인터랙션 UI)
 export { EmojiPicker } from './components/EmojiPicker';
 export { CustomEmojiManager } from './components/CustomEmojiManager';
-export { useCustomEmojiStore } from './hooks/useCustomEmojiStore';
+export { customEmojisAtom, addCustomEmojiAtom, removeCustomEmojiAtom } from './model/emojiAtoms';

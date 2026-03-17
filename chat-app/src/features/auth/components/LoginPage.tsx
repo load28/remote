@@ -6,6 +6,7 @@
 // T-10: 라우트 레벨 에러 바운더리
 
 import { useMemo, useState } from 'react';
+import { useSetAtom } from 'jotai';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { useNotificationActions } from '@/shared/contexts/NotificationContext';
 import { AuthLayout } from './AuthLayout';
@@ -13,7 +14,7 @@ import { AuthForm } from './AuthForm';
 import { PasswordField } from './PasswordField';
 import { RecentUserList } from './RecentUserList';
 import { useLoginMutation } from '../hooks/useLoginMutation';
-import { useAuthStore } from '../hooks/useAuthStore';
+import { signInAtom } from '../model/authAtoms';
 import { usePasswordStrength } from '../hooks/usePasswordStrength';
 import type { AuthFormMode, RecentUser } from '../types';
 
@@ -49,7 +50,7 @@ export function LoginPage({ recentUsers, onLoginSuccess }: LoginPageProps) {
   const [errorMessage, setErrorMessage] = useState('');
 
   const loginMutation = useLoginMutation();
-  const signIn = useAuthStore((s) => s.signIn);
+  const signIn = useSetAtom(signInAtom);
   const { strength, updateStrength } = usePasswordStrength();
   const { addNotification } = useNotificationActions();
 
@@ -101,7 +102,7 @@ export function LoginPage({ recentUsers, onLoginSuccess }: LoginPageProps) {
         username: form.username.trim(),
         password: form.password,
       });
-      signIn(user, token);
+      signIn({ user, token });
       addNotification('success', '로그인 성공!');
       onLoginSuccess();
     } catch {

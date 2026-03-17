@@ -2,6 +2,7 @@
 // useChatThread 패턴 동일
 
 import { useCallback } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useChannelPlans,
@@ -10,7 +11,11 @@ import {
   useTogglePlanItem,
   useDeletePlanItem,
   useDeletePlan,
-  usePlanStore,
+  activePlanIdAtom,
+  isPlanPanelOpenAtom,
+  openPlanAtom,
+  closePlanAtom,
+  togglePlanPanelAtom,
   canDeletePlan,
   canAddItem,
   PLAN_QUERY_KEY,
@@ -30,11 +35,11 @@ export function useChatPlan(channelId: string, currentUserId: string) {
   const deletePlanItem = useDeletePlanItem();
   const deletePlan = useDeletePlan();
 
-  const activePlanId = usePlanStore((s) => s.activePlanId);
-  const isPlanPanelOpen = usePlanStore((s) => s.isPlanPanelOpen);
-  const openPlan = usePlanStore((s) => s.openPlan);
-  const closePlan = usePlanStore((s) => s.closePlan);
-  const togglePlanPanel = usePlanStore((s) => s.togglePlanPanel);
+  const activePlanId = useAtomValue(activePlanIdAtom);
+  const isPlanPanelOpen = useAtomValue(isPlanPanelOpenAtom);
+  const openPlan = useSetAtom(openPlanAtom);
+  const closePlan = useSetAtom(closePlanAtom);
+  const togglePlanPanel = useSetAtom(togglePlanPanelAtom);
 
   const activePlan = plans.find((p) => p.id === activePlanId) ?? null;
 

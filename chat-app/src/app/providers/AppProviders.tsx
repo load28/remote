@@ -2,6 +2,7 @@
 // S-07: 변경 빈도별 Context 분리, T-10: 앱 레벨 에러 바운더리
 
 import type { PropsWithChildren } from 'react';
+import { Provider as JotaiProvider } from 'jotai';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { NotificationProvider } from '@/shared/contexts/NotificationContext';
@@ -32,12 +33,14 @@ export function AppProviders({ children }: PropsWithChildren) {
         </div>
       )}
     >
-      <QueryClientProvider client={queryClient}>
-        {/* ✅ S-07: NotificationProvider 추가 — 읽기/쓰기 분리 Context */}
-        <NotificationProvider>
-          {children}
-        </NotificationProvider>
-      </QueryClientProvider>
+      <JotaiProvider>
+        <QueryClientProvider client={queryClient}>
+          {/* ✅ S-07: NotificationProvider 추가 — 읽기/쓰기 분리 Context */}
+          <NotificationProvider>
+            {children}
+          </NotificationProvider>
+        </QueryClientProvider>
+      </JotaiProvider>
     </ErrorBoundary>
   );
 }

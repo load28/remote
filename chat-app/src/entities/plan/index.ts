@@ -16,8 +16,7 @@ export {
   PLAN_QUERY_KEY,
 } from './model/usePlan';
 
-export { usePlanStore } from './model/usePlanStore';
-export type { PlanStoreState, PlanStoreActions } from './model/usePlanStore';
+export { activePlanIdAtom, isPlanPanelOpenAtom, openPlanAtom, closePlanAtom, togglePlanPanelAtom } from './model/planAtoms';
 
 // Domain
 export {

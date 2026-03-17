@@ -3,15 +3,16 @@
 // A-08: 단방향 데이터 흐름 (props down, events up)
 
 import { useCallback, useMemo, useState } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChannelList, ChannelMemberPanel, useChannels } from '@/features/channel';
 import { MessageList, MessageInput, MessageSearchBar, useMessages, useSendMessage, useMessageSearch, filterMessagesByQuery, MESSAGE_QUERY_KEY, type MessageAuthor, type Message } from '@/features/message';
 import { UserProfile, ProfileEditModal, useUsers, useUpdateProfile, USER_QUERY_KEY, type UpdateProfileInput } from '@/features/user';
 import { EmojiPicker, CustomEmojiManager, useCustomEmojis, useCreateCustomEmoji, useDeleteCustomEmoji, CUSTOM_EMOJI_QUERY_KEY, EMOJI_CATEGORIES, type CustomEmoji, type CreateCustomEmojiInput } from '@/features/emoji';
-import { WorkspaceSwitcher, useWorkspaces, useWorkspaceStore } from '@/features/workspace';
-import { useAuthStore } from '@/features/auth';
+import { WorkspaceSwitcher, useWorkspaces, selectedWorkspaceIdAtom, selectWorkspaceAtom } from '@/features/workspace';
+import { currentUserAtom, isGuestAtom, guestChannelIdAtom } from '@/features/auth';
 import { ThreadPanel, ThreadIndicator, UnreadBadge, type ThreadAuthor } from '@/features/thread';
-import { NotificationPanel, useNotifications, useReadNotification, useReadAllNotifications, useNotificationStore, getUnreadCount } from '@/features/notification';
+import { NotificationPanel, useNotifications, useReadNotification, useReadAllNotifications, isNotificationPanelOpenAtom, toggleNotificationPanelAtom, closeNotificationPanelAtom, getUnreadCount } from '@/features/notification';
 import { PlanPanel } from '@/features/plan';
 import { ContestExportPanel, useContestExport, useContestExportStore } from '@/features/contest-export';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
@@ -47,13 +48,13 @@ export function ChatPage() {
   const [messageContent, setMessageContent] = useState('');
 
   const queryClient = useQueryClient();
-  const currentUser = useAuthStore((s) => s.currentUser);
-  const isGuest = useAuthStore((s) => s.isGuest);
-  const guestChannelId = useAuthStore((s) => s.guestChannelId);
+  const currentUser = useAtomValue(currentUserAtom);
+  const isGuest = useAtomValue(isGuestAtom);
+  const guestChannelId = useAtomValue(guestChannelIdAtom);
   const currentUserId = currentUser?.id ?? '';
   const { data: workspaces = DEFAULT_EMPTY_ARRAY } = useWorkspaces();
-  const selectedWorkspaceId = useWorkspaceStore((s) => s.selectedWorkspaceId);
-  const selectWorkspace = useWorkspaceStore((s) => s.selectWorkspace);
+  const selectedWorkspaceId = useAtomValue(selectedWorkspaceIdAtom);
+  const selectWorkspace = useSetAtom(selectWorkspaceAtom);
   const { data: channels = DEFAULT_EMPTY_ARRAY } = useChannels();
   const { data: users = DEFAULT_EMPTY_ARRAY } = useUsers();
   const effectiveWorkspaceId = selectedWorkspaceId ?? workspaces[0]?.id ?? null;
@@ -84,9 +85,9 @@ export function ChatPage() {
   const { data: notifications = DEFAULT_EMPTY_ARRAY } = useNotifications(currentUserId);
   const readNotification = useReadNotification();
   const readAllNotifications = useReadAllNotifications();
-  const isNotificationPanelOpen = useNotificationStore((s) => s.isPanelOpen);
-  const toggleNotificationPanel = useNotificationStore((s) => s.togglePanel);
-  const closeNotificationPanel = useNotificationStore((s) => s.closePanel);
+  const isNotificationPanelOpen = useAtomValue(isNotificationPanelOpenAtom);
+  const toggleNotificationPanel = useSetAtom(toggleNotificationPanelAtom);
+  const closeNotificationPanel = useSetAtom(closeNotificationPanelAtom);
   const unreadNotificationCount = getUnreadCount(notifications);
 
   const handleReadNotification = (id: string) => {

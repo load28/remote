@@ -4,7 +4,6 @@ export type { Notification, NotificationType } from './model/types';
 export { useNotifications } from './model/useNotifications';
 export { useReadNotification } from './model/useReadNotification';
 export { useReadAllNotifications } from './model/useReadAllNotifications';
-export { useNotificationStore } from './model/useNotificationStore';
-export type { NotificationPanelState, NotificationPanelActions } from './model/useNotificationStore';
+export { isNotificationPanelOpenAtom, toggleNotificationPanelAtom, openNotificationPanelAtom, closeNotificationPanelAtom } from './model/notificationAtoms';
 export { getUnreadCount } from './model/notificationRules';
 export { notificationApi } from './api/notificationApi';

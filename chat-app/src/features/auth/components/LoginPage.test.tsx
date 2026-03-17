@@ -9,9 +9,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createStore, Provider } from 'jotai';
 import { createMockServer } from '@/shared/testing/setupMsw';
 import { LoginPage } from './LoginPage';
-import { useAuthStore } from '../hooks/useAuthStore';
+import { authStateAtom } from '../model/authAtoms';
+import type { AuthState } from '../model/authAtoms';
 import { NotificationProvider } from '@/shared/contexts/NotificationContext';
 import type { RecentUser } from '../types';
 
@@ -46,24 +48,36 @@ function createTestQueryClient() {
   });
 }
 
+// P-03: 모듈 레벨 상수
+const DEFAULT_AUTH_STATE: AuthState = {
+  currentUser: null,
+  token: null,
+  isAuthenticated: false,
+  isGuest: false,
+  guestChannelId: null,
+};
+
+let testStore: ReturnType<typeof createStore>;
+
 function renderLoginPage(props?: Partial<{ onLoginSuccess: () => void; recentUsers: RecentUser[] }>) {
   const queryClient = createTestQueryClient();
+  testStore = createStore();
+  testStore.set(authStateAtom, DEFAULT_AUTH_STATE);
   return render(
-    <QueryClientProvider client={queryClient}>
-      <NotificationProvider>
-        <LoginPage
-          recentUsers={props?.recentUsers ?? MOCK_RECENT_USERS}
-          onLoginSuccess={props?.onLoginSuccess ?? vi.fn()}
-        />
-      </NotificationProvider>
-    </QueryClientProvider>,
+    <Provider store={testStore}>
+      <QueryClientProvider client={queryClient}>
+        <NotificationProvider>
+          <LoginPage
+            recentUsers={props?.recentUsers ?? MOCK_RECENT_USERS}
+            onLoginSuccess={props?.onLoginSuccess ?? vi.fn()}
+          />
+        </NotificationProvider>
+      </QueryClientProvider>
+    </Provider>,
   );
 }
 
-// ✅ 테스트 간 Zustand store 초기화
-beforeEach(() => {
-  useAuthStore.setState({ currentUser: null, token: null, isAuthenticated: false });
-});
+// ✅ 테스트 간 Jotai store 초기화 — renderLoginPage()에서 매번 새 store 생성
 
 describe('LoginPage', () => {
   // ✅ T-08: 사용자 관점 쿼리
@@ -101,7 +115,7 @@ describe('LoginPage', () => {
       expect(handleLoginSuccess).toHaveBeenCalledOnce();
     });
 
-    const state = useAuthStore.getState();
+    const state = testStore.get(authStateAtom);
     expect(state.isAuthenticated).toBe(true);
     expect(state.currentUser?.username).toBe('jimin');
   });
