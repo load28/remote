@@ -1,0 +1,4 @@
+node_modules/
+.next/
+src/__generated__/
+*.tsbuildinfo
