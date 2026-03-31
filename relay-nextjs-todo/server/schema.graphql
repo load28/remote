@@ -1,0 +1,130 @@
+# =============================================================================
+# Relay 베스트 프랙티스: GraphQL 스키마 설계
+# =============================================================================
+#
+# 1. Node Interface: 모든 엔티티가 전역 고유 ID를 가져야 함 (Relay의 핵심 요구사항)
+#    - Relay는 이 ID를 사용해 클라이언트 캐시에서 객체를 식별/재사용함
+#
+# 2. Connection Pattern: 리스트는 반드시 Connection 스펙을 따름
+#    - edges/node/cursor/pageInfo 구조
+#    - 커서 기반 페이지네이션의 표준
+#
+# 3. Input Object: Mutation은 단일 input 파라미터를 받음
+#    - 확장성과 일관성을 위한 패턴
+#
+# 4. Payload Type: Mutation 응답은 전용 Payload 타입을 반환
+#    - 에러 처리와 다양한 반환 데이터를 유연하게 처리
+# =============================================================================
+
+# Relay Node Interface - 전역 ID로 어떤 객체든 재조회 가능
+interface Node {
+  id: ID!
+}
+
+# Todo 엔티티
+type Todo implements Node {
+  id: ID!
+  text: String!
+  completed: Boolean!
+  createdAt: String!
+}
+
+# Connection Pattern - Relay 표준 페이지네이션
+type TodoEdge {
+  cursor: String!
+  node: Todo!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type TodoConnection {
+  edges: [TodoEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+# Query
+type Query {
+  # Node Interface 구현: ID로 어떤 노드든 조회 가능
+  node(id: ID!): Node
+
+  # Todo 목록 조회 (Connection 패턴)
+  todos(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filter: TodoFilter
+  ): TodoConnection!
+}
+
+# 필터 옵션
+enum TodoFilter {
+  ALL
+  ACTIVE
+  COMPLETED
+}
+
+# =============================================================================
+# Mutations: Input/Payload 패턴
+# =============================================================================
+
+# Todo 추가
+input AddTodoInput {
+  text: String!
+}
+
+type AddTodoPayload {
+  todoEdge: TodoEdge!
+  query: Query
+}
+
+# Todo 수정 (텍스트 변경)
+input UpdateTodoInput {
+  id: ID!
+  text: String!
+}
+
+type UpdateTodoPayload {
+  todo: Todo!
+}
+
+# Todo 완료 토글
+input ToggleTodoInput {
+  id: ID!
+}
+
+type ToggleTodoPayload {
+  todo: Todo!
+}
+
+# Todo 삭제
+input RemoveTodoInput {
+  id: ID!
+}
+
+type RemoveTodoPayload {
+  deletedTodoId: ID!
+}
+
+# 전체 완료 토글
+input ToggleAllTodosInput {
+  completed: Boolean!
+}
+
+type ToggleAllTodosPayload {
+  changedTodos: [Todo!]!
+}
+
+type Mutation {
+  addTodo(input: AddTodoInput!): AddTodoPayload!
+  updateTodo(input: UpdateTodoInput!): UpdateTodoPayload!
+  toggleTodo(input: ToggleTodoInput!): ToggleTodoPayload!
+  removeTodo(input: RemoveTodoInput!): RemoveTodoPayload!
+  toggleAllTodos(input: ToggleAllTodosInput!): ToggleAllTodosPayload!
+}
