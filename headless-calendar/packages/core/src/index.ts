@@ -1,5 +1,6 @@
 export { createCalendarStore } from './store.js';
 export { createViewBuilder } from './viewBuilder.js';
+export { createTimeSlotDayGenerator } from './generators.js';
 export {
   withToday,
   withOutsideFlag,
@@ -11,6 +12,7 @@ export {
   withDisabled,
   withCustom,
 } from './presets.js';
+export type { TimeSlotDayOptions } from './generators.js';
 export type {
   BaseCell,
   CalendarEvent,

@@ -68,9 +68,6 @@ export type ViewGenerator = (cursor: Date, options: ViewBuilderOptions) => BaseC
 
 export interface ViewBuilderOptions {
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  dayStartHour?: number;
-  dayEndHour?: number;
-  slotInterval?: number;
 }
 
 export interface ViewBuilder<TCell extends BaseCell> {

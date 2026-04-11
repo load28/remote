@@ -5,7 +5,6 @@ import {
   endOfWeek,
   startOfDay,
   eachDayOfInterval,
-  set,
 } from 'date-fns';
 import type {
   BaseCell,
@@ -41,19 +40,8 @@ function generateWeekCells(cursor: Date, options: ViewBuilderOptions): BaseCell[
   return [days.map((date) => ({ date }))];
 }
 
-function generateDayCells(cursor: Date, options: ViewBuilderOptions): BaseCell[][] {
-  const { dayStartHour = 0, dayEndHour = 24, slotInterval = 60 } = options;
-  const dayStart = set(startOfDay(cursor), { hours: dayStartHour });
-  const slots: BaseCell[] = [];
-  let current = dayStart;
-  const minutesEnd = dayEndHour * 60;
-
-  while (current.getHours() * 60 + current.getMinutes() < minutesEnd) {
-    slots.push({ date: new Date(current) });
-    current = new Date(current.getTime() + slotInterval * 60 * 1000);
-  }
-
-  return [slots];
+function generateDayCells(cursor: Date, _options: ViewBuilderOptions): BaseCell[][] {
+  return [[{ date: startOfDay(cursor) }]];
 }
 
 const DEFAULT_GENERATORS: Record<string, ViewGenerator> = {
