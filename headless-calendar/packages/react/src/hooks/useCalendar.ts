@@ -1,0 +1,37 @@
+import { useMemo } from 'react';
+import {
+  createViewBuilder,
+  type CalendarStoreOptions,
+  type ViewBuilderOptions,
+  type BaseCell,
+  type BuildContext,
+  type ViewBuilder,
+} from '@calendar/core';
+import { useCalendarStore } from './useCalendarStore.js';
+import { useViewBuilder } from './useViewBuilder.js';
+
+export interface UseCalendarOptions extends CalendarStoreOptions {
+  viewBuilderOptions?: ViewBuilderOptions;
+}
+
+export function useCalendar<TCell extends BaseCell = BaseCell>(
+  options: UseCalendarOptions = {},
+  configurePipes?: (builder: ViewBuilder<BaseCell>) => ViewBuilder<TCell>,
+) {
+  const { viewBuilderOptions, ...storeOptions } = options;
+  const { state, store, ...actions } = useCalendarStore(storeOptions);
+
+  const builder = useMemo(() => {
+    const base = createViewBuilder(viewBuilderOptions);
+    return configurePipes ? configurePipes(base) : base as unknown as ViewBuilder<TCell>;
+  }, []);
+
+  const grid = useViewBuilder(builder, state.cursor, state.view);
+
+  return {
+    state,
+    store,
+    grid,
+    ...actions,
+  };
+}
