@@ -4,7 +4,6 @@ import {
   type CalendarStoreOptions,
   type ViewBuilderOptions,
   type BaseCell,
-  type BuildContext,
   type ViewBuilder,
 } from '@calendar/core';
 import { useCalendarStore } from './useCalendarStore.js';
@@ -26,7 +25,7 @@ export function useCalendar<TCell extends BaseCell = BaseCell>(
     return configurePipes ? configurePipes(base) : base as unknown as ViewBuilder<TCell>;
   }, []);
 
-  const grid = useViewBuilder(builder, state.cursor, state.view);
+  const grid = useViewBuilder(builder, state);
 
   return {
     state,

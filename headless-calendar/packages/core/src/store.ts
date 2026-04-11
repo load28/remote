@@ -30,8 +30,7 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
   const listeners = new Set<(state: CalendarState) => void>();
 
   function notify(): void {
-    const snapshot = { ...state };
-    listeners.forEach((fn) => fn(snapshot));
+    listeners.forEach((fn) => fn(state));
   }
 
   function setState(updater: Partial<CalendarState> | ((prev: CalendarState) => CalendarState)): void {
@@ -41,7 +40,7 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
 
   return {
     getState() {
-      return { ...state };
+      return state;
     },
 
     subscribe(listener) {
