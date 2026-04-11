@@ -5,6 +5,7 @@ export { useCalendar, type UseCalendarOptions } from './hooks/useCalendar.js';
 export {
   createCalendarStore,
   createViewBuilder,
+  createTimeSlotDayGenerator,
   withToday,
   withOutsideFlag,
   withSelection,
@@ -26,6 +27,7 @@ export type {
   NavigationStrategy,
   BuildContext,
   PipeFn,
+  TimeSlotDayOptions,
   ViewBuilder,
   ViewBuilderOptions,
   ViewGenerator,
