@@ -3,6 +3,7 @@ import {
   useCalendarStore,
   useViewBuilder,
   createViewBuilder,
+  createTimeSlotDayGenerator,
   withFixedWeeks,
   withToday,
   withOutsideFlag,
@@ -32,14 +33,16 @@ export function App() {
   useEffect(() => {
     if (seeded.current) return;
     seeded.current = true;
-    store.addEvent({ title: '팀 회의', start: new Date(2026, 3, 11), color: '#4f46e5' });
-    store.addEvent({ title: '런치', start: new Date(2026, 3, 11), color: '#16a34a' });
-    store.addEvent({ title: '디자인 리뷰', start: new Date(2026, 3, 15), color: '#ea580c' });
-    store.addEvent({ title: '배포', start: new Date(2026, 3, 22), color: '#dc2626' });
-    store.addEvent({ title: '회고', start: new Date(2026, 3, 30), color: '#0891b2' });
+    store.addEvent({ title: '팀 회의',     start: new Date(2026, 3, 11, 10, 0), color: '#4f46e5' });
+    store.addEvent({ title: '런치',         start: new Date(2026, 3, 11, 12, 0), color: '#16a34a' });
+    store.addEvent({ title: '디자인 리뷰',  start: new Date(2026, 3, 11, 14, 0), color: '#ea580c' });
+    store.addEvent({ title: '1:1',          start: new Date(2026, 3, 11, 16, 0), color: '#0891b2' });
+    store.addEvent({ title: '배포',         start: new Date(2026, 3, 22, 16, 0), color: '#dc2626' });
+    store.addEvent({ title: '회고',         start: new Date(2026, 3, 30, 17, 0), color: '#0891b2' });
   }, [store]);
 
-  const builder = useMemo(
+  // Month용 빌더: withFixedWeeks 등 month 전용 pipe
+  const monthBuilder = useMemo(
     () =>
       createViewBuilder({ weekStartsOn: 0 })
         .pipe(withFixedWeeks(6))
@@ -51,8 +54,43 @@ export function App() {
     [store],
   );
 
-  const grid = useViewBuilder(builder, state);
+  // Day용 빌더: 옵트인 타임슬롯 제너레이터 등록
+  const dayBuilder = useMemo(
+    () =>
+      createViewBuilder().register(
+        'day',
+        createTimeSlotDayGenerator({
+          startHour: 9,
+          endHour: 18,
+          slotMinutes: 60,
+        }),
+      ),
+    [],
+  );
+
+  const monthGrid = useViewBuilder(monthBuilder, state);
+
+  const dayAnchor = state.selected[0] ?? state.cursor;
+  const daySlots = useMemo(
+    () => dayBuilder.build(dayAnchor, 'day')[0],
+    [dayBuilder, dayAnchor],
+  );
+
+  // 타임슬롯별 이벤트 매칭 (슬롯 시작 ~ 다음 슬롯)
+  const slotEvents = useMemo(() => {
+    const slotMs = 60 * 60 * 1000;
+    return daySlots.map((slot) => {
+      const slotStart = slot.date.getTime();
+      const slotEnd = slotStart + slotMs;
+      return state.events.filter((ev) => {
+        const t = ev.start.getTime();
+        return t >= slotStart && t < slotEnd;
+      });
+    });
+  }, [daySlots, state.events]);
+
   const monthLabel = format(state.cursor, 'yyyy년 M월');
+  const dayLabel = format(dayAnchor, 'M월 d일 (EEEE)');
 
   return (
     <div className="app">
@@ -81,7 +119,7 @@ export function App() {
         </div>
 
         <div className="grid">
-          {grid.map((row, rowIndex) => (
+          {monthGrid.map((row, rowIndex) => (
             <div className="row" key={rowIndex}>
               {row.map((cell) => {
                 const cls = [
@@ -118,6 +156,40 @@ export function App() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="schedule" data-testid="day-schedule">
+        <div className="schedule-head">
+          <h3 className="schedule-title">
+            Day schedule <span className="schedule-date">· {dayLabel}</span>
+          </h3>
+          <code className="schedule-hint">
+            createTimeSlotDayGenerator({'{'} startHour: 9, endHour: 18, slotMinutes: 60 {'}'})
+          </code>
+        </div>
+
+        <ol className="slots">
+          {daySlots.map((slot, i) => (
+            <li key={slot.date.toISOString()} className="slot">
+              <span className="slot-time">{format(slot.date, 'HH:mm')}</span>
+              <div className="slot-events">
+                {slotEvents[i].length === 0 ? (
+                  <span className="slot-empty">—</span>
+                ) : (
+                  slotEvents[i].map((ev) => (
+                    <span
+                      key={ev.id}
+                      className="slot-event"
+                      style={{ backgroundColor: ev.color ?? '#64748b' }}
+                    >
+                      {ev.title}
+                    </span>
+                  ))
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <footer className="footer">
