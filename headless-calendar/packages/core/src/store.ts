@@ -15,7 +15,6 @@ const DEFAULT_NAVIGATION: Record<string, NavigationStrategy> = {
 };
 
 const EMPTY_EVENTS: CalendarEvent[] = [];
-const DAY_MS = 86_400_000;
 
 export function createCalendarStore(options: CalendarStoreOptions = {}): CalendarStore {
   const navigation: Record<string, NavigationStrategy> = {
@@ -91,15 +90,18 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
 
     const map = new Map<number, CalendarEvent[]>();
     for (const ev of state.events) {
-      const startMs = startOfDay(ev.start).getTime();
-      const endMs = ev.end ? startOfDay(ev.end).getTime() : startMs;
-      for (let key = startMs; key <= endMs; key += DAY_MS) {
+      const evStart = startOfDay(ev.start);
+      const evEnd = ev.end ? startOfDay(ev.end) : evStart;
+      let current = evStart;
+      while (current <= evEnd) {
+        const key = current.getTime();
         let bucket = map.get(key);
         if (!bucket) {
           bucket = [];
           map.set(key, bucket);
         }
         bucket.push(ev);
+        current = addDays(current, 1);
       }
     }
 
@@ -144,13 +146,15 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
     },
 
     selectRange(start, end) {
-      const sMs = startOfDay(start).getTime();
-      const eMs = startOfDay(end).getTime();
-      const fromMs = Math.min(sMs, eMs);
-      const toMs = Math.max(sMs, eMs);
+      const s = startOfDay(start);
+      const e = startOfDay(end);
+      const from = s <= e ? s : e;
+      const to = s <= e ? e : s;
       const range: Date[] = [];
-      for (let ms = fromMs; ms <= toMs; ms += DAY_MS) {
-        range.push(new Date(ms));
+      let current = from;
+      while (current <= to) {
+        range.push(current);
+        current = addDays(current, 1);
       }
       setState({ selected: range });
     },
@@ -207,13 +211,14 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
     },
 
     getEventsForRange(start, end) {
-      const sMs = startOfDay(start).getTime();
-      const eMs = startOfDay(end).getTime();
+      const s = startOfDay(start);
+      const e = startOfDay(end);
       const index = buildEventIndex();
       const seen = new Set<string>();
       const result: CalendarEvent[] = [];
-      for (let ms = sMs; ms <= eMs; ms += DAY_MS) {
-        const bucket = index.get(ms);
+      let current = s;
+      while (current <= e) {
+        const bucket = index.get(current.getTime());
         if (bucket) {
           for (const ev of bucket) {
             if (!seen.has(ev.id)) {
@@ -222,6 +227,7 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
             }
           }
         }
+        current = addDays(current, 1);
       }
       return result;
     },

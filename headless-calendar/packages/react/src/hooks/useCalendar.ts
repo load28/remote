@@ -20,16 +20,13 @@ export function useCalendar<TCell extends BaseCell = BaseCell>(
   const { viewBuilderOptions, ...storeOptions } = options;
   const { state, store, ...actions } = useCalendarStore(storeOptions);
 
-  // Serialize to a stable primitive so inline `{ weekStartsOn, fixedWeeks }`
-  // objects don't cause a rebuild every render.  Forward-compatible with any
-  // future ViewBuilderOptions fields without manual extraction.
-  const builderDeps = JSON.stringify(viewBuilderOptions ?? {});
+  const weekStartsOn = viewBuilderOptions?.weekStartsOn;
+  const fixedWeeks = viewBuilderOptions?.fixedWeeks;
 
   const builder = useMemo(() => {
-    const base = createViewBuilder(viewBuilderOptions);
+    const base = createViewBuilder({ weekStartsOn, fixedWeeks });
     return configurePipes ? configurePipes(base) : base as unknown as ViewBuilder<TCell>;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [builderDeps, configurePipes]);
+  }, [weekStartsOn, fixedWeeks, configurePipes]);
 
   const grid = useViewBuilder(builder, state);
 
