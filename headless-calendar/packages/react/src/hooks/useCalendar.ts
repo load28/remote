@@ -21,11 +21,12 @@ export function useCalendar<TCell extends BaseCell = BaseCell>(
   const { state, store, ...actions } = useCalendarStore(storeOptions);
 
   const weekStartsOn = viewBuilderOptions?.weekStartsOn;
+  const fixedWeeks = viewBuilderOptions?.fixedWeeks;
 
   const builder = useMemo(() => {
-    const base = createViewBuilder({ weekStartsOn });
+    const base = createViewBuilder({ weekStartsOn, fixedWeeks });
     return configurePipes ? configurePipes(base) : base as unknown as ViewBuilder<TCell>;
-  }, [weekStartsOn, configurePipes]);
+  }, [weekStartsOn, fixedWeeks, configurePipes]);
 
   const grid = useViewBuilder(builder, state);
 

@@ -4,6 +4,7 @@ import {
   startOfWeek,
   endOfWeek,
   startOfDay,
+  addDays,
   eachDayOfInterval,
 } from 'date-fns';
 import type {
@@ -16,7 +17,7 @@ import type {
 } from './types.js';
 
 function generateMonthCells(cursor: Date, options: ViewBuilderOptions): BaseCell[][] {
-  const { weekStartsOn = 0 } = options;
+  const { weekStartsOn = 0, fixedWeeks } = options;
   const monthStart = startOfMonth(cursor);
   const monthEnd = endOfMonth(cursor);
   const gridStart = startOfWeek(monthStart, { weekStartsOn });
@@ -29,7 +30,18 @@ function generateMonthCells(cursor: Date, options: ViewBuilderOptions): BaseCell
   for (let i = 0; i < cells.length; i += 7) {
     rows.push(cells.slice(i, i + 7));
   }
-  return rows;
+
+  if (fixedWeeks && rows.length < fixedWeeks) {
+    while (rows.length < fixedWeeks) {
+      const lastRow = rows[rows.length - 1];
+      const lastDate = lastRow[lastRow.length - 1].date;
+      rows.push(
+        Array.from({ length: 7 }, (_, i) => ({ date: addDays(lastDate, i + 1) })),
+      );
+    }
+  }
+
+  return fixedWeeks ? rows.slice(0, fixedWeeks) : rows;
 }
 
 function generateWeekCells(cursor: Date, options: ViewBuilderOptions): BaseCell[][] {
@@ -50,25 +62,37 @@ const DEFAULT_GENERATORS: Record<string, ViewGenerator> = {
   day: generateDayCells,
 };
 
-export function createViewBuilder<TCell extends BaseCell = BaseCell>(
-  options: ViewBuilderOptions = {},
+type AnyPipeFn = (cells: any[][], context: BuildContext) => any[][];
+
+/**
+ * Internal factory that carries accumulated pipes and generators.
+ *
+ * Every `pipe()` and `register()` call returns a **new** builder instance so
+ * the original is never mutated.  This prevents the shared-builder aliasing
+ * bug where forking a base builder silently appends pipes to both forks.
+ */
+function _createBuilder<TCell extends BaseCell>(
+  options: ViewBuilderOptions,
+  pipes: AnyPipeFn[],
+  generators: Record<string, ViewGenerator>,
 ): ViewBuilder<TCell> {
-  type AnyPipeFn = (cells: any[][], context: BuildContext) => any[][];
-
-  const pipes: AnyPipeFn[] = [];
-  const generators: Record<string, ViewGenerator> = { ...DEFAULT_GENERATORS };
-
-  const builder: ViewBuilder<TCell> = {
+  return {
     pipe<TExtra = {}>(
       fn: (cells: TCell[][], context: BuildContext) => (TCell & TExtra)[][],
     ): ViewBuilder<TCell & TExtra> {
-      pipes.push(fn as AnyPipeFn);
-      return builder as unknown as ViewBuilder<TCell & TExtra>;
+      return _createBuilder<TCell & TExtra>(
+        options,
+        [...pipes, fn as AnyPipeFn],
+        generators,
+      );
     },
 
     register(viewName: string, generator: ViewGenerator): ViewBuilder<TCell> {
-      generators[viewName] = generator;
-      return builder;
+      return _createBuilder<TCell>(
+        options,
+        pipes,
+        { ...generators, [viewName]: generator },
+      );
     },
 
     build(cursor: Date, view: ViewType = 'month') {
@@ -90,6 +114,10 @@ export function createViewBuilder<TCell extends BaseCell = BaseCell>(
       return cells as TCell[][] & { meta?: Record<string, unknown> };
     },
   };
+}
 
-  return builder;
+export function createViewBuilder<TCell extends BaseCell = BaseCell>(
+  options: ViewBuilderOptions = {},
+): ViewBuilder<TCell> {
+  return _createBuilder<TCell>(options, [], { ...DEFAULT_GENERATORS });
 }
