@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import type { CalendarEvent, CalendarStore } from '@calendar/core';
 import { useCalendarStoreContext } from '../CalendarProvider.js';
 
