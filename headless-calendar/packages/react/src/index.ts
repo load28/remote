@@ -6,8 +6,15 @@ export {
 } from './hooks/useCalendarStore.js';
 export { useViewBuilder } from './hooks/useViewBuilder.js';
 export { useCalendar, type UseCalendarOptions } from './hooks/useCalendar.js';
-export { useCalendarSelector } from './hooks/useCalendarSelector.js';
+export { useCalendarSelector, shallowEqual } from './hooks/useCalendarSelector.js';
 export { useCalendarEvents } from './hooks/useCalendarEvents.js';
+export { useCalendarGrid } from './hooks/useCalendarGrid.js';
+export {
+  useCalendarProps,
+  type CellProps,
+  type NavButtonProps,
+  type UseCalendarPropsOptions,
+} from './hooks/useCalendarProps.js';
 export {
   CalendarProvider,
   useCalendarStoreContext,
