@@ -9,10 +9,10 @@ import { useCalendarStoreContext } from '../CalendarProvider.js';
  * that filters events for the requested date(s) and caches the result.
  *
  * Two levels of caching avoid unnecessary work:
- * 1. If `state.events` reference hasn't changed, the previous result is
- *    returned immediately (fast path — skips the filter entirely).
- * 2. If events did change, the filtered result is compared element-wise
- *    so unrelated event mutations don't trigger a re-render.
+ * 1. If `state.events` reference AND date parameters are both unchanged,
+ *    the previous result is returned immediately (fast path).
+ * 2. If events or date params changed, the filtered result is compared
+ *    element-wise so unrelated mutations don't trigger a re-render.
  *
  * @example
  * // single date
@@ -29,17 +29,21 @@ export function useCalendarEvents(dateOrStart: Date, end?: Date): CalendarEvent[
   const startMs = dateOrStart.getTime();
   const endMs = end?.getTime();
 
-  const prevEventsRef = useRef<CalendarEvent[]>([]);
-  const resultRef = useRef<CalendarEvent[]>([]);
+  const cacheRef = useRef<{
+    eventsRef: CalendarEvent[];
+    startMs: number;
+    endMs: number | undefined;
+    result: CalendarEvent[];
+  }>({ eventsRef: [], startMs: 0, endMs: undefined, result: [] });
 
   const getSnapshot = useCallback(() => {
     const currentEvents = store.getState().events;
+    const c = cacheRef.current;
 
-    // Fast path: events array unchanged → filtered result unchanged
-    if (currentEvents === prevEventsRef.current) {
-      return resultRef.current;
+    // Fast path: both events array AND date params unchanged
+    if (currentEvents === c.eventsRef && startMs === c.startMs && endMs === c.endMs) {
+      return c.result;
     }
-    prevEventsRef.current = currentEvents;
 
     const next = endMs !== undefined
       ? store.getEventsForRange(new Date(startMs), new Date(endMs))
@@ -47,13 +51,14 @@ export function useCalendarEvents(dateOrStart: Date, end?: Date): CalendarEvent[
 
     // Return stable reference if filtered contents are identical
     if (
-      next.length === resultRef.current.length
-      && next.every((e: CalendarEvent, i: number) => e === resultRef.current[i])
+      next.length === c.result.length
+      && next.every((e: CalendarEvent, i: number) => e === c.result[i])
     ) {
-      return resultRef.current;
+      cacheRef.current = { eventsRef: currentEvents, startMs, endMs, result: c.result };
+      return c.result;
     }
 
-    resultRef.current = next;
+    cacheRef.current = { eventsRef: currentEvents, startMs, endMs, result: next };
     return next;
   }, [store, startMs, endMs]);
 

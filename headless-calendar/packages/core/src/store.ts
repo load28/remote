@@ -192,17 +192,20 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
     },
 
     removeEvent(id) {
-      setState((prev) => ({
-        ...prev,
-        events: prev.events.filter((e) => e.id !== id),
-      }));
+      setState((prev) => {
+        const events = prev.events.filter((e) => e.id !== id);
+        if (events.length === prev.events.length) return prev;
+        return { ...prev, events };
+      });
     },
 
     updateEvent(id, patch) {
-      setState((prev) => ({
-        ...prev,
-        events: prev.events.map((e) => (e.id === id ? { ...e, ...patch } : e)),
-      }));
+      setState((prev) => {
+        const idx = prev.events.findIndex((e) => e.id === id);
+        if (idx === -1) return prev;
+        const events = prev.events.map((e, i) => (i === idx ? { ...e, ...patch } : e));
+        return { ...prev, events };
+      });
     },
 
     getEventsForDate(date) {
@@ -213,11 +216,13 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
     getEventsForRange(start, end) {
       const s = startOfDay(start);
       const e = startOfDay(end);
+      const from = s <= e ? s : e;
+      const to = s <= e ? e : s;
       const index = buildEventIndex();
       const seen = new Set<string>();
       const result: CalendarEvent[] = [];
-      let current = s;
-      while (current <= e) {
+      let current = from;
+      while (current <= to) {
         const bucket = index.get(current.getTime());
         if (bucket) {
           for (const ev of bucket) {
