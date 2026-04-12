@@ -1,6 +1,5 @@
 export {
   useCalendarStore,
-  extractActions,
   type CalendarActions,
   type UseCalendarStoreReturn,
 } from './hooks/useCalendarStore.js';
