@@ -6,9 +6,7 @@ import {
   type CalendarStore,
 } from '@calendar/core';
 
-export interface UseCalendarStoreReturn {
-  state: CalendarState;
-  store: CalendarStore;
+export interface CalendarActions {
   next: () => void;
   prev: () => void;
   today: () => void;
@@ -23,18 +21,13 @@ export interface UseCalendarStoreReturn {
   updateEvent: CalendarStore['updateEvent'];
 }
 
-export function useCalendarStore(options: CalendarStoreOptions = {}): UseCalendarStoreReturn {
-  const store = useMemo(() => createCalendarStore(options), []);
+export interface UseCalendarStoreReturn extends CalendarActions {
+  state: CalendarState;
+  store: CalendarStore;
+}
 
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getState,
-    store.getState,
-  );
-
-  return useMemo(() => ({
-    state,
-    store,
+export function extractActions(store: CalendarStore): CalendarActions {
+  return {
     next: store.next,
     prev: store.prev,
     today: store.today,
@@ -47,5 +40,20 @@ export function useCalendarStore(options: CalendarStoreOptions = {}): UseCalenda
     addEvent: store.addEvent,
     removeEvent: store.removeEvent,
     updateEvent: store.updateEvent,
-  }), [state, store]);
+  };
+}
+
+export function useCalendarStore(options: CalendarStoreOptions = {}): UseCalendarStoreReturn {
+  const store = useMemo(() => createCalendarStore(options), []);
+
+  const state = useSyncExternalStore(
+    store.subscribe,
+    store.getState,
+    store.getState,
+  );
+
+  return useMemo(
+    () => ({ state, store, ...extractActions(store) }),
+    [state, store],
+  );
 }
