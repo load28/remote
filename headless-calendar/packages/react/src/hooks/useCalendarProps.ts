@@ -1,7 +1,6 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import type { BaseCell } from '@calendar/core';
 import { useCalendarActions } from '../CalendarProvider.js';
-import type { CalendarActions } from './useCalendarStore.js';
 
 export interface CellProps {
   role: 'gridcell';
@@ -22,6 +21,8 @@ type CellClickMode = 'select' | 'toggleSelect' | ((date: Date) => void);
 export interface UseCalendarPropsOptions {
   onCellClick?: CellClickMode;
 }
+
+const NAV_LABELS: Record<string, string> = { prev: 'Previous', next: 'Next', today: 'Today' };
 
 /**
  * Prop getters for calendar cells and navigation buttons.
@@ -48,10 +49,15 @@ export function useCalendarProps(options: UseCalendarPropsOptions = {}) {
   const actions = useCalendarActions();
   const { onCellClick = 'select' } = options;
 
-  const cellHandler = useMemo<(date: Date) => void>(() => {
-    if (typeof onCellClick === 'function') return onCellClick;
-    return onCellClick === 'toggleSelect' ? actions.toggleSelect : actions.select;
-  }, [actions, onCellClick]);
+  const onCellClickRef = useRef(onCellClick);
+  onCellClickRef.current = onCellClick;
+
+  const cellHandler = useCallback((date: Date) => {
+    const mode = onCellClickRef.current;
+    if (typeof mode === 'function') return mode(date);
+    if (mode === 'toggleSelect') return actions.toggleSelect(date);
+    actions.select(date);
+  }, [actions]);
 
   const getCellProps = useCallback(
     (cell: BaseCell & { selected?: boolean; disabled?: boolean }): CellProps => {
@@ -71,8 +77,6 @@ export function useCalendarProps(options: UseCalendarPropsOptions = {}) {
     () => ({ prev: actions.prev, next: actions.next, today: actions.today }),
     [actions],
   );
-
-  const NAV_LABELS: Record<string, string> = { prev: 'Previous', next: 'Next', today: 'Today' };
 
   const getNavProps = useCallback(
     (direction: 'prev' | 'next' | 'today'): NavButtonProps => ({
