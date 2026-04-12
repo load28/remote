@@ -1,6 +1,19 @@
-export { useCalendarStore, type UseCalendarStoreReturn } from './hooks/useCalendarStore.js';
+export {
+  useCalendarStore,
+  extractActions,
+  type CalendarActions,
+  type UseCalendarStoreReturn,
+} from './hooks/useCalendarStore.js';
 export { useViewBuilder } from './hooks/useViewBuilder.js';
 export { useCalendar, type UseCalendarOptions } from './hooks/useCalendar.js';
+export { useCalendarSelector } from './hooks/useCalendarSelector.js';
+export { useCalendarEvents } from './hooks/useCalendarEvents.js';
+export {
+  CalendarProvider,
+  useCalendarStoreContext,
+  useCalendarState,
+  useCalendarActions,
+} from './CalendarProvider.js';
 
 export {
   createCalendarStore,
