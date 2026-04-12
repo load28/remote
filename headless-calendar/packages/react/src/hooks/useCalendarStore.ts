@@ -52,8 +52,10 @@ export function useCalendarStore(options: CalendarStoreOptions = {}): UseCalenda
     store.getState,
   );
 
+  const actions = useMemo(() => extractActions(store), [store]);
+
   return useMemo(
-    () => ({ state, store, ...extractActions(store) }),
-    [state, store],
+    () => ({ state, store, ...actions }),
+    [state, store, actions],
   );
 }

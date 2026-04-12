@@ -8,6 +8,9 @@ import { useCalendarState } from '../CalendarProvider.js';
  * Same logic as `useViewBuilder` but reads cursor/view from context,
  * so the builder doesn't need to be wired to state manually.
  *
+ * Dependencies use individual state fields so the grid only rebuilds when
+ * a field it could depend on actually changes (see useViewBuilder).
+ *
  * @example
  * function MonthView({ builder }: { builder: ViewBuilder<MyCell> }) {
  *   const grid = useCalendarGrid(builder);
@@ -21,6 +24,6 @@ export function useCalendarGrid<TCell extends BaseCell>(
 
   return useMemo(
     () => builder.build(state.cursor, state.view),
-    [builder, state],
+    [builder, state.cursor, state.view, state.selected, state.events],
   );
 }
