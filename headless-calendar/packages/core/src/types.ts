@@ -51,6 +51,7 @@ export interface CalendarStore {
   updateEvent(id: string, patch: Partial<CalendarEvent>): void;
   getEventsForDate(date: Date): CalendarEvent[];
   getEventsForRange(start: Date, end: Date): CalendarEvent[];
+  batch(fn: () => void): void;
 }
 
 export interface BuildContext {
@@ -68,6 +69,7 @@ export type ViewGenerator = (cursor: Date, options: ViewBuilderOptions) => BaseC
 
 export interface ViewBuilderOptions {
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  fixedWeeks?: number;
 }
 
 export interface ViewBuilder<TCell extends BaseCell> {

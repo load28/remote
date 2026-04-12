@@ -4,7 +4,6 @@ import {
   useViewBuilder,
   createViewBuilder,
   createTimeSlotDayGenerator,
-  withFixedWeeks,
   withToday,
   withOutsideFlag,
   withSelection,
@@ -33,19 +32,20 @@ export function App() {
   useEffect(() => {
     if (seeded.current) return;
     seeded.current = true;
-    store.addEvent({ title: '팀 회의',     start: new Date(2026, 3, 11, 10, 0), color: '#4f46e5' });
-    store.addEvent({ title: '런치',         start: new Date(2026, 3, 11, 12, 0), color: '#16a34a' });
-    store.addEvent({ title: '디자인 리뷰',  start: new Date(2026, 3, 11, 14, 0), color: '#ea580c' });
-    store.addEvent({ title: '1:1',          start: new Date(2026, 3, 11, 16, 0), color: '#0891b2' });
-    store.addEvent({ title: '배포',         start: new Date(2026, 3, 22, 16, 0), color: '#dc2626' });
-    store.addEvent({ title: '회고',         start: new Date(2026, 3, 30, 17, 0), color: '#0891b2' });
+    store.batch(() => {
+      store.addEvent({ title: '팀 회의',     start: new Date(2026, 3, 11, 10, 0), color: '#4f46e5' });
+      store.addEvent({ title: '런치',         start: new Date(2026, 3, 11, 12, 0), color: '#16a34a' });
+      store.addEvent({ title: '디자인 리뷰',  start: new Date(2026, 3, 11, 14, 0), color: '#ea580c' });
+      store.addEvent({ title: '1:1',          start: new Date(2026, 3, 11, 16, 0), color: '#0891b2' });
+      store.addEvent({ title: '배포',         start: new Date(2026, 3, 22, 16, 0), color: '#dc2626' });
+      store.addEvent({ title: '회고',         start: new Date(2026, 3, 30, 17, 0), color: '#0891b2' });
+    });
   }, [store]);
 
-  // Month용 빌더: withFixedWeeks 등 month 전용 pipe
+  // Month용 빌더: fixedWeeks 옵션으로 6줄 고정 (generator 레벨에서 패딩)
   const monthBuilder = useMemo(
     () =>
-      createViewBuilder({ weekStartsOn: 0 })
-        .pipe(withFixedWeeks(6))
+      createViewBuilder({ weekStartsOn: 0, fixedWeeks: 6 })
         .pipe(withToday())
         .pipe(withOutsideFlag())
         .pipe(withWeekend())

@@ -1,4 +1,4 @@
-import { useMemo, useSyncExternalStore } from 'react';
+import { useState, useMemo, useSyncExternalStore } from 'react';
 import {
   createCalendarStore,
   type CalendarStoreOptions,
@@ -19,6 +19,7 @@ export interface CalendarActions {
   addEvent: CalendarStore['addEvent'];
   removeEvent: CalendarStore['removeEvent'];
   updateEvent: CalendarStore['updateEvent'];
+  batch: CalendarStore['batch'];
 }
 
 export interface UseCalendarStoreReturn extends CalendarActions {
@@ -40,11 +41,14 @@ export function extractActions(store: CalendarStore): CalendarActions {
     addEvent: store.addEvent,
     removeEvent: store.removeEvent,
     updateEvent: store.updateEvent,
+    batch: store.batch,
   };
 }
 
 export function useCalendarStore(options: CalendarStoreOptions = {}): UseCalendarStoreReturn {
-  const store = useMemo(() => createCalendarStore(options), []);
+  // useState initializer runs exactly once — no exhaustive-deps lint issue
+  // and React guarantees the value is never recomputed, unlike useMemo.
+  const [store] = useState(() => createCalendarStore(options));
 
   const state = useSyncExternalStore(
     store.subscribe,
@@ -54,8 +58,5 @@ export function useCalendarStore(options: CalendarStoreOptions = {}): UseCalenda
 
   const actions = useMemo(() => extractActions(store), [store]);
 
-  return useMemo(
-    () => ({ state, store, ...actions }),
-    [state, store, actions],
-  );
+  return { state, store, ...actions };
 }
