@@ -1,4 +1,4 @@
-import { addMonths, addWeeks, addDays, startOfDay, isSameDay } from 'date-fns';
+import { addMonths, addWeeks, addDays, startOfDay } from 'date-fns';
 import type {
   CalendarStore,
   CalendarStoreOptions,
@@ -22,11 +22,16 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
     ...options.navigation,
   };
 
+  const initialEvents: CalendarEvent[] = (options.defaultEvents ?? []).map((e) => ({
+    ...e,
+    id: e.id ?? crypto.randomUUID(),
+  }));
+
   let state: CalendarState = {
     cursor: startOfDay(options.defaultDate ?? new Date()),
     view: options.defaultView ?? 'month',
     selected: [],
-    events: [],
+    events: initialEvents,
   };
 
   const listeners = new Set<(state: CalendarState) => void>();
@@ -143,10 +148,11 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
     selectRange(start, end) {
       const s = startOfDay(start);
       const e = startOfDay(end);
+      const from = s <= e ? s : e;
+      const to = s <= e ? e : s;
       const range: Date[] = [];
-      let current = s <= e ? s : e;
-      const last = s <= e ? e : s;
-      while (current <= last) {
+      let current = from;
+      while (current <= to) {
         range.push(current);
         current = addDays(current, 1);
       }
@@ -155,12 +161,13 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
 
     toggleSelect(date) {
       const target = startOfDay(date);
+      const targetMs = target.getTime();
       setState((prev) => {
-        const exists = prev.selected.some((d) => isSameDay(d, target));
+        const exists = prev.selected.some((d) => d.getTime() === targetMs);
         return {
           ...prev,
           selected: exists
-            ? prev.selected.filter((d) => !isSameDay(d, target))
+            ? prev.selected.filter((d) => d.getTime() !== targetMs)
             : [...prev.selected, target],
         };
       });

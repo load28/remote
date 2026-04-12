@@ -1,4 +1,4 @@
-import { isToday, isSameMonth, isSameDay, getWeek, isWeekend, addDays } from 'date-fns';
+import { isToday, isSameMonth, getWeek, isWeekend } from 'date-fns';
 import type { BaseCell, BuildContext, CalendarStore, CalendarEvent } from './types.js';
 
 export function withToday<TCell extends BaseCell>() {
@@ -48,22 +48,6 @@ export function withWeekend<TCell extends BaseCell>() {
     cells.map((row) =>
       row.map((cell) => ({ ...cell, weekend: isWeekend(cell.date) })),
     );
-}
-
-export function withFixedWeeks<TCell extends BaseCell>(totalWeeks: number = 6) {
-  return (cells: TCell[][], _context: BuildContext): TCell[][] => {
-    const result = [...cells];
-    while (result.length < totalWeeks) {
-      const lastRow = result[result.length - 1];
-      const lastDate = lastRow[lastRow.length - 1].date;
-      const newRow: TCell[] = [];
-      for (let i = 1; i <= 7; i++) {
-        newRow.push({ date: addDays(lastDate, i) } as TCell);
-      }
-      result.push(newRow);
-    }
-    return result.slice(0, totalWeeks);
-  };
 }
 
 export function withDisabled<TCell extends BaseCell>(predicate: (date: Date) => boolean) {

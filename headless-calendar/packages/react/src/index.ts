@@ -31,7 +31,6 @@ export {
   withEvents,
   withWeekNumbers,
   withWeekend,
-  withFixedWeeks,
   withDisabled,
   withCustom,
 } from '@calendar/core';
