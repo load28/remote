@@ -1,4 +1,4 @@
-import { addMonths, addWeeks, addDays, startOfDay, isSameDay } from 'date-fns';
+import { addMonths, addWeeks, addDays, startOfDay } from 'date-fns';
 import type {
   CalendarStore,
   CalendarStoreOptions,
@@ -15,6 +15,7 @@ const DEFAULT_NAVIGATION: Record<string, NavigationStrategy> = {
 };
 
 const EMPTY_EVENTS: CalendarEvent[] = [];
+const DAY_MS = 86_400_000;
 
 export function createCalendarStore(options: CalendarStoreOptions = {}): CalendarStore {
   const navigation: Record<string, NavigationStrategy> = {
@@ -22,11 +23,16 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
     ...options.navigation,
   };
 
+  const initialEvents: CalendarEvent[] = (options.defaultEvents ?? []).map((e) => ({
+    ...e,
+    id: e.id ?? crypto.randomUUID(),
+  }));
+
   let state: CalendarState = {
     cursor: startOfDay(options.defaultDate ?? new Date()),
     view: options.defaultView ?? 'month',
     selected: [],
-    events: [],
+    events: initialEvents,
   };
 
   const listeners = new Set<(state: CalendarState) => void>();
@@ -85,18 +91,15 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
 
     const map = new Map<number, CalendarEvent[]>();
     for (const ev of state.events) {
-      const evStart = startOfDay(ev.start);
-      const evEnd = ev.end ? startOfDay(ev.end) : evStart;
-      let current = evStart;
-      while (current <= evEnd) {
-        const key = current.getTime();
+      const startMs = startOfDay(ev.start).getTime();
+      const endMs = ev.end ? startOfDay(ev.end).getTime() : startMs;
+      for (let key = startMs; key <= endMs; key += DAY_MS) {
         let bucket = map.get(key);
         if (!bucket) {
           bucket = [];
           map.set(key, bucket);
         }
         bucket.push(ev);
-        current = addDays(current, 1);
       }
     }
 
@@ -141,26 +144,26 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
     },
 
     selectRange(start, end) {
-      const s = startOfDay(start);
-      const e = startOfDay(end);
+      const sMs = startOfDay(start).getTime();
+      const eMs = startOfDay(end).getTime();
+      const fromMs = Math.min(sMs, eMs);
+      const toMs = Math.max(sMs, eMs);
       const range: Date[] = [];
-      let current = s <= e ? s : e;
-      const last = s <= e ? e : s;
-      while (current <= last) {
-        range.push(current);
-        current = addDays(current, 1);
+      for (let ms = fromMs; ms <= toMs; ms += DAY_MS) {
+        range.push(new Date(ms));
       }
       setState({ selected: range });
     },
 
     toggleSelect(date) {
       const target = startOfDay(date);
+      const targetMs = target.getTime();
       setState((prev) => {
-        const exists = prev.selected.some((d) => isSameDay(d, target));
+        const exists = prev.selected.some((d) => d.getTime() === targetMs);
         return {
           ...prev,
           selected: exists
-            ? prev.selected.filter((d) => !isSameDay(d, target))
+            ? prev.selected.filter((d) => d.getTime() !== targetMs)
             : [...prev.selected, target],
         };
       });
@@ -204,14 +207,13 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
     },
 
     getEventsForRange(start, end) {
-      const s = startOfDay(start);
-      const e = startOfDay(end);
+      const sMs = startOfDay(start).getTime();
+      const eMs = startOfDay(end).getTime();
       const index = buildEventIndex();
       const seen = new Set<string>();
       const result: CalendarEvent[] = [];
-      let current = s;
-      while (current <= e) {
-        const bucket = index.get(current.getTime());
+      for (let ms = sMs; ms <= eMs; ms += DAY_MS) {
+        const bucket = index.get(ms);
         if (bucket) {
           for (const ev of bucket) {
             if (!seen.has(ev.id)) {
@@ -220,7 +222,6 @@ export function createCalendarStore(options: CalendarStoreOptions = {}): Calenda
             }
           }
         }
-        current = addDays(current, 1);
       }
       return result;
     },

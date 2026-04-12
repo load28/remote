@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import {
   useCalendarStore,
   useViewBuilder,
@@ -14,6 +14,15 @@ import { format } from 'date-fns';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
+const DEMO_EVENTS = [
+  { title: '팀 회의',     start: new Date(2026, 3, 11, 10, 0), color: '#4f46e5' },
+  { title: '런치',         start: new Date(2026, 3, 11, 12, 0), color: '#16a34a' },
+  { title: '디자인 리뷰',  start: new Date(2026, 3, 11, 14, 0), color: '#ea580c' },
+  { title: '1:1',          start: new Date(2026, 3, 11, 16, 0), color: '#0891b2' },
+  { title: '배포',         start: new Date(2026, 3, 22, 16, 0), color: '#dc2626' },
+  { title: '회고',         start: new Date(2026, 3, 30, 17, 0), color: '#0891b2' },
+];
+
 export function App() {
   const {
     state,
@@ -25,22 +34,8 @@ export function App() {
   } = useCalendarStore({
     defaultDate: new Date(2026, 3, 11),
     defaultView: 'month',
+    defaultEvents: DEMO_EVENTS,
   });
-
-  // 데모 이벤트 한 번만 등록 (StrictMode 더블 호출에도 안전)
-  const seeded = useRef(false);
-  useEffect(() => {
-    if (seeded.current) return;
-    seeded.current = true;
-    store.batch(() => {
-      store.addEvent({ title: '팀 회의',     start: new Date(2026, 3, 11, 10, 0), color: '#4f46e5' });
-      store.addEvent({ title: '런치',         start: new Date(2026, 3, 11, 12, 0), color: '#16a34a' });
-      store.addEvent({ title: '디자인 리뷰',  start: new Date(2026, 3, 11, 14, 0), color: '#ea580c' });
-      store.addEvent({ title: '1:1',          start: new Date(2026, 3, 11, 16, 0), color: '#0891b2' });
-      store.addEvent({ title: '배포',         start: new Date(2026, 3, 22, 16, 0), color: '#dc2626' });
-      store.addEvent({ title: '회고',         start: new Date(2026, 3, 30, 17, 0), color: '#0891b2' });
-    });
-  }, [store]);
 
   // Month용 빌더: fixedWeeks 옵션으로 6줄 고정 (generator 레벨에서 패딩)
   const monthBuilder = useMemo(

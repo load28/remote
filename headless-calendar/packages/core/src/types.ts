@@ -30,6 +30,7 @@ export interface NavigationStrategy {
 export interface CalendarStoreOptions {
   defaultDate?: Date;
   defaultView?: ViewType;
+  defaultEvents?: CalendarEventInput[];
   navigation?: Record<string, NavigationStrategy>;
 }
 
