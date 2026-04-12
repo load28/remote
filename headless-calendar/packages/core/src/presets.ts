@@ -36,9 +36,9 @@ export function withEvents<TCell extends BaseCell>(store: CalendarStore) {
 }
 
 export function withWeekNumbers<TCell extends BaseCell>() {
-  return (cells: TCell[][], _context: BuildContext): (TCell & { weekNumber: number })[][] =>
+  return (cells: TCell[][], context: BuildContext): (TCell & { weekNumber: number })[][] =>
     cells.map((row) => {
-      const weekNumber = getWeek(row[0].date);
+      const weekNumber = getWeek(row[0].date, { weekStartsOn: context.options.weekStartsOn });
       return row.map((cell) => ({ ...cell, weekNumber }));
     });
 }
