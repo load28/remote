@@ -11,6 +11,9 @@ import { TodoList } from "@/components/todo-list";
 import { ProtectedPostsBroken } from "@/components/protected-posts-broken";
 import { PostsWithServerAction } from "@/components/posts-with-server-action";
 import { PostsHydrated } from "@/components/posts-hydrated";
+import { PostsWithMemoryToken } from "@/components/posts-with-memory-token";
+import { MemoryTokenSetter } from "@/components/memory-token-setter";
+import { ClientOnly } from "@/components/client-only";
 import { CookieSetter } from "@/components/cookie-setter";
 
 // 이 컴포넌트는 서버 컴포넌트 (기본값)
@@ -122,6 +125,36 @@ export default async function Page() {
             <PostsWithServerAction />
           </Suspense>
         </ErrorBoundary>
+      </section>
+
+      {/* ===== 메모리 토큰: ClientOnly로 SSR 자체를 건너뜀 ===== */}
+      <section
+        style={{
+          marginTop: "32px",
+          padding: "24px",
+          border: "2px solid #8b5cf6",
+          borderRadius: "12px",
+          backgroundColor: "#f5f3ff",
+        }}
+      >
+        <h2 style={{ color: "#7c3aed" }}>
+          메모리 토큰: ClientOnly로 SSR 건너뛰기
+        </h2>
+        <p style={{ color: "#64748b", fontSize: "14px" }}>
+          토큰이 메모리(JS 변수)에 있으면 SSR을 피하면 됨.
+          <br />
+          ClientOnly 래퍼로 서버에서 렌더링하지 않으면 queryFn이 서버에서 실행되지 않음.
+          <br />
+          대신 SSR의 이점(서버 렌더링, SEO 등)을 포기하게 됨.
+        </p>
+        <MemoryTokenSetter />
+        <ClientOnly
+          fallback={<LoadingSkeleton label="게시글 (클라이언트 대기 중)" />}
+        >
+          <Suspense fallback={<LoadingSkeleton label="게시글 (메모리 토큰)" />}>
+            <PostsWithMemoryToken />
+          </Suspense>
+        </ClientOnly>
       </section>
 
       {/* ===== FIX: prefetch + HydrationBoundary + Route Handler ===== */}
