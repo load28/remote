@@ -1,11 +1,16 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { UserList } from "@/components/user-list";
 import { TodoList } from "@/components/todo-list";
 import { ProtectedPostsBroken } from "@/components/protected-posts-broken";
-import { ProtectedPostsFixed } from "@/components/protected-posts-fixed";
 import { PostsWithServerAction } from "@/components/posts-with-server-action";
+import { PostsHydrated } from "@/components/posts-hydrated";
 import { CookieSetter } from "@/components/cookie-setter";
 
 // 이 컴포넌트는 서버 컴포넌트 (기본값)
@@ -27,9 +32,27 @@ function LoadingSkeleton({ label }: { label: string }) {
 }
 
 export default async function Page() {
-  // 서버 컴포넌트에서 쿠키로 토큰을 읽음
   const cookieStore = await cookies();
-  const token = cookieStore.get("access_token")?.value ?? null;
+  const token = cookieStore.get("access_token")?.value;
+
+  // 서버 컴포넌트에서 prefetch: 토큰은 여기서만 사용되고 클라이언트에 전달되지 않음
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: ["posts"],
+    queryFn: async () => {
+      console.log("[Server Prefetch] token:", token ?? "(없음)");
+      const res = await fetch(
+        "https://jsonplaceholder.typicode.com/posts?_limit=5",
+        {
+          headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to fetch posts");
+      return res.json();
+    },
+  });
 
   return (
     <main style={{ maxWidth: "720px", margin: "0 auto", padding: "40px 16px" }}>
@@ -101,7 +124,7 @@ export default async function Page() {
         </ErrorBoundary>
       </section>
 
-      {/* ===== FIX: 서버 컴포넌트에서 토큰 읽어서 props로 전달 ===== */}
+      {/* ===== FIX: prefetch + HydrationBoundary + Route Handler ===== */}
       <section
         style={{
           marginTop: "32px",
@@ -112,19 +135,21 @@ export default async function Page() {
         }}
       >
         <h2 style={{ color: "#16a34a" }}>
-          FIX: 서버 컴포넌트에서 cookies() → props 전달
+          FIX: Server Prefetch + HydrationBoundary + Route Handler
         </h2>
         <p style={{ color: "#64748b", fontSize: "14px" }}>
-          서버 컴포넌트(page.tsx)에서 쿠키를 읽고, 클라이언트 컴포넌트에 props로 전달.
-          queryFn은 순수한 fetch만 수행.
-        </p>
-        <p style={{ color: "#64748b", fontSize: "14px" }}>
-          현재 토큰: <code>{token ?? "(없음)"}</code>
+          1. 서버 컴포넌트에서 cookies()로 토큰 읽고 prefetchQuery로 데이터를 미리 fetch
+          <br />
+          2. HydrationBoundary로 캐시를 클라이언트에 전달 (토큰은 전달 안 됨, 데이터만 전달)
+          <br />
+          3. 클라이언트 refetch 시 /api/posts Route Handler가 쿠키에서 토큰을 읽어 프록시
         </p>
         <CookieSetter />
-        <Suspense fallback={<LoadingSkeleton label="게시글 (props 토큰)" />}>
-          <ProtectedPostsFixed token={token} />
-        </Suspense>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <Suspense fallback={<LoadingSkeleton label="게시글 (hydrated)" />}>
+            <PostsHydrated />
+          </Suspense>
+        </HydrationBoundary>
       </section>
     </main>
   );
