@@ -15,6 +15,7 @@ import { PostsWithMemoryToken } from "@/components/posts-with-memory-token";
 import { MemoryTokenSetter } from "@/components/memory-token-setter";
 import { ClientOnly } from "@/components/client-only";
 import { CookieSetter } from "@/components/cookie-setter";
+import { PostsUseQuery } from "@/components/posts-use-query";
 
 // 이 컴포넌트는 서버 컴포넌트 (기본값)
 
@@ -79,7 +80,27 @@ export default async function Page() {
         </Suspense>
       </section>
 
-      {/* ===== BUG 1: queryFn에서 localStorage 직접 접근 ===== */}
+      {/* ===== 비교: useQuery로 동일하게 localStorage 접근 ===== */}
+      <section
+        style={{
+          marginTop: "48px",
+          padding: "24px",
+          border: "2px solid #3b82f6",
+          borderRadius: "12px",
+          backgroundColor: "#eff6ff",
+        }}
+      >
+        <h2 style={{ color: "#2563eb" }}>
+          useQuery + localStorage (동일 조건)
+        </h2>
+        <p style={{ color: "#64748b", fontSize: "14px" }}>
+          useSuspenseQuery와 동일하게 queryFn에서 localStorage 접근.
+          SSR 시 어떻게 되는가?
+        </p>
+        <PostsUseQuery />
+      </section>
+
+      {/* ===== BUG 1: useSuspenseQuery로 localStorage 직접 접근 ===== */}
       <section
         style={{
           marginTop: "48px",
@@ -90,7 +111,7 @@ export default async function Page() {
         }}
       >
         <h2 style={{ color: "#dc2626" }}>
-          BUG 1: queryFn에서 직접 localStorage 접근
+          BUG 1: useSuspenseQuery + localStorage (동일 조건)
         </h2>
         <p style={{ color: "#64748b", fontSize: "14px" }}>
           SSR 시 localStorage가 없어서 에러 →{" "}
