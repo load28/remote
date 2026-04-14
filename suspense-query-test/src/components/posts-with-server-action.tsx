@@ -1,6 +1,7 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { getTokenFromCookie } from "@/actions/get-token";
 
 interface Post {
   id: number;
@@ -9,17 +10,17 @@ interface Post {
 }
 
 /**
- * 해결법: 서버 컴포넌트에서 토큰을 읽어서 props로 전달
+ * 테스트: useSuspenseQuery의 queryFn 안에서 서버 액션으로 쿠키 토큰을 가져오는 경우
  *
- * - useSuspenseQuery는 SSR 시에도 queryFn을 실행함
- * - queryFn 안에서 localStorage, 서버 액션 등 클라이언트/서버 전용 API를 쓰면 에러
- * - 해결: 서버 컴포넌트(page.tsx)에서 cookies()로 토큰을 읽고 props로 내림
+ * 질문: SSR 시에도 정상 동작하는가?
  */
-export function ProtectedPostsFixed({ token }: { token: string | null }) {
+export function PostsWithServerAction() {
   const { data: posts } = useSuspenseQuery<Post[]>({
-    queryKey: ["posts-fixed", token],
+    queryKey: ["posts-server-action"],
     queryFn: async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // 서버 액션으로 쿠키에서 토큰 가져오기
+      const token = await getTokenFromCookie();
+      console.log("[Client] token from server action:", token);
 
       const res = await fetch(
         "https://jsonplaceholder.typicode.com/posts?_limit=5",
@@ -42,7 +43,7 @@ export function ProtectedPostsFixed({ token }: { token: string | null }) {
           style={{
             padding: "12px 16px",
             marginBottom: "8px",
-            border: "1px solid #86efac",
+            border: "1px solid #93c5fd",
             borderRadius: "8px",
           }}
         >
