@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { QueryProvider } from "@/providers/query-provider";
 
 export const metadata: Metadata = {
-  title: "Suspense Query Test",
-  description: "Testing useSuspenseQuery with Next.js Server Components",
+  title: "Suspense Query Architecture",
 };
 
 export default function RootLayout({
@@ -13,7 +12,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body>
+      <body style={{ fontFamily: "system-ui", maxWidth: 720, margin: "0 auto", padding: "40px 16px" }}>
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

@@ -1,23 +1,25 @@
 import { queryOptions } from "@tanstack/react-query";
 
-interface Post {
+export interface Post {
   id: number;
+  userId: number;
   title: string;
   body: string;
 }
 
 /**
- * queryFn은 토큰을 전혀 모른다.
+ * 클라이언트 refetch용 queryOptions
  *
- * - /api/posts (Route Handler)를 호출할 뿐
- * - 토큰은 Route Handler가 httpOnly 쿠키에서 읽어서 처리
- * - 이 queryFn은 클라이언트에서만 실행됨 (prefetch 패턴 사용 시)
+ * - queryKey: 서버 prefetch와 공유
+ * - queryFn: 클라이언트에서 refetch 시에만 실행 (프록시 경유)
  */
 export const postsQueryOptions = queryOptions<Post[]>({
   queryKey: ["posts"],
   queryFn: async () => {
-    const res = await fetch("/api/posts?limit=5");
-    if (!res.ok) throw new Error("Failed to fetch posts");
+    console.log("[Client queryFn] /api/proxy/posts 호출");
+    const res = await fetch("/api/proxy/posts?_limit=5");
+    if (!res.ok) throw new Error("Failed to fetch");
     return res.json();
   },
+  staleTime: 10 * 1000, // 10초 후 stale → refetch 테스트 가능
 });
