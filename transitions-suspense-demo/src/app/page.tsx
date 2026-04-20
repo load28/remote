@@ -13,8 +13,8 @@ const demos = [
   },
   {
     href: "/demo3-deferred-value",
-    title: "Demo 3 — useDeferredValue + 무거운 동기 렌더",
-    desc: "데이터 fetch 없이 CPU만 잡아먹는 렌더. 입력 반응성 비교.",
+    title: "Demo 3 — 검색: debounce + useDeferredValue + Suspense",
+    desc: "검색어 입력 → debounce로 요청 횟수 줄이고 → useDeferredValue + Suspense로 이전 결과 유지.",
   },
   {
     href: "/demo4-manual-vs-transition",
