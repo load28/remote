@@ -13,8 +13,8 @@ const demos = [
   },
   {
     href: "/demo3-deferred-value",
-    title: "Demo 3 — 검색: 수동 (React Query 없이)",
-    desc: "useDebounce + useDeferredValue + Suspense + 수동 promise 캐시. abort 미지원의 한계 노출.",
+    title: "Demo 3 — 수동 (React Query 없이) + AbortController",
+    desc: "useDebounce + useDeferredValue + Suspense + promise 캐시 + 수동 abort로 stale 요청 취소.",
   },
   {
     href: "/demo4-manual-vs-transition",

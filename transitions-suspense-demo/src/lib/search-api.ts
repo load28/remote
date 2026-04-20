@@ -42,13 +42,18 @@ export function searchAPI(query: string, signal?: AbortSignal): Promise<string[]
       return reject(new DOMException("Aborted", "AbortError"));
     }
 
+    let settled = false;
     const timeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
       const key = query.toLowerCase().trim();
       const res = key ? ALL.filter((it) => it.toLowerCase().includes(key)) : ALL;
       resolve(res);
     }, 1000);
 
     signal?.addEventListener("abort", () => {
+      if (settled) return; // 이미 resolve됐으면 abort 무시
+      settled = true;
       clearTimeout(timeout);
       abortedCount++;
       listeners.forEach((l) => l());
