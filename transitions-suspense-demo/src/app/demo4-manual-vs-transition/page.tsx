@@ -3,7 +3,27 @@
 import { Suspense, use, useEffect, useState, useTransition } from "react";
 import { BackLink } from "@/components/BackLink";
 
+// 같은 tab이면 같은 promise를 반환해야 use()가 무한 suspend되지 않는다.
+const promiseCache = new Map<string, Promise<string[]>>();
+
 function fetchItems(tab: string, delay = 1500): Promise<string[]> {
+  const cached = promiseCache.get(tab);
+  if (cached) return cached;
+  const p = new Promise<string[]>((resolve) =>
+    setTimeout(
+      () =>
+        resolve(
+          Array.from({ length: 6 }, (_, i) => `${tab.toUpperCase()} #${i + 1}`),
+        ),
+      delay,
+    ),
+  );
+  promiseCache.set(tab, p);
+  return p;
+}
+
+// ManualVersion은 useEffect로 fetch하므로 매번 fresh한 결과가 필요하다.
+function fetchItemsFresh(tab: string, delay = 1500): Promise<string[]> {
   return new Promise((resolve) =>
     setTimeout(
       () =>
@@ -24,7 +44,7 @@ function ManualVersion() {
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
-    fetchItems(tab).then((data) => {
+    fetchItemsFresh(tab).then((data) => {
       if (!cancelled) {
         setItems(data);
         setIsLoading(false);
