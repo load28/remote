@@ -112,6 +112,12 @@ export default function Demo7() {
           <em>이전 화면 유지를 데이터 레이어가 하느냐(A) 렌더 레이어가
           하느냐(B)</em>의 차이.
         </p>
+        <p>
+          <strong>관찰 4 (<code>gcTime: 0</code>).</strong> 관찰자 0이 되는
+          즉시 캐시 제거 → 재검색 시 캐시 hit 없음. 단,{" "}
+          <code>useDeferredValue</code>가 잡은 이전 렌더는 React가 따로
+          보관하므로 화면 유지 효과는 그대로.
+        </p>
       </footer>
     </main>
   );

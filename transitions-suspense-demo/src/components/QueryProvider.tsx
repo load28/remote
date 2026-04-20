@@ -10,6 +10,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 30_000,
+            gcTime: 0, // 관찰자 0이 되는 순간 즉시 캐시 제거
           },
         },
       }),

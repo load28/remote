@@ -103,6 +103,13 @@ export default function Demo6() {
           <strong>관찰 3.</strong> 첫 진입에는 placeholder가 없으므로{" "}
           <code>isLoading=true</code>로 fallback이 표시됩니다.
         </p>
+        <p>
+          <strong>관찰 4 (<code>gcTime: 0</code>).</strong> QueryProvider에서
+          gcTime을 0으로 설정 → queryKey가 바뀌면 이전 key의 관찰자가 0이
+          되는 즉시 캐시 제거. 같은 단어로 재검색하면 <strong>캐시 hit이
+          일어나지 않고</strong> 새로 네트워크 요청이 나갑니다 (호출
+          카운터 확인).
+        </p>
       </footer>
     </main>
   );
