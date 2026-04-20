@@ -13,8 +13,8 @@ const demos = [
   },
   {
     href: "/demo3-deferred-value",
-    title: "Demo 3 — useDeferredValue + 무거운 동기 렌더",
-    desc: "데이터 fetch 없이 CPU만 잡아먹는 렌더. 입력 반응성 비교.",
+    title: "Demo 3 — 수동 (React Query 없이) + AbortController",
+    desc: "useDebounce + useDeferredValue + Suspense + promise 캐시 + 수동 abort로 stale 요청 취소.",
   },
   {
     href: "/demo4-manual-vs-transition",
@@ -25,6 +25,16 @@ const demos = [
     href: "/demo5-router-transition/home",
     title: "Demo 5 — router.push + useTransition isPending",
     desc: "동적 라우트 네비게이션의 진행 상태를 isPending으로 추적.",
+  },
+  {
+    href: "/demo6-rq-pattern-a",
+    title: "Demo 6 — 검색 패턴 A: useQuery + keepPreviousData",
+    desc: "React Query가 데이터 레이어에서 이전 결과 유지. Suspense 없음. signal로 자동 abort.",
+  },
+  {
+    href: "/demo7-rq-pattern-b",
+    title: "Demo 7 — 검색 패턴 B: useSuspenseQuery + useDeferredValue",
+    desc: "Suspense 기반. useDeferredValue가 렌더 레이어에서 이전 화면 유지. signal로 자동 abort.",
   },
 ];
 
