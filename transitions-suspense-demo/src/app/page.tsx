@@ -48,6 +48,11 @@ export default function Home() {
         <p className="text-zinc-600 dark:text-zinc-400">
           Next.js 16 + React 19. 각 데모를 직접 클릭해보며 차이를 확인하세요.
         </p>
+        <p className="rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
+          🛠 모든 fetch는 <strong>MSW(Mock Service Worker)</strong>로 가로채는
+          진짜 HTTP 요청입니다. 브라우저 DevTools → Network 탭을 열어 두면
+          요청 발사와 <code>cancelled</code> 상태를 직접 볼 수 있습니다.
+        </p>
       </header>
       <ul className="flex flex-col gap-3">
         {demos.map((d) => (
