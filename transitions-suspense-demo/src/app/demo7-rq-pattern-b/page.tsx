@@ -1,25 +1,17 @@
 "use client";
 
-import { Suspense, use, useDeferredValue, useState } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Suspense, useDeferredValue, useState } from "react";
 import { BackLink } from "@/components/BackLink";
 import { searchAPI } from "@/lib/search-api";
 import { useDebounce } from "@/lib/use-debounce";
 import { useNetworkMetrics } from "@/lib/use-network-metrics";
 
-// use()를 위한 promise 캐시 (같은 query면 같은 promise 반환).
-const promiseCache = new Map<string, Promise<string[]>>();
-function getSearchPromise(query: string) {
-  const key = query.toLowerCase().trim();
-  const hit = promiseCache.get(key);
-  if (hit) return hit;
-  // 수동 데모에서는 abort 없이 단순 cache. (한계 표시)
-  const p = searchAPI(query);
-  promiseCache.set(key, p);
-  return p;
-}
-
 function Results({ query }: { query: string }) {
-  const data = use(getSearchPromise(query));
+  const { data } = useSuspenseQuery({
+    queryKey: ["search", query],
+    queryFn: ({ signal }) => searchAPI(query, signal),
+  });
   return (
     <ul className="space-y-1">
       {data.length === 0 ? (
@@ -38,7 +30,7 @@ function Results({ query }: { query: string }) {
   );
 }
 
-export default function Demo3() {
+export default function Demo7() {
   const [query, setQuery] = useState("");
   const debounced = useDebounce(query, 300);
   const deferred = useDeferredValue(debounced);
@@ -52,12 +44,12 @@ export default function Demo3() {
       <BackLink />
       <header>
         <h1 className="text-2xl font-semibold">
-          Demo 3 — 수동 (React Query 없이)
+          Demo 7 — 패턴 B: useSuspenseQuery + useDeferredValue
         </h1>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          <code>useDebounce</code> + <code>useDeferredValue</code> +{" "}
-          <code>Suspense</code> + 직접 만든 promise 캐시. 가장 raw한 형태이며
-          AbortController가 없어 stale 응답 race를 막지 못합니다.
+          Suspense 기반. <code>useSuspenseQuery</code>는 placeholderData를
+          지원하지 않으므로 <code>useDeferredValue</code>가 "이전 화면 유지"를
+          담당. <code>signal</code>로 자동 abort.
         </p>
       </header>
 
@@ -87,9 +79,6 @@ export default function Demo3() {
         <div className="pt-1 text-zinc-500">
           네트워크 호출: <strong>{metrics.networkCallCount}</strong>회 / 취소:{" "}
           <strong>{metrics.abortedCount}</strong>회
-          <span className="ml-2 text-zinc-400">
-            (캐시 hit은 미카운트, 수동 데모는 abort 미지원)
-          </span>
         </div>
       </div>
 
@@ -108,11 +97,20 @@ export default function Demo3() {
         </Suspense>
       </section>
 
-      <footer className="text-xs text-zinc-500 leading-relaxed">
+      <footer className="text-xs text-zinc-500 leading-relaxed space-y-2">
         <p>
-          <strong>한계:</strong> 캐시는 있지만 abort가 없어, 빠르게 검색어를
-          바꾸면 이전 stale 요청도 끝까지 발사됩니다 (race condition 위험).
-          Demo 6/7과 비교해 보세요.
+          <strong>관찰 1.</strong> 빠르게 검색어를 바꾸면 이전 화면이 dim된 채
+          유지됩니다 (useDeferredValue가 transition lane으로 처리 → Suspense
+          fallback 억제).
+        </p>
+        <p>
+          <strong>관찰 2.</strong> queryKey가 바뀌면 React Query가 이전 요청을
+          자동 abort.
+        </p>
+        <p>
+          <strong>관찰 3.</strong> Demo 6과 비교: 결과적 UX는 같지만,{" "}
+          <em>이전 화면 유지를 데이터 레이어가 하느냐(A) 렌더 레이어가
+          하느냐(B)</em>의 차이.
         </p>
       </footer>
     </main>
