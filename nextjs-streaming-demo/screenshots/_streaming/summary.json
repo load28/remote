@@ -1,0 +1,299 @@
+{
+  "networkLog": {
+    "url": "http://localhost:3010/streaming",
+    "status": 200,
+    "contentLength": "(none — chunked)",
+    "firstByteAt": "140ms",
+    "finishedAt": "1636ms",
+    "totalChunks": 5,
+    "chunks": [
+      {
+        "at": 148,
+        "bytes": 9655
+      },
+      {
+        "at": 236,
+        "bytes": 1565
+      },
+      {
+        "at": 930,
+        "bytes": 732
+      },
+      {
+        "at": 1632,
+        "bytes": 424
+      },
+      {
+        "at": 1633,
+        "bytes": 324
+      }
+    ]
+  },
+  "firstSeen": {
+    "fast": "+426ms",
+    "medium": "+863ms",
+    "slow": "+1523ms"
+  },
+  "snapshots": [
+    {
+      "at": 26.05702500000001,
+      "visible": {
+        "pendingMarkers": 3,
+        "hiddenContainers": 0,
+        "fast": false,
+        "medium": false,
+        "slow": false,
+        "fastFb": true,
+        "mediumFb": true,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 193.49165599999998,
+      "visible": {
+        "pendingMarkers": 2,
+        "hiddenContainers": 0,
+        "fast": false,
+        "medium": false,
+        "slow": false,
+        "fastFb": true,
+        "mediumFb": true,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 307.949998,
+      "visible": {
+        "pendingMarkers": 2,
+        "hiddenContainers": 0,
+        "fast": false,
+        "medium": false,
+        "slow": false,
+        "fastFb": true,
+        "mediumFb": true,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 425.97131599999994,
+      "visible": {
+        "pendingMarkers": 2,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": false,
+        "slow": false,
+        "fastFb": false,
+        "mediumFb": true,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 534.445651,
+      "visible": {
+        "pendingMarkers": 2,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": false,
+        "slow": false,
+        "fastFb": false,
+        "mediumFb": true,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 643.204497,
+      "visible": {
+        "pendingMarkers": 2,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": false,
+        "slow": false,
+        "fastFb": false,
+        "mediumFb": true,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 752.011651,
+      "visible": {
+        "pendingMarkers": 2,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": false,
+        "slow": false,
+        "fastFb": false,
+        "mediumFb": true,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 862.8739820000001,
+      "visible": {
+        "pendingMarkers": 1,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": false,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 974.630703,
+      "visible": {
+        "pendingMarkers": 1,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": false,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 1084.632212,
+      "visible": {
+        "pendingMarkers": 1,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": false,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 1192.371809,
+      "visible": {
+        "pendingMarkers": 1,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": false,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 1301.5813090000001,
+      "visible": {
+        "pendingMarkers": 1,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": false,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 1411.668501,
+      "visible": {
+        "pendingMarkers": 1,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": false,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": true
+      }
+    },
+    {
+      "at": 1523.200944,
+      "visible": {
+        "pendingMarkers": 0,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": true,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": false
+      }
+    },
+    {
+      "at": 1646.900703,
+      "visible": {
+        "pendingMarkers": 0,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": true,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": false
+      }
+    },
+    {
+      "at": 1760.2768280000003,
+      "visible": {
+        "pendingMarkers": 0,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": true,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": false
+      }
+    },
+    {
+      "at": 1874.755116,
+      "visible": {
+        "pendingMarkers": 0,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": true,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": false
+      }
+    },
+    {
+      "at": 1984.301787,
+      "visible": {
+        "pendingMarkers": 0,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": true,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": false
+      }
+    },
+    {
+      "at": 2093.8898759999997,
+      "visible": {
+        "pendingMarkers": 0,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": true,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": false
+      }
+    },
+    {
+      "at": 2208.695441,
+      "visible": {
+        "pendingMarkers": 0,
+        "hiddenContainers": 0,
+        "fast": true,
+        "medium": true,
+        "slow": true,
+        "fastFb": false,
+        "mediumFb": false,
+        "slowFb": false
+      }
+    }
+  ]
+}

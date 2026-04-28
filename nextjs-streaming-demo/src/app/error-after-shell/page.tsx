@@ -2,8 +2,7 @@ import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
-async function ThrowAfterShell() {
-  // 셸 + 첫 청크가 나간 뒤에 throw
+async function ThrowAfterShell(): Promise<React.ReactNode> {
   await new Promise((resolve) => setTimeout(resolve, 600));
   throw new Error(
     "셸이 이미 200 OK로 흘러나간 뒤에 던져진 에러 — 응답 코드를 5xx로 바꿀 수 없음"

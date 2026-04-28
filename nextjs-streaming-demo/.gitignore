@@ -4,3 +4,4 @@ node_modules
 *.log
 .DS_Store
 next-env.d.ts
+# 검증 산출물은 의도적으로 포함되므로 무시하지 않음 (screenshots/, videos/)
